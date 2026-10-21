@@ -1,0 +1,24 @@
+# Glossary
+
+- **Approach:** one road entering the intersection (N, S, E, W). Opposing approaches share a phase: NS is Phase 1, EW is Phase 2.
+- **DPO / PIA:** Data Protection Officer / Privacy Impact Assessment, the Tier 2 prerequisites under NPC Circular 16-01.
+- **DPWH:** Department of Public Works and Highways, the source of commercial turnkey signals.
+- **Diode-OR:** two diodes feeding one bus so the higher-voltage source powers it, giving seamless failover (`hardware.md`).
+- **Flashing Amber:** caution mode on all approaches; L4 or a manual override.
+- **FEWS:** the Catarman River Flood Early Warning System.
+- **Gap-out:** ending green early once the stop bar has been vacant for more than 3 s.
+- **Ghost red:** a red held against a driver while the cross-street is empty, which invites red-light running and spreads non-compliance.
+- **Habal-habal:** a motorcycle taxi.
+- **Heartbeat:** the vision node's periodic liveness signal to the ESP32. Missing 3 triggers L2.
+- **L1–L4:** degradation levels (`degradation-levels.md`).
+- **LGU:** Local Government Unit, here the Municipality of Catarman.
+- **MDRRMO:** Municipal Disaster Risk Reduction and Management Office.
+- **NEMA TS2 / HCM:** U.S. traffic-controller standard / Highway Capacity Manual. Both split detection into advance (50–100 m upstream) and stop-bar.
+- **NORSAMELCO / NGCP:** the Northern Samar electric cooperative (distribution faults) / the National Grid Corporation (transmission trips).
+- **NPC:** National Privacy Commission.
+- **PCU:** Passenger Car Unit, a vehicle's congestion weight relative to a car (1 car ≈ 2 tricycles).
+- **POSO:** Public Order and Safety Office, which employs the traffic enforcers.
+- **ROI:** Region of Interest, the virtual stop-line zone in the camera frame.
+- **Sangguniang Bayan:** the municipal legislative council.
+- **Stop-bar detection:** presence sensing at the stop line for right-of-way demand, as opposed to upstream advance detection.
+- **TODA:** Tricycle Operators and Drivers' Association.

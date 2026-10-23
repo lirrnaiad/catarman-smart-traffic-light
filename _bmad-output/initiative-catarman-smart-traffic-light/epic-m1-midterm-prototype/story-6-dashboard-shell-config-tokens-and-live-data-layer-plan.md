@@ -3,7 +3,8 @@ title: 'Dashboard shell: config, tokens and live data layer'
 type: 'feature'
 ticket: '6'
 created: '2026-10-23'
-status: 'draft'
+baseline_commit: '061f0c39de02da23566fd87e85f824dabe4f9aaa'
+status: 'done'
 route: 'dispatch'
 risk: 'medium'
 review_loop_iteration: 0
@@ -102,12 +103,12 @@ context:
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] `dashboard/next.config.ts`, `dashboard/postcss.config.mjs`, `dashboard/.env.development`, `dashboard/.env.production` -- the AD-9 config and the API URLs.
-- [ ] `dashboard/src/app/globals.css` and `dashboard/src/app/layout.tsx` -- every token in `@theme`, the base `body` on `surface-page` with `font-body` and `text`; `<html lang="en">`; a layout whose `<body>` wraps its children in `LiveProvider`.
-- [ ] `dashboard/src/lib/config.ts` and `dashboard/src/lib/api/client.ts` -- the API base, `apiUrl`, `apiGet`, `apiPost`, `apiList`, and the error carrying `code`.
-- [ ] `dashboard/src/lib/time.ts`, `dashboard/src/lib/visuals.ts`, `dashboard/src/lib/use-vehicle-classes.ts` -- as in Boundaries. `visuals.ts` exports a lookup per family (`{label, token}`), `colorVar(token)` → `var(--color-<token>)`, and `classColor`.
-- [ ] `dashboard/src/lib/live/` -- `LiveProvider`, the four hooks, and `LiveTestProvider`. A test can set slices, stream open or closed, and the epoch, and can fire occurrences through the same hooks.
-- [ ] Tests next to each module -- every matrix row; every enum value has a non-empty label (a loop over each contract enum's options); a render under `LiveTestProvider`.
+- [x] `dashboard/next.config.ts`, `dashboard/postcss.config.mjs`, `dashboard/.env.development`, `dashboard/.env.production` -- the AD-9 config and the API URLs.
+- [x] `dashboard/src/app/globals.css` and `dashboard/src/app/layout.tsx` -- every token in `@theme`, the base `body` on `surface-page` with `font-body` and `text`; `<html lang="en">`; a layout whose `<body>` wraps its children in `LiveProvider`.
+- [x] `dashboard/src/lib/config.ts` and `dashboard/src/lib/api/client.ts` -- the API base, `apiUrl`, `apiGet`, `apiPost`, `apiList`, and the error carrying `code`.
+- [x] `dashboard/src/lib/time.ts`, `dashboard/src/lib/visuals.ts`, `dashboard/src/lib/use-vehicle-classes.ts` -- as in Boundaries. `visuals.ts` exports a lookup per family (`{label, token}`), `colorVar(token)` → `var(--color-<token>)`, and `classColor`.
+- [x] `dashboard/src/lib/live/` -- `LiveProvider`, the four hooks, and `LiveTestProvider`. A test can set slices, stream open or closed, and the epoch, and can fire occurrences through the same hooks.
+- [x] Tests next to each module -- every matrix row; every enum value has a non-empty label (a loop over each contract enum's options); a render under `LiveTestProvider`.
 
 **Acceptance Criteria:**
 - When `npm run build -w dashboard` runs with no backend, then it exports to `dashboard/out/` with no error and no warning about a disallowed feature.
@@ -120,6 +121,30 @@ context:
 
 ## Review Triage Log
 
+| # | Source | Finding | Verdict | Evidence | Route |
+|---|--------|---------|---------|----------|-------|
+| 1 | blind, edge, verification-gap | The stream never recovers once the browser closes the `EventSource` for good | medium | A non-200 or non-`text/event-stream` reply sets `readyState` CLOSED and the browser stops retrying; the `error` handler only flips `open`; epic Done #2 needs the dashboard to reconnect when the backend returns | patch |
+| 2 | blind, edge, verification-gap | One failed `/api/vehicle-classes` sticks until reload | medium | `npm run dev` starts the backend and dashboard together, so a page loaded during backend boot keeps a rejected `pending` for the session | patch |
+| 3 | blind | Tailwind's default font, text and radius scales still resolve | low | Only `--color-*` is reset, so `text-sm`, `font-mono` and `rounded-2xl` produce non-DESIGN values; resetting them is a direct correction | patch |
+| 4 | blind | Every frame re-renders every live consumer | low | One context holds all slices; at M1 rates (demand ≤ 4 Hz) the cost is acceptable, so the fix is a `shortcut:` comment, not a store | patch |
+| 5 | verification-gap | Untested: a rejecting `fetch` (INTERNAL, status 0), `apiList` on a path with `?`, `useLiveEvent` calling the latest handler and nothing after unmount | medium | Deleting each branch passes all 37 tests | patch |
+| 6 | verification-gap | The root layout's `LiveProvider` mount is untested | low | No page exists yet; entry 7's render or entry 8's live check covers it | reject |
+| 7 | verification-gap | `@theme static` and the colour reset are checked only in source text | low | The built CSS was checked by hand; a build-output check needs tooling the repo doesn't have | reject |
+| 8 | edge | After a reopen, the old `link` slice can read LIVE before the new one arrives | low | The hub writes `link` first on connect, so the window is milliseconds; clearing it would blank the header | reject |
+| 9 | blind, edge | One throwing `useLiveEvent` handler stops the rest | low | Needs a buggy handler; fix adds a guard | reject |
+| 10 | edge | Handlers added during `emit` get the same frame; the handler ref syncs in `useEffect` | low | Needs a handler that subscribes from inside a handler, or a frame between render and effect flush | reject |
+| 11 | blind, edge | Hooks outside the provider fail silently | low | Only `LiveProvider` and `LiveTestProvider` mount them; fix adds a throw path | reject |
+| 12 | edge | `rejectionReason` lookup hits prototype keys like `toString` | false | Reasons pass `^[A-Z][A-Z0-9_]{0,31}$`, so no lower-case prototype key can arrive | reject |
+| 13 | edge | A sixth vehicle class renders as unknown | false | DESIGN defines exactly five class tokens; extra classes are neutral by design | reject |
+| 14 | blind, edge | An invalid ISO string crashes `formatManila` | low | Every input is schema-validated `isoUtc` | reject |
+| 15 | blind, edge | A trailing slash in the base URL doubles the slash | low | Both committed `.env` files have none | reject |
+| 16 | edge | An `ApiError` with an unknown code loses its message | low | The backend emits only the four `ErrorCode` values | reject |
+| 17 | edge | `LiveTestProvider`'s default `{}` changes every render | low | Test-only; no assertion depends on render counts | reject |
+| 18 | edge | `ErrorCode` has no visuals entry | false | It isn't an enum family in the spine's Consistency Conventions; errors show their message | reject |
+| 19 | blind | The client takes no `signal` or `RequestInit` | low | No caller needs it yet | reject |
+| 20 | blind | Dev cross-origin CORS is undocumented | false | Story 1.2's dev CORS allows `DASHBOARD_ORIGINS` (default `localhost:3000`, `127.0.0.1:3000`) | reject |
+| 21 | blind | The CSS-token test checks only one direction | low | A missing `COLOR_TOKENS` entry only stops `visuals.ts` using it; fix adds a parser | reject |
+
 ## Verification
 
 **Commands:**
@@ -127,3 +152,10 @@ context:
 
 **Manual checks:**
 - If the backend core (1.2) is available, run it with `npm run dev -w dashboard` and confirm the one stream connection and the parsed `link` slice (React DevTools or a temporary `console.info`, removed afterwards). Otherwise, record that the live check waits for entry 7/8 (epic rule 4). Record the steps here.
+
+**Recorded (2026-10-23):**
+- `npm run typecheck`, `npm run lint`, `npm test` (dashboard: 6 files, 37 tests) and `npm run build -w dashboard` all exit 0; `dashboard/out/` exists, with no disallowed-feature warning. The built CSS has `--color-signal-red` and no Tailwind default hue.
+- `next dev` on a scratch port served the 404 page with `<html lang="en">`, and its client bundle points the stream at `http://127.0.0.1:4000`.
+- The live check against the 1.2 backend in a real browser (one `EventSource`, parsed `link`) was not run: 1.2 is not on this branch. It waits for entry 7/8 (epic rule 4).
+- **After review fixes (2026-10-23):** `npm run typecheck`, `npm run lint`, `npm test` (42 dashboard tests) and `npm run build -w dashboard` exit 0. The live browser check against the 1.2 backend (exactly one `EventSource` on `http://127.0.0.1:4000/api/stream`) waits for 1.2 to reach `main` and is re-checked in entry 7 or 8 (epic rule 4). Until then it is shown against fixtures: the fake-`EventSource` tests cover connect, slices, occurrences, bad frames, reconnect, the reopen after a permanent close, and liveness.
+- **Open for the user:** `next dev` (Next 16) writes a managed `dashboard/AGENTS.md` on every run. Stopping it needs `agentRules: false` in `next.config.ts`, a fourth key that AD-9 doesn't list; ignoring it needs a `.gitignore` line (entry 1's file). Not committed here.

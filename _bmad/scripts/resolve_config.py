@@ -43,7 +43,9 @@ def write_json_stdout(output) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Resolve BMad central config using four-layer TOML merge.")
+    parser = argparse.ArgumentParser(
+        description="Resolve BMad central config using four-layer TOML merge."
+    )
     parser.add_argument(
         "--project-root",
         "-p",
@@ -77,8 +79,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    if sys.platform == "win32":
-        # Piped output on Windows defaults to a legacy code page, not UTF-8.
-        sys.stdout.reconfigure(encoding="utf-8")
-        sys.stderr.reconfigure(encoding="utf-8")
     raise SystemExit(main())

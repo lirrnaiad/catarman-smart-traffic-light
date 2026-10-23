@@ -1,14 +1,21 @@
 import { fileURLToPath } from "node:url";
+import type { LinkSlice } from "@stl/contracts";
 import express, { type Express, type RequestHandler } from "express";
 import { config } from "./config.ts";
 import type { Pool } from "./db/pool.ts";
 import { errorMiddleware } from "./http/error-middleware.ts";
 import { routes } from "./http/routes/index.ts";
+import type { Publisher } from "./mqtt/publisher.ts";
 import { AppError } from "./services/errors.ts";
 import type { Hub } from "./sse/hub.ts";
 
-/** Core dependencies only (AD-16); entry 3 adds `publisher` and `getLink`. */
-export type AppDeps = { pool: Pool; hub: Hub };
+/** Core dependencies only (AD-16). */
+export type AppDeps = {
+  pool: Pool;
+  hub: Hub;
+  publisher: Publisher;
+  getLink: () => LinkSlice;
+};
 
 const dashboardOut = fileURLToPath(
   new URL("../../dashboard/out/", import.meta.url),

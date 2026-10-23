@@ -8,6 +8,7 @@ import { z } from "zod";
 import { type AppDeps, createApp } from "./app.ts";
 import type { Pool } from "./db/pool.ts";
 import { errorMiddleware } from "./http/error-middleware.ts";
+import type { Publisher } from "./mqtt/publisher.ts";
 import { AppError } from "./services/errors.ts";
 import { createHub, initialLink } from "./sse/hub.ts";
 
@@ -18,17 +19,32 @@ const downPool = {
   },
 } as unknown as Pool;
 
-function deps(pool: Pool = upPool): AppDeps {
-  return { pool, hub: createHub({ validate: "throw" }) };
+const publisher: Publisher = { publish: async () => {} };
+
+function deps(pool: Pool = upPool, broker = initialLink.broker): AppDeps {
+  return {
+    pool,
+    hub: createHub({ validate: "throw" }),
+    publisher,
+    getLink: () => ({ ...initialLink, broker }),
+  };
 }
 
 afterEach(() => vi.restoreAllMocks());
 
 describe("GET /api/health", () => {
-  it("reports db true when the database answers", async () => {
+  it("reports ok when the database answers and the broker is connected", async () => {
+    const res = await request(createApp(deps(upPool, "CONNECTED"))).get(
+      "/api/health",
+    );
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ok: true, db: true, broker: true });
+  });
+
+  it("reports broker false and not ok while the broker is disconnected", async () => {
     const res = await request(createApp(deps())).get("/api/health");
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ ok: true, db: true, broker: false });
+    expect(res.body).toEqual({ ok: false, db: true, broker: false });
   });
 
   it("reports db false, never 500, when the database is down", async () => {

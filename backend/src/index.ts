@@ -2,16 +2,24 @@ import { createApp } from "./app.ts";
 import { config, HOST, PORT } from "./config.ts";
 import { createPool } from "./db/pool.ts";
 import { jobs } from "./jobs/index.ts";
+import { connectMqtt, createMqttClient } from "./mqtt/client.ts";
+import { handlers } from "./mqtt/handlers/index.ts";
+import { createPublisher } from "./mqtt/publisher.ts";
+import { createLink } from "./services/link.ts";
 import { createHub } from "./sse/hub.ts";
 
 // Composition root; boot order per AD-14.
 const pool = createPool(config.DATABASE_URL);
 const hub = createHub({ validate: "log" });
-const ctx = { pool, hub };
+const link = createLink(hub);
+const client = createMqttClient(config.MQTT_URL, config.MQTT_PASSWORD); // not connected yet
+const publisher = createPublisher(client, config.INTERSECTION_ID);
+const ctx = { pool, hub, publisher, link, getLink: link.get };
 
 for (const job of jobs) await job.start(ctx);
 
-// Entry 3 (story 1.3) slots in here: register every MQTT handler, then mqtt.connect.
+// Registers every MQTT handler, then connects.
+connectMqtt(client, { ...ctx, iid: config.INTERSECTION_ID, handlers });
 
 const server = createApp(ctx).listen(PORT, HOST, (err) => {
   if (err) {
@@ -28,6 +36,7 @@ async function shutdown(signal: string): Promise<void> {
   console.info(`[http] ${signal}: shutting down`);
   try {
     for (const job of jobs) await job.stop();
+    await client.endAsync(true); // force: never wait on in-flight QoS 1 while the broker is down
     hub.close();
     await new Promise<void>((resolve) => server.close(() => resolve()));
     await pool.end();

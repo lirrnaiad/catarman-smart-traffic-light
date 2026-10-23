@@ -3,10 +3,10 @@ import { Router } from "express";
 import type { AppDeps } from "../../app.ts";
 import { pingDb } from "../../db/pool.ts";
 
-export default ({ pool }: AppDeps) =>
+export default ({ pool, getLink }: AppDeps) =>
   Router().get("/health", async (_req, res) => {
     const db = await pingDb(pool);
-    // Entry 3 adds the broker: ok = db && broker.
-    const body: Health = { ok: db, db, broker: false };
+    const broker = getLink().broker === "CONNECTED";
+    const body: Health = { ok: db && broker, db, broker };
     res.json(body);
   });

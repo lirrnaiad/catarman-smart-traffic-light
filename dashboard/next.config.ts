@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
   trailingSlash: true,
   allowedDevOrigins: ["127.0.0.1"],
   transpilePackages: ["@stl/contracts"],
+  // Stops `next dev` writing a managed dashboard/AGENTS.md on every run (user, 2026-10-23).
+  agentRules: false,
 };
 
 export default nextConfig;

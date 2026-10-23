@@ -3,7 +3,7 @@ title: 'S0: workspace, contracts, schema and local infra'
 type: 'feature'
 ticket: '1'
 created: '2026-10-23'
-status: 'built'
+status: done
 baseline_revision: 'f27587b1be34048ac0298976c20cfe74a6de9d21'
 route: 'full'
 route_source: 'auto'

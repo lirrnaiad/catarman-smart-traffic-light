@@ -7,7 +7,7 @@ paradigm: 'Event-driven pub/sub over a local MQTT bus; the backend is a single p
 scope: 'Whole system. Deep on M1 (CAP-1 to CAP-6: simulator, backend, dashboard). Contracts only for the M2 vision node and ESP32 firmware.'
 status: final
 created: '2026-10-22'
-updated: '2026-10-22'
+updated: '2026-10-23'
 binds: [CAP-1, CAP-2, CAP-3, CAP-4, CAP-5, CAP-6, CAP-7, CAP-8, CAP-9, CAP-10, CAP-11, CAP-12, CAP-13, CAP-14, CAP-15, CAP-16, CAP-17, CAP-18, CAP-19, CAP-20]
 sources:
   - ../spec-smart-traffic-light/spec-smart-traffic-light.md
@@ -464,7 +464,7 @@ Library imports are fenced too:
   - **Runner:** every workspace uses Vitest, and `npm test` at the root runs them all.
   - **Backend tests:**
     - Route tests use Supertest against `createApp(deps)` from `src/app.ts`, never a listening port.
-    - Handlers and jobs take `(payload, ctx)` or `start(ctx)`. `ctx` injects `receivedAt`, services and the hub, and tests pass fakes for the publisher and hub. Repository tests hit the real `stl_test` database, which `globalSetup` migrates and `test/reset-db.ts` resets. DB test files run serially (`fileParallelism: false`).
+    - Handlers and jobs take `(payload, ctx)` or `start(ctx)`. `ctx` and `createApp(deps)` carry only core dependencies: `receivedAt` (handlers only), the hub, the publisher, `getLink` and the pool. Each CAP's handlers, routes and jobs import their own CAP's service module and pass it the dependencies it needs, so no CAP story edits `index.ts` or `app.ts` (AD-14). Tests pass fakes for the publisher and hub. Repository tests hit the real `stl_test` database, which `globalSetup` migrates and `test/reset-db.ts` resets. DB test files run serially (`fileParallelism: false`).
     - No test needs a broker.
   - **Simulator tests:** behaviors are tested as functions of state and input.
   - **Dashboard tests:** components and hooks that contain logic are tested with Testing Library and jsdom, under `LiveTestProvider`.
@@ -566,7 +566,7 @@ Library imports are fenced too:
 | Staleness | A role's data is `LIVE` only while three things hold: the SSE stream is open, `link.broker` is `CONNECTED`, and `link.<role>` is `ONLINE`. Views read this only through `useLiveness(role)`. A stale view keeps its last value and marks it stale; it never blanks it. |
 | Display target | Every view targets full-screen Chromium at 1920×1080 on the venue TV. The live status view (`/`) fits without page scroll. |
 | Privacy | Data about vehicles and road users is limited to the Tier 1 list in `privacy-compliance.md`: timestamp, vehicle class, centroid, anonymized crop and aggregates. Nothing identifying is stored, logged, shown or exported: no OCR text, plate or body number, face, driver identity or cross-frame track id. No component runs OCR or text detection, or joins vehicle data with any external registry or database. Speed alerts are shown transiently and never stored. Operational data (signal state, levels, overrides, link health, PCU, power source) is allowed. Retention follows AD-19. |
-| Branching | Each story works on its own short-lived branch and rebases on `main` before merging. When two stories add registration lines to the same index, keep both lines in alphabetical order. |
+| Branching | Each story works on its own short-lived branch and rebases on `main` before merging. `main` is protected by a GitHub ruleset: every change, including the AD-4 and AD-13 one-commit chores, lands through a pull request, and `main` can't be force-pushed or deleted. When two stories add registration lines to the same index, keep both lines in alphabetical order. |
 
 ## Stack
 

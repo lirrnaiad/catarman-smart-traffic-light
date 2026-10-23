@@ -3,7 +3,8 @@ title: 'Live status: signal state on /'
 type: 'feature'
 ticket: '8'
 created: '2026-10-23'
-status: 'draft'
+baseline_commit: '8f04a719351a98d1f08862ce0728b49d5e3a0b5b'
+status: 'done'
 route: 'dispatch'
 risk: 'medium'
 review_loop_iteration: 0
@@ -98,11 +99,11 @@ context:
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] `backend/src/services/state.ts`, `backend/src/mqtt/handlers/controller-state.slice.ts`, and the registration line -- the slice writer.
-- [ ] `backend/src/services/state.test.ts` -- the three backend matrix rows.
-- [ ] `dashboard/src/components/live/{panel,signal-head,signal-state-panel,ladder-panel,flood-fault-panel}.tsx` -- the panels.
-- [ ] `dashboard/src/app/page.tsx` -- the grid, mounts and slots.
-- [ ] Tests next to each dashboard component -- the remaining matrix rows.
+- [x] `backend/src/services/state.ts`, `backend/src/mqtt/handlers/controller-state.slice.ts`, and the registration line -- the slice writer.
+- [x] `backend/src/services/state.test.ts` -- the three backend matrix rows.
+- [x] `dashboard/src/components/live/{panel,signal-head,signal-state-panel,ladder-panel,flood-fault-panel}.tsx` -- the panels.
+- [x] `dashboard/src/app/page.tsx` -- the grid, mounts and slots.
+- [x] Tests next to each dashboard component -- the remaining matrix rows.
 
 **Acceptance Criteria:**
 - Given `npm run broker`, `npm run dev` and the simulator with `--roles controller`, when `/` is open at 1920×1080, then:
@@ -114,9 +115,29 @@ context:
 
 ## Implementation Notes
 
+- **Height budget on `/`'s left column.** DESIGN's 42px aspect label cannot fit "Flashing amber" in two side-by-side 190px cards, so the phase cards stack. To fit three panels in 904px with the worst case (WET note plus a fault), a few mock spacings were tightened: title strip margin 14→10 (in `Panel`, so entries 10/13/16 inherit it), phase cards py 4 with an 8px gap, rung gap 5, selector cells 46px, and the fault row's reset note shares the "CONFLICT FAULT" line. Measured worst case (WET + fault): 26px to spare in the flood panel.
+- `Panel` takes `of` (role) and `since`; it keeps `StaleBadge` always mounted so transitions are announced, and shows the micro tag only while LIVE. With three controller panels, one STALE transition is announced three times through the shared live region ("Controller stale. Controller stale. Controller stale").
+- `SignalHead` has the backplate but no mounting bracket (it matches the shell's `UnlitHead`); entry 13 may add one for the map.
+- The ladder's rung text is the level name without its code ("Vision adaptive"); with the `LevelBadge` it reads the exact name, and the badge's accessible name is the full `levelVisuals` label.
+
 ## Spec Change Log
 
 ## Review Triage Log
+
+| # | Source | Finding | Verdict | Evidence | Route |
+|---|--------|---------|---------|----------|-------|
+| 1 | implementer, blind | One STALE change is announced three times | medium | Each of the three panels' `StaleBadge` calls `announce()`; entry 7's live region joins identical messages queued in one tick | defer → fixed on entry 7's branch (live region drops duplicate messages within a tick), merged here |
+| 2 | edge, blind | A stale FLASHING_AMBER lens keeps its 1 Hz flash | medium | `AspectLamp` applies `lamp-flash` whenever `flashing`, ignoring `stale`; at L4 a dead controller looks live; `SignalHead` (this story) can pass `flashing && !stale` | patch |
+| 3 | verification-gap, blind | No test shows `controllerStateSlice` is registered, or that `remainingS: 0` and a no-`remainingS` fresh state are kept as sent | medium | Deleting the registration line passes every test; only `writeState` is tested directly | patch |
+| 4 | blind | Each ladder rung reads its name twice | low | The `LevelBadge` img is named "L2 Stop-bar presence" and the visible text "Stop-bar presence" follows; a direct `aria-hidden` fix | patch |
+| 5 | blind | The panel `<h2>` holds the tag and StaleBadge too | low | The heading's accessible name becomes "Signal state Live · INT-01"; a direct fix in `Panel` | patch |
+| 6 | blind | The page STALE test checks only one panel tag | low | It asserts "Live · INT-01" is gone but not "Degrades downward" or "Immersion probe" | patch |
+| 7 | blind | A retained state gets a fresh `receivedAt` | false | AD-6 and the SSE table make `receivedAt` the backend receive time | reject |
+| 8 | blind | The ladder name comes from `label.replace` | low | The rung test pins the result; a `name` field needs an entry-6 edit | reject |
+| 9 | blind | The tag says "Live" even with a simulated source | low | The Sim tag and the simulated note in the link bar carry the source (EXPERIENCE) | reject |
+| 10 | blind | Spacing departures from DESIGN aren't in DESIGN.md | low | Recorded in Implementation Notes; updating DESIGN.md is a UX-doc change | reject |
+| 11 | blind | The single-`EventSource` check is still open | low | Covered in this entry's live verification, not in code | reject |
+| 12 | blind | The no-countdown test asserts only one string is absent | low | No component reads `remainingS`; nothing else could render one | reject |
 
 ## Verification
 
@@ -125,3 +146,15 @@ context:
 
 **Manual checks:**
 - The live acceptance run in a browser at 1920×1080 against the simulator, recorded here. It also re-checks entry 7's header, link bar and banners and entry 6's single `EventSource` (both deferred to this entry).
+
+**Recorded (2026-10-23):**
+- `npm run typecheck`, `npm run lint`, `npm test` (backend 59, dashboard 111) and `npm run build -w dashboard` all exit 0.
+- Live run: `npm run broker`, `npm run dev`, simulator from `feat/m1-5-simulator-vision` (scratch worktree, junctioned `node_modules`) with `--roles controller`; headless Edge over CDP at 1920×1080 with screenshots. Phase cycle (green/yellow/red per card), `level L1`/`L2`/`L3`/`L4`, `flood on` (WET with its note, then FLOODED with the L4 banner), `conflict raise`/`reset` (fault row and FAULT banner) all rendered; each REPL change was in the DOM within ~0.4 s (poll granularity). Document scroll size stayed 1920×1080 in every state; no countdown. Killing the simulator: all three panels showed "STALE · HH:mm:ss" with their last values and lenses lit without glow (the link bar read Controller OFFLINE via the simulator's will, which `useLiveness` also treats as stale).
+- Shell re-check: top bar, link bar pilots/Sim tags, data-source note and L4/FAULT banners looked right. The single `EventSource` was **not** confirmed (resource timing doesn't list a pending SSE request); still open.
+
+- **Live acceptance after review fixes (2026-10-23):** native Mosquitto, `npm run dev`, and the simulator from `feat/m1-5-simulator-vision` with `--roles controller`, driven through headless Edge at 1920×1080 over the DevTools protocol.
+  - **Display:** the page was ready 0.4 s after load. The NS aspect flipped Green → Yellow on its own.
+  - **Latency:** after the REPL commands, the L4 banner showed in 102 ms, WET with its note in 92 ms, and the FAULT banner in 98 ms. Under L4 + FAULT, the ladder stayed on L4 and the fault row read "FAULT · Conflict monitor".
+  - **Layout:** scroll stayed 1920×1080 in every state, and no countdown showed.
+  - **Stale:** stopping the simulator showed "STALE · HH:mm:ss" on all three panels, with the last values kept and the flashing lens steady. The live region read "Controller stale" once, so the entry-7 dedupe works.
+  - **Deferred checks:** exactly one `EventSource`, on `http://127.0.0.1:4000/api/stream`, never failed. That closes entry 6's deferred check, and the header, link bar and banners close entry 7's.

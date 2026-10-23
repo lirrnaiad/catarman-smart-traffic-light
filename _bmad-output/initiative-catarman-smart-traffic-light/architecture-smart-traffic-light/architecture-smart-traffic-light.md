@@ -464,7 +464,7 @@ Library imports are fenced too:
   - **Runner:** every workspace uses Vitest, and `npm test` at the root runs them all.
   - **Backend tests:**
     - Route tests use Supertest against `createApp(deps)` from `src/app.ts`, never a listening port.
-    - Handlers and jobs take `(payload, ctx)` or `start(ctx)`. `ctx` injects `receivedAt`, services and the hub, and tests pass fakes for the publisher and hub. Repository tests hit the real `stl_test` database, which `globalSetup` migrates and `test/reset-db.ts` resets. DB test files run serially (`fileParallelism: false`).
+    - Handlers and jobs take `(payload, ctx)` or `start(ctx)`. `ctx` and `createApp(deps)` carry only core dependencies: `receivedAt` (handlers only), the hub, the publisher, `getLink` and the pool. Each CAP's handlers, routes and jobs import their own CAP's service module and pass it the dependencies it needs, so no CAP story edits `index.ts` or `app.ts` (AD-14). Tests pass fakes for the publisher and hub. Repository tests hit the real `stl_test` database, which `globalSetup` migrates and `test/reset-db.ts` resets. DB test files run serially (`fileParallelism: false`).
     - No test needs a broker.
   - **Simulator tests:** behaviors are tested as functions of state and input.
   - **Dashboard tests:** components and hooks that contain logic are tested with Testing Library and jsdom, under `LiveTestProvider`.

@@ -6,6 +6,7 @@ covers: [CAP-1, CAP-2, CAP-3, CAP-4, CAP-5, CAP-6]
 after: []
 assignee: ""
 risk: high
+status: in-progress
 ---
 
 # M1 Midterm prototype
@@ -121,6 +122,7 @@ Rounds are a suggestion; `after` in `tickets.toml` holds the real prerequisites.
 - Decision: the 18-entry breakdown and this envelope were approved as drafted after the set check (user, 2026-10-23).
 - Source conflict: AD-16 vs AD-14 — AD-16 says a handler's `ctx` "injects receivedAt, services and the hub", while AD-14 says services are not registered and CAP stories add only files plus registration lines. Building every CAP service into `ctx` or `createApp(deps)` would make entries 8, 9, 12, 13 and 15 edit `index.ts` and `app.ts` side by side.
 - Decision: each CAP handler, route and job imports its own CAP's service module. `ctx` and `createApp(deps)` carry only core dependencies (`receivedAt`, the hub, the publisher, `getLink`, the pool), so tests still pass fakes. No CAP story edits `be/index.ts` or `be/app.ts`. The AD-16 wording goes to `bmad-architecture` (user, 2026-10-23).
+- Resolved: the spine's AD-16 now says this. `ctx` and `createApp(deps)` carry only core dependencies, and each CAP imports its own service module (spine update run 4, 2026-10-23).
 - Tracer bullet: entry 8 is the first path through every layer: simulator → broker → backend → SSE → dashboard. Entry 1 and the cores come before it because AD-14 requires them. Entry 9 follows, because the override lifecycle (AD-7) is the least certain flow.
 - Assumption: entry 11 adds `StateChangeItem` in `contracts/src/api/state-changes.ts` inside its own story, per AD-14's extension table. AD-4's one-commit chore applies to edits of S0's shapes and `contracts/schema/`, and a REST-only DTO changes neither.
 - Assumption: entry 1 creates `backend/.env.example` with `DATABASE_URL` and `backend/.env.test`, so `db:migrate` runs. Entry 2 adds the backend's other keys. Entry 4 creates `simulator/.env.example`.
@@ -130,4 +132,4 @@ Rounds are a suggestion; `after` in `tickets.toml` holds the real prerequisites.
 - High-risk check, entry 1: Squad A's data and QA member reviews the initial migration (AD-10), and the Squad A and B leads receive the generated `contracts/schema/` (milestones, Week 1 action).
 - High-risk check, entry 9: before merge, a second Squad C developer runs EXPERIENCE Flow 1's failure paths against the simulator.
 - Open question (entry 7): does the demo laptop have a condensed system font (Bahnschrift, Liberation Sans Narrow, Nimbus Sans Narrow, DejaVu Sans Condensed)? If not, the shell bundles one through `next/font/local` (DESIGN, Typography).
-- Open question (entry 18): which remote is the M1 repository submitted to? The repo has no remote yet.
+- Decision (entry 18): the M1 repository is `git@github.com:lirrnaiad/catarman-smart-traffic-light.git`, private on GitHub. `main` is protected by a ruleset (pull request required, no force push, no deletion), so every story and chore merges through a PR (spine, Branching convention) (user, 2026-10-23).

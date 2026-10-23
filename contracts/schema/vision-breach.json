@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VisionBreach",
+  "description": "Payload of stl/<iid>/vision/breach, MQTT contract v1.",
+  "type": "object",
+  "properties": {
+    "v": {
+      "type": "number",
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "ts": {
+      "type": "integer",
+      "minimum": 1600000000000,
+      "maximum": 4100000000000
+    },
+    "approach": {
+      "type": "string",
+      "enum": [
+        "N",
+        "S",
+        "E",
+        "W"
+      ]
+    },
+    "vehicleClass": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,31}$"
+    },
+    "centroid": {
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "y": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ]
+    },
+    "crop": {
+      "type": "object",
+      "properties": {
+        "mime": {
+          "type": "string"
+        },
+        "data": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "mime",
+        "data"
+      ],
+      "description": "An anonymized baseline JPEG without EXIF: mime \"image/jpeg\", data base64, at most 64 px on its long side and at most 204,800 base64 characters, scaled down and then blurred before encoding. The backend checks these limits, not the schema (AD-11)."
+    }
+  },
+  "required": [
+    "v",
+    "id",
+    "approach",
+    "vehicleClass",
+    "centroid"
+  ]
+}

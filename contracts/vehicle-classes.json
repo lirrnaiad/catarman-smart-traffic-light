@@ -1,0 +1,27 @@
+[
+  {
+    "id": "car",
+    "label": "Car",
+    "pcu": 1.0
+  },
+  {
+    "id": "tricycle",
+    "label": "Tricycle",
+    "pcu": 0.5
+  },
+  {
+    "id": "motorcycle",
+    "label": "Motorcycle (incl. habal-habal)",
+    "pcu": 0.25
+  },
+  {
+    "id": "jeepney",
+    "label": "Jeepney",
+    "pcu": 1.5
+  },
+  {
+    "id": "utility_van",
+    "label": "Utility van",
+    "pcu": 1.0
+  }
+]

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VisionStatus",
+  "description": "Payload of stl/<iid>/vision/status, MQTT contract v1.",
+  "type": "object",
+  "properties": {
+    "v": {
+      "type": "number",
+      "const": 1
+    },
+    "online": {
+      "type": "boolean"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "sim",
+        "live"
+      ]
+    }
+  },
+  "required": [
+    "v",
+    "online",
+    "source"
+  ]
+}

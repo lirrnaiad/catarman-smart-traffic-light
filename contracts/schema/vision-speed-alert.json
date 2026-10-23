@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VisionSpeedAlert",
+  "description": "Payload of stl/<iid>/vision/speed-alert, MQTT contract v1. Crossed two virtual lines on one approach in elapsedMs < thresholdMs; an uncalibrated mockup.",
+  "type": "object",
+  "properties": {
+    "v": {
+      "type": "number",
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "ts": {
+      "type": "integer",
+      "minimum": 1600000000000,
+      "maximum": 4100000000000
+    },
+    "approach": {
+      "type": "string",
+      "enum": [
+        "N",
+        "S",
+        "E",
+        "W"
+      ]
+    },
+    "vehicleClass": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,31}$"
+    },
+    "elapsedMs": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "thresholdMs": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    }
+  },
+  "required": [
+    "v",
+    "id",
+    "approach",
+    "vehicleClass",
+    "elapsedMs",
+    "thresholdMs"
+  ]
+}

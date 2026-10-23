@@ -1,5 +1,25 @@
+# Python (edge_vision/)
 __pycache__/
 *.pyc
+
+# Node
 node_modules/
+*.tsbuildinfo
+
+# Env files: .env is ignored in every workspace. .env.example, backend/.env.test and
+# the dashboard's .env.development and .env.production are committed (AD-15).
 .env
-.env.*
+.env.local
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+
+# Mosquitto (AD-14, AD-15)
+infra/mosquitto/data/
+infra/mosquitto/passwd
+infra/mosquitto/credentials.env
+
+# BMad render output
+_bmad/render/

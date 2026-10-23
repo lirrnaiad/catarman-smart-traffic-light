@@ -1,0 +1,35 @@
+{
+  "name": "@stl/backend",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "predev": "npm run db:migrate",
+    "dev": "tsx watch src/index.ts",
+    "prestart": "npm run db:migrate",
+    "start": "tsx src/index.ts",
+    "db:migrate": "dbmate --env-file .env --migrations-dir db/migrations --wait --no-dump-schema up",
+    "db:migrate:test": "dbmate --env-file .env.test --migrations-dir db/migrations --wait --no-dump-schema up",
+    "db:seed": "tsx scripts/db-seed.ts",
+    "test": "vitest run",
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@stl/contracts": "0.0.0",
+    "dbmate": "2.37.0",
+    "express": "5.3.0",
+    "mqtt": "5.16.1",
+    "mysql2": "3.24.6",
+    "tsx": "4.23.15",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/express": "5.0.6",
+    "@types/node": "24.19.2",
+    "@types/supertest": "7.2.1",
+    "supertest": "7.3.1",
+    "typescript": "6.0.3",
+    "vite": "8.3.4",
+    "vitest": "5.0.5"
+  }
+}

@@ -1,0 +1,51 @@
+# Optional local MySQL and Mosquitto (AD-15). The native installs in
+# docs/setup.md are the primary path; hotspot mode uses the native broker only.
+#   docker compose -f infra/compose.yaml up -d
+# Both services publish on 127.0.0.1 only.
+
+name: smart-traffic-light
+
+services:
+  mysql:
+    image: mysql:9.7.4
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+    ports:
+      - "127.0.0.1:3306:3306"
+    configs:
+      - source: create-stl-user
+        target: /docker-entrypoint-initdb.d/create-stl-user.sql
+    volumes:
+      - mysql-data:/var/lib/mysql
+    restart: unless-stopped
+
+  mosquitto:
+    image: eclipse-mosquitto:2.1.2-alpine
+    # Mirror the repo layout so compose.conf's relative persistence path works.
+    working_dir: /mosquitto
+    # The image's entrypoint chowns only /mosquitto/data, and the broker drops to
+    # uid 1883, so hand it the persistence volume before starting.
+    command:
+      - sh
+      - -c
+      - chown -R 1883:1883 infra/mosquitto/data && exec mosquitto -c infra/mosquitto/compose.conf
+    ports:
+      - "127.0.0.1:1883:1883"
+    volumes:
+      - ./mosquitto/compose.conf:/mosquitto/infra/mosquitto/compose.conf:ro
+      - mosquitto-data:/mosquitto/infra/mosquitto/data
+    restart: unless-stopped
+
+configs:
+  # Runs once, when the MySQL volume is first initialized. Inside the container
+  # the host connects through Docker's bridge, so the user is 'stl'@'%' here; the
+  # host port stays 127.0.0.1-only. Same grants as infra/mysql/create-user.sql.
+  create-stl-user:
+    content: |
+      CREATE USER 'stl'@'%' IDENTIFIED BY 'stl';
+      GRANT ALL PRIVILEGES ON `stl`.* TO 'stl'@'%';
+      GRANT ALL PRIVILEGES ON `stl\_test`.* TO 'stl'@'%';
+
+volumes:
+  mysql-data:
+  mosquitto-data:

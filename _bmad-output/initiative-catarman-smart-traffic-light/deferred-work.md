@@ -1,0 +1,3 @@
+- source_plan: `_bmad-output/initiative-catarman-smart-traffic-light/epic-m1-midterm-prototype/story-s0-workspace-contracts-schema-and-local-infra-plan.md`
+  summary: Verify `npm run broker` (infra/scripts/broker.mjs with infra/mosquitto/mosquitto.conf) against a native Mosquitto 2.0/2.1 on Linux and Windows, including the `C:\Program Files\mosquitto` fallback.
+  evidence: Ticket 1.1's verify requires `npm run broker` to succeed on a fresh clone, but the S0 machine had no native Mosquitto, so only compose and a stub were tested. To settle it, install Mosquitto (Fedora `sudo dnf install mosquitto`, the mosquitto.org Windows installer), stop the OS service, run `npm run broker`, and confirm it listens on 127.0.0.1:1883 and writes infra/mosquitto/data/.

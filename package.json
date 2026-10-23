@@ -1,0 +1,33 @@
+{
+  "name": "smart-traffic-light",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "contracts",
+    "backend",
+    "simulator",
+    "dashboard"
+  ],
+  "engines": {
+    "node": ">=24.22.1 <25"
+  },
+  "scripts": {
+    "dev": "concurrently -n backend,dashboard -c blue,magenta \"npm run dev -w backend --\" \"npm run dev -w dashboard --\"",
+    "sim": "npm run sim -w simulator --",
+    "broker": "node infra/scripts/broker.mjs",
+    "build": "npm run build -w dashboard --",
+    "start": "npm run start -w backend --",
+    "test": "npm run test --workspaces --",
+    "typecheck": "npm run typecheck --workspaces --",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "db:migrate": "npm run db:migrate -w backend --",
+    "db:seed": "npm run db:seed -w backend --",
+    "contracts:schema": "npm run schema -w contracts --"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.2",
+    "concurrently": "10.0.6"
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "controller/status": {
+    "pattern": "stl/+/controller/status",
+    "qos": 0,
+    "retain": true,
+    "publisherRole": "controller",
+    "schema": "controller-status.json"
+  },
+  "controller/state": {
+    "pattern": "stl/+/controller/state",
+    "qos": 0,
+    "retain": true,
+    "publisherRole": "controller",
+    "schema": "controller-state.json"
+  },
+  "controller/override/ack": {
+    "pattern": "stl/+/controller/override/ack",
+    "qos": 0,
+    "retain": false,
+    "publisherRole": "controller",
+    "schema": "controller-override-ack.json"
+  },
+  "controller/override/cmd": {
+    "pattern": "stl/+/controller/override/cmd",
+    "qos": 1,
+    "retain": false,
+    "publisherRole": "gateway",
+    "schema": "controller-override-cmd.json"
+  },
+  "vision/status": {
+    "pattern": "stl/+/vision/status",
+    "qos": 1,
+    "retain": true,
+    "publisherRole": "vision",
+    "schema": "vision-status.json"
+  },
+  "vision/heartbeat": {
+    "pattern": "stl/+/vision/heartbeat",
+    "qos": 0,
+    "retain": false,
+    "publisherRole": "vision",
+    "schema": "vision-heartbeat.json"
+  },
+  "vision/demand": {
+    "pattern": "stl/+/vision/demand",
+    "qos": 0,
+    "retain": false,
+    "publisherRole": "vision",
+    "schema": "vision-demand.json"
+  },
+  "vision/counts": {
+    "pattern": "stl/+/vision/counts",
+    "qos": 1,
+    "retain": false,
+    "publisherRole": "vision",
+    "schema": "vision-counts.json"
+  },
+  "vision/breach": {
+    "pattern": "stl/+/vision/breach",
+    "qos": 1,
+    "retain": false,
+    "publisherRole": "vision",
+    "schema": "vision-breach.json"
+  },
+  "vision/speed-alert": {
+    "pattern": "stl/+/vision/speed-alert",
+    "qos": 0,
+    "retain": false,
+    "publisherRole": "vision",
+    "schema": "vision-speed-alert.json"
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VisionCounts",
+  "description": "Payload of stl/<iid>/vision/counts, MQTT contract v1.",
+  "type": "object",
+  "properties": {
+    "v": {
+      "type": "number",
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "ts": {
+      "type": "integer",
+      "minimum": 1600000000000,
+      "maximum": 4100000000000
+    },
+    "crossings": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "approach": {
+            "type": "string",
+            "enum": [
+              "N",
+              "S",
+              "E",
+              "W"
+            ]
+          },
+          "vehicleClass": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{0,31}$"
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "approach",
+          "vehicleClass",
+          "count"
+        ]
+      },
+      "description": "Each approach + vehicleClass pair appears at most once; count is an integer >= 1."
+    }
+  },
+  "required": [
+    "v",
+    "id",
+    "crossings"
+  ]
+}

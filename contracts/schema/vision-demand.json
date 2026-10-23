@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VisionDemand",
+  "description": "Payload of stl/<iid>/vision/demand, MQTT contract v1.",
+  "type": "object",
+  "properties": {
+    "v": {
+      "type": "number",
+      "const": 1
+    },
+    "ts": {
+      "type": "integer",
+      "minimum": 1600000000000,
+      "maximum": 4100000000000
+    },
+    "pcu": {
+      "type": "object",
+      "properties": {
+        "N": {
+          "type": "number",
+          "minimum": 0
+        },
+        "S": {
+          "type": "number",
+          "minimum": 0
+        },
+        "E": {
+          "type": "number",
+          "minimum": 0
+        },
+        "W": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "N",
+        "S",
+        "E",
+        "W"
+      ]
+    }
+  },
+  "required": [
+    "v",
+    "ts",
+    "pcu"
+  ]
+}

@@ -13,7 +13,7 @@
 
 - **TODA operators and provincial motorists.** Daily-wage drivers whose income depends on turnaround time.
   - *Pains:* idling at empty cross-streets burns fuel; chaotic gridlock at un-signaled junctions.
-  - *Goals:* responsive greens (CAP-14) and predictable countdowns (open question).
+  - *Goals:* responsive greens (CAP-14) and predictable countdowns. The controller-box OLED shows a countdown and the dashboard shows it too (M2, CAP-8); no road-facing one is planned.
 - **Municipal IT and engineering technicians.**
   - *Pains:* cannot service proprietary DPWH controllers that need Manila technicians.
   - *Goals:* modular, open-source hardware they can repair and reconfigure in-house.

@@ -1,0 +1,7 @@
+# Catarman SMART Traffic Light: the epics in build order. M2 (CAP-7 to CAP-20) is parked in the initiative's Notes.
+
+[[epic]]
+id = 1
+slug = "epic-m1-midterm-prototype"
+title = "M1 Midterm prototype"
+covers = ["CAP-1", "CAP-2", "CAP-3", "CAP-4", "CAP-5", "CAP-6"]

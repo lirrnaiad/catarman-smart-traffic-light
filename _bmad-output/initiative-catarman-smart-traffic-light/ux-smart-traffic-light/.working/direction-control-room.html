@@ -1,0 +1,1069 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Control Room HUD</title>
+<style>
+/* =====================================================================
+   DIRECTION: Control Room HUD (Catarman SMART Traffic Light)
+   Every concrete color on this page, grouped as semantic tokens.
+   Maps 1:1 to Tailwind v4 @theme tokens (--color-<name>).
+
+   SURFACES
+     --surface-canvas        #03060C    page behind the artboards
+     --surface-base          #050A13    artboard / app background
+     --surface-panel         #08101DE6  panel fill (90%, grid ghosts through)
+     --surface-raised        #0D1828    chips, dialog, current level cell
+     --surface-inset         #02060C    wells: schematic, countdown, table
+     --housing               #010409    signal-head housing
+     --grid-minor            #0A1322    32 px grid
+     --grid-major            #0F1D33    160 px grid, range ring
+   LINES
+     --line                  #1A2A44    1 px panel borders, row rules
+     --line-strong           #2B4469    housings, ticks, buttons
+     --bracket               #7FA3D1    corner brackets
+   TEXT
+     --text                  #EAF2FC
+     --text-secondary        #A9BAD2
+     --text-muted            #6F82A0
+     --text-faint            #42546E
+   HUD CHROME + DATA (never carries a signal meaning)
+     --hud-accent            #5CD6F5    active nav, current level, PCU bars, focus
+     --hud-accent-dim        #1D4A5E    PCU zone outlines
+     --hud-accent-wash       #5CD6F51F  tint behind the current level
+   SIGNAL ASPECTS (lit lamps, stop bars, state words only; glow = live)
+     --signal-red            #FF3B30
+     --signal-yellow         #FFC414
+     --signal-green          #2CFF8E
+     --signal-red-core       #FFD9D6    hot centre of a lit lens
+     --signal-yellow-core    #FFF1C2
+     --signal-green-core     #D6FFE9
+     --signal-red-glow       #FF3B3099
+     --signal-yellow-glow    #FFC41499
+     --signal-green-glow     #2CFF8E99
+     --signal-red-halo       #FF3B3038
+     --signal-yellow-halo    #FFC41438
+     --signal-green-halo     #2CFF8E38
+     --lamp-red-off          #2A0E0D    unlit lens keeps its position hue
+     --lamp-yellow-off       #2A2208
+     --lamp-green-off        #08291A
+     --lamp-red-rim          #5A1E1A
+     --lamp-yellow-rim       #5A4710
+     --lamp-green-rim        #145A37
+   SYSTEM STATUS (square pips and triangle tags; never glow)
+     --status-ok             #7EE8C0    CONNECTED, ONLINE, DRY, NONE
+     --status-warn           #F5A524    STALE link, WET
+     --status-alert          #FF4F86    breach / alert tag (rose, not signal red)
+   STALE
+     --stale-ink             #8A9AB3
+     --stale-hatch           #6F82A040
+   DECORATIVE TRIAD (horizontal R-Y-G hairline + loader only; flat, never one hue alone)
+     --deco-red              #FF3B3066
+     --deco-yellow           #FFC41466
+     --deco-green            #2CFF8E66
+   BREACH THUMBNAIL (anonymized blur)
+     --thumb-1               #262B33
+     --thumb-2               #3C434F
+     --thumb-3               #6B7383
+     --thumb-4               #565E6C
+   ACTIONS
+     --action-primary        #EAF2FC    Confirm fill
+     --action-on-primary     #050A13
+     --scrim                 #02050ACC  dialog backdrop
+
+   DATA NOTE: the per-approach x class counts in the brief sum to 210
+   (N 74, S 47, E 59, W 30), not the stated "Hour total 315". This
+   mock shows the computed 210 so the table adds up.
+   ===================================================================== */
+
+:root {
+  --surface-canvas: #03060C;
+  --surface-base: #050A13;
+  --surface-panel: #08101DE6;
+  --surface-raised: #0D1828;
+  --surface-inset: #02060C;
+  --housing: #010409;
+  --grid-minor: #0A1322;
+  --grid-major: #0F1D33;
+  --line: #1A2A44;
+  --line-strong: #2B4469;
+  --bracket: #7FA3D1;
+  --text: #EAF2FC;
+  --text-secondary: #A9BAD2;
+  --text-muted: #6F82A0;
+  --text-faint: #42546E;
+  --hud-accent: #5CD6F5;
+  --hud-accent-dim: #1D4A5E;
+  --hud-accent-wash: #5CD6F51F;
+  --signal-red: #FF3B30;
+  --signal-yellow: #FFC414;
+  --signal-green: #2CFF8E;
+  --signal-red-core: #FFD9D6;
+  --signal-yellow-core: #FFF1C2;
+  --signal-green-core: #D6FFE9;
+  --signal-red-glow: #FF3B3099;
+  --signal-yellow-glow: #FFC41499;
+  --signal-green-glow: #2CFF8E99;
+  --signal-red-halo: #FF3B3038;
+  --signal-yellow-halo: #FFC41438;
+  --signal-green-halo: #2CFF8E38;
+  --lamp-red-off: #2A0E0D;
+  --lamp-yellow-off: #2A2208;
+  --lamp-green-off: #08291A;
+  --lamp-red-rim: #5A1E1A;
+  --lamp-yellow-rim: #5A4710;
+  --lamp-green-rim: #145A37;
+  --status-ok: #7EE8C0;
+  --status-warn: #F5A524;
+  --status-alert: #FF4F86;
+  --stale-ink: #8A9AB3;
+  --stale-hatch: #6F82A040;
+  --deco-red: #FF3B3066;
+  --deco-yellow: #FFC41466;
+  --deco-green: #2CFF8E66;
+  --thumb-1: #262B33;
+  --thumb-2: #3C434F;
+  --thumb-3: #6B7383;
+  --thumb-4: #565E6C;
+  --action-primary: #EAF2FC;
+  --action-on-primary: #050A13;
+  --scrim: #02050ACC;
+
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--surface-canvas); }
+body {
+  min-width: 1960px;
+  padding: 0 20px 72px;
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+ul, ol { list-style: none; }
+button { font: inherit; color: inherit; }
+a { color: inherit; }
+
+/* ---------- shared HUD primitives ---------- */
+.grid-bg {
+  background-color: var(--surface-base);
+  background-image:
+    linear-gradient(var(--grid-major) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-major) 1px, transparent 1px),
+    linear-gradient(var(--grid-minor) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-minor) 1px, transparent 1px);
+  background-size: 160px 160px, 160px 160px, 32px 32px, 32px 32px;
+}
+/* corner brackets: 8 hairline segments on one pseudo-element */
+.brk { position: relative; --bc: var(--bracket); --bl: 16px; --bt: 2px; }
+.brk::before {
+  content: ""; position: absolute; inset: -1px; pointer-events: none;
+  background:
+    linear-gradient(var(--bc), var(--bc)) left top / var(--bl) var(--bt) no-repeat,
+    linear-gradient(var(--bc), var(--bc)) left top / var(--bt) var(--bl) no-repeat,
+    linear-gradient(var(--bc), var(--bc)) right top / var(--bl) var(--bt) no-repeat,
+    linear-gradient(var(--bc), var(--bc)) right top / var(--bt) var(--bl) no-repeat,
+    linear-gradient(var(--bc), var(--bc)) left bottom / var(--bl) var(--bt) no-repeat,
+    linear-gradient(var(--bc), var(--bc)) left bottom / var(--bt) var(--bl) no-repeat,
+    linear-gradient(var(--bc), var(--bc)) right bottom / var(--bl) var(--bt) no-repeat,
+    linear-gradient(var(--bc), var(--bc)) right bottom / var(--bt) var(--bl) no-repeat;
+}
+/* decorative triad: flat, horizontal, always all three, 40% */
+.triad { display: inline-flex; gap: 3px; }
+.triad i { display: block; width: 14px; height: 3px; }
+.triad i:nth-child(1) { background: var(--deco-red); }
+.triad i:nth-child(2) { background: var(--deco-yellow); }
+.triad i:nth-child(3) { background: var(--deco-green); }
+.triad-line {
+  height: 1px;
+  background: linear-gradient(90deg, var(--deco-red) 0 33.33%, var(--deco-yellow) 0 66.66%, var(--deco-green) 0);
+}
+/* system status pip: square, flat */
+.pip { display: inline-block; width: 9px; height: 9px; background: var(--status-ok); flex: none; }
+.pip.warn { background: var(--status-warn); }
+.tri { flex: none; }
+
+/* signal lamp (HTML) */
+.housing {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 7px; border: 1px solid var(--line-strong); border-radius: 12px;
+  background: var(--housing); width: max-content;
+}
+.lamp { position: relative; width: 32px; height: 32px; border-radius: 50%; border: 1px solid; }
+.lamp.r { border-color: var(--lamp-red-rim); background: var(--lamp-red-off); --c: var(--signal-red); --core: var(--signal-red-core); --glow: var(--signal-red-glow); --halo: var(--signal-red-halo); }
+.lamp.y { border-color: var(--lamp-yellow-rim); background: var(--lamp-yellow-off); --c: var(--signal-yellow); --core: var(--signal-yellow-core); --glow: var(--signal-yellow-glow); --halo: var(--signal-yellow-halo); }
+.lamp.g { border-color: var(--lamp-green-rim); background: var(--lamp-green-off); --c: var(--signal-green); --core: var(--signal-green-core); --glow: var(--signal-green-glow); --halo: var(--signal-green-halo); }
+.lamp.on {
+  border: 2px solid var(--c);
+  background: radial-gradient(circle at 50% 46%, var(--core) 0 12%, var(--c) 42%, var(--halo) 78%);
+  box-shadow: 0 0 10px 1px var(--glow), inset 0 0 6px var(--glow);
+}
+.lamp.on::after {
+  content: ""; position: absolute; inset: -14px; border-radius: 50%;
+  background: radial-gradient(circle, var(--glow) 0%, var(--halo) 40%, transparent 70%);
+  pointer-events: none;
+}
+/* stale lamp: keeps its hue and position, loses the glow, turns hatched */
+.lamp.on.stale {
+  border: 2px dashed var(--c);
+  background: repeating-linear-gradient(135deg, var(--halo) 0 3px, transparent 3px 6px), var(--housing);
+  box-shadow: none; opacity: .6;
+}
+.lamp.on.stale::after { display: none; }
+.housing.sm { padding: 5px; gap: 5px; border-radius: 9px; }
+.housing.sm .lamp { width: 22px; height: 22px; }
+.housing.sm .lamp.on::after { inset: -9px; }
+
+/* tags */
+.tag {
+  display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px;
+  font: 700 12px/1.2 var(--font-mono); letter-spacing: .14em; text-transform: uppercase;
+  border: 1px solid currentColor; white-space: nowrap;
+}
+.tag-alert { color: var(--status-alert); }
+.tag-stale {
+  color: var(--stale-ink); border-color: var(--text-muted);
+  background: repeating-linear-gradient(135deg, var(--stale-hatch) 0 3px, transparent 3px 7px);
+}
+.tag-live { color: var(--status-ok); }
+.tag-cyan { color: var(--hud-accent); }
+
+/* ---------- direction strip ---------- */
+.strip {
+  width: 1920px; display: grid; grid-template-columns: 330px 1fr 660px; gap: 36px;
+  padding: 22px 0 20px; margin-bottom: 18px; border-bottom: 1px solid var(--line);
+  align-items: start;
+}
+.strip .eyebrow { font: 600 12px var(--font-mono); letter-spacing: .2em; color: var(--hud-accent); text-transform: uppercase; }
+.strip h1 { font-size: 30px; font-weight: 650; letter-spacing: .01em; margin: 6px 0 10px; }
+.strip .triad-line { width: 120px; }
+.strip p { font-size: 16px; line-height: 1.55; color: var(--text-secondary); max-width: 860px; }
+.strip p b { color: var(--text); font-weight: 600; }
+.legend { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; }
+.legend li { display: grid; grid-template-columns: 44px 1fr; gap: 10px; align-items: center; font-size: 14px; line-height: 1.35; color: var(--text-secondary); }
+.legend li b { color: var(--text); font-weight: 600; display: block; font-size: 13px; font-family: var(--font-mono); letter-spacing: .1em; text-transform: uppercase; }
+.legend .sw { display: flex; justify-content: center; align-items: center; height: 40px; }
+.legend .housing { padding: 3px; gap: 3px; border-radius: 6px; }
+.legend .lamp { width: 9px; height: 9px; }
+.legend .lamp.on { border-width: 1px; }
+.legend .lamp.on::after { inset: -5px; }
+
+.ab-label {
+  display: flex; gap: 14px; align-items: baseline; margin: 0 0 10px;
+  font: 600 13px var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted);
+}
+.ab-label b { color: var(--text); font-weight: 600; }
+
+/* ---------- hero artboard ---------- */
+.artboard { position: relative; overflow: hidden; outline: 1px solid var(--line); }
+.artboard.hero { width: 1920px; height: 1080px; }
+.app {
+  position: absolute; inset: 0; padding: 18px 20px;
+  display: grid; grid-template-rows: 72px minmax(0, 1fr) 150px; gap: 14px;
+}
+
+/* top bar */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 24px;
+  padding: 0 20px; border: 1px solid var(--line); background: var(--surface-panel);
+}
+.topbar::after {
+  content: ""; position: absolute; left: 20px; bottom: -1px; width: 120px; height: 1px;
+  background: linear-gradient(90deg, var(--deco-red) 0 33.33%, var(--deco-yellow) 0 66.66%, var(--deco-green) 0);
+}
+.brand { display: flex; align-items: center; gap: 16px; }
+.brand-name { font-size: 24px; font-weight: 650; letter-spacing: .01em; line-height: 1.1; }
+.brand-sub { font: 12px var(--font-mono); color: var(--text-muted); letter-spacing: .12em; text-transform: uppercase; margin-top: 4px; }
+.int-chip { display: flex; flex-direction: column; padding: 5px 12px; border: 1px solid var(--line-strong); background: var(--surface-inset); margin-left: 6px; --bl: 8px; }
+.int-chip .k { font: 11px var(--font-mono); letter-spacing: .16em; color: var(--text-muted); }
+.int-chip .v { font: 700 21px/1.1 var(--font-mono); letter-spacing: .06em; }
+.nav { display: flex; align-self: stretch; }
+.nav a {
+  position: relative; display: flex; align-items: center; padding: 0 18px;
+  font-size: 17px; color: var(--text-muted); text-decoration: none;
+}
+.nav a:hover { color: var(--text-secondary); }
+.nav a[aria-current="page"] { color: var(--text); font-weight: 600; }
+.nav a[aria-current="page"]::after {
+  content: ""; position: absolute; left: 14px; right: 14px; bottom: -1px; height: 2px;
+  background: var(--hud-accent); box-shadow: 0 0 8px var(--hud-accent);
+}
+.links { display: flex; gap: 8px; }
+.chip {
+  display: grid; grid-template-columns: auto auto; column-gap: 8px; row-gap: 2px; align-items: center;
+  padding: 6px 12px; border: 1px solid var(--line); background: var(--surface-inset);
+}
+.chip .k { grid-column: 1 / -1; font: 11px var(--font-mono); letter-spacing: .16em; color: var(--text-muted); text-transform: uppercase; }
+.chip .v { font: 600 15px var(--font-mono); color: var(--status-ok); letter-spacing: .04em; white-space: nowrap; }
+.chip .v em { font-style: normal; font-weight: 400; color: var(--text-muted); }
+.chip.warn { border-color: var(--status-warn); }
+.chip.warn .v { color: var(--status-warn); }
+
+/* panels */
+.panels { display: grid; grid-template-columns: 452px minmax(0, 1fr) 452px; gap: 14px; min-height: 0; }
+.panel {
+  display: flex; flex-direction: column; min-height: 0;
+  padding: 0 16px 16px; border: 1px solid var(--line); background: var(--surface-panel);
+}
+.ph {
+  position: relative; flex: none; height: 44px; display: flex; align-items: center; gap: 12px;
+  margin: 0 -16px 14px; padding: 0 16px; border-bottom: 1px solid var(--line);
+}
+.ph::after { content: ""; position: absolute; left: 16px; bottom: -1px; width: 48px; height: 1px; background: var(--hud-accent); }
+.ph-idx { font: 600 13px var(--font-mono); color: var(--hud-accent); letter-spacing: .1em; }
+.ph-title { font: 600 15px var(--font-mono); letter-spacing: .16em; text-transform: uppercase; }
+.ph-meta { margin-left: auto; display: flex; gap: 8px; align-items: center; font: 12px var(--font-mono); letter-spacing: .14em; color: var(--text-muted); text-transform: uppercase; }
+.sec-h {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+  font: 600 13px var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--text-secondary);
+}
+.sec-h small { font: 13px var(--font-sans); letter-spacing: 0; text-transform: none; color: var(--text-muted); }
+.sec + .sec { margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--line-strong); }
+
+/* left: breach */
+.breach-body { display: grid; grid-template-columns: 168px 1fr; gap: 16px; }
+.thumb { width: 168px; height: 128px; overflow: hidden; border: 1px solid var(--line-strong); background: var(--thumb-1); --bc: var(--text-muted); --bl: 10px; }
+.thumb .blur {
+  position: absolute; inset: -12px; filter: blur(7px);
+  background:
+    radial-gradient(ellipse 22% 26% at 50% 40%, var(--thumb-3) 0%, transparent 70%),
+    radial-gradient(ellipse 30% 14% at 48% 70%, var(--thumb-4) 0%, transparent 72%),
+    radial-gradient(ellipse 12% 12% at 30% 72%, var(--thumb-3) 0%, transparent 70%),
+    radial-gradient(ellipse 12% 12% at 68% 72%, var(--thumb-3) 0%, transparent 70%),
+    linear-gradient(180deg, var(--thumb-1) 0%, var(--thumb-2) 58%, var(--thumb-1) 100%);
+}
+.thumb .det { position: absolute; left: 50%; top: 52%; width: 74px; height: 66px; transform: translate(-50%, -50%); --bc: var(--status-alert); --bl: 10px; }
+.thumb .cap {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 3px 7px;
+  font: 600 11px var(--font-mono); letter-spacing: .14em; color: var(--text-secondary); background: var(--scrim);
+}
+.bm { display: flex; flex-direction: column; gap: 8px; }
+.bm .k { display: block; font: 11px var(--font-mono); letter-spacing: .16em; text-transform: uppercase; color: var(--text-muted); }
+.bm .t { font: 600 40px/1 var(--font-mono); letter-spacing: .02em; }
+.bm .v { font-size: 20px; line-height: 1.2; }
+.breach-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; font-size: 14px; color: var(--text-muted); }
+.breach-foot a { font: 600 13px var(--font-mono); letter-spacing: .12em; color: var(--hud-accent); text-decoration: none; text-transform: uppercase; }
+
+/* left: link health */
+.linklist li { display: flex; align-items: center; gap: 12px; height: 56px; border-bottom: 1px solid var(--line); }
+.linklist li:last-child { border-bottom: 0; }
+.linklist .ln { font-size: 19px; line-height: 1.15; }
+.linklist .ln small { display: block; font: 12px var(--font-mono); letter-spacing: .08em; color: var(--text-muted); margin-top: 2px; }
+.linklist .lead { flex: 1; height: 1px; background: repeating-linear-gradient(90deg, var(--line-strong) 0 2px, transparent 2px 6px); }
+.linklist .lv { font: 600 18px var(--font-mono); color: var(--status-ok); letter-spacing: .04em; white-space: nowrap; }
+.linklist .lv em { font-style: normal; font-weight: 400; color: var(--text-muted); }
+
+/* left: flood */
+.flood-now { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.flood-now .v { font: 700 44px/1 var(--font-mono); letter-spacing: .06em; }
+.flood-now .n { font-size: 15px; color: var(--text-muted); }
+.flood-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.flood-steps li { padding: 9px 10px 8px; border-top: 3px solid var(--line-strong); background: var(--surface-inset); color: var(--text-muted); }
+.flood-steps b { display: block; font: 700 14px var(--font-mono); letter-spacing: .12em; }
+.flood-steps span { display: block; font-size: 13px; line-height: 1.3; margin-top: 3px; }
+.flood-steps li.is-now { border-top-color: var(--status-ok); color: var(--text); background: var(--surface-raised); }
+.flood-steps li.is-now span { color: var(--text-secondary); }
+
+/* center */
+.center-body { display: grid; grid-template-columns: 480px minmax(0, 1fr); gap: 22px; }
+.schematic { width: 480px; height: 480px; border: 1px solid var(--line); background: var(--surface-inset); }
+.schematic svg { display: block; }
+.readouts { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.phase {
+  height: 136px; display: grid; grid-template-columns: auto 1fr; gap: 20px; align-items: center;
+  padding: 0 18px; border: 1px solid var(--line); background: var(--surface-inset);
+}
+.phase .k { font: 600 13px var(--font-mono); letter-spacing: .16em; color: var(--text-secondary); }
+.phase .w { font: 800 60px/1 var(--font-sans); letter-spacing: .04em; margin: 6px 0 6px; }
+.phase .w.g { color: var(--signal-green); text-shadow: 0 0 18px var(--signal-green-halo), 0 0 6px var(--signal-green-halo); }
+.phase .w.r { color: var(--signal-red); text-shadow: 0 0 18px var(--signal-red-halo), 0 0 6px var(--signal-red-halo); }
+.phase .s { font-size: 15px; color: var(--text-muted); }
+.countdown {
+  flex: 1; display: flex; flex-direction: column; padding: 14px 18px 14px;
+  border: 1px solid var(--line-strong); background: var(--surface-inset); --bc: var(--hud-accent); --bl: 12px;
+}
+.cd-k { display: flex; justify-content: space-between; align-items: center; font: 600 13px var(--font-mono); letter-spacing: .16em; color: var(--text-secondary); text-transform: uppercase; }
+.cd-k .asp { display: inline-flex; align-items: center; gap: 8px; color: var(--signal-green); }
+.cd-k .asp i { width: 10px; height: 10px; border-radius: 50%; background: var(--signal-green); box-shadow: 0 0 8px var(--signal-green-glow); }
+.cd-v { display: flex; align-items: baseline; gap: 12px; margin-top: auto; }
+.cd-v .upto { font: 600 20px var(--font-mono); letter-spacing: .1em; color: var(--text-secondary); text-transform: uppercase; }
+.cd-v .num { font: 600 112px/0.9 var(--font-mono); letter-spacing: -.02em; }
+.cd-v .unit { font: 500 36px var(--font-mono); color: var(--text-secondary); }
+.cd-note { font-size: 14px; color: var(--text-muted); margin-top: 8px; }
+
+/* ladder */
+.ladder-wrap { margin-top: auto; display: grid; grid-template-columns: minmax(0, 1fr) 176px; gap: 14px; }
+.ladder { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.lvl {
+  height: 150px; display: flex; flex-direction: column; padding: 12px 14px 12px;
+  border: 1px solid var(--line); background: var(--surface-inset); color: var(--text-muted);
+}
+.lvl .top { display: flex; align-items: center; gap: 10px; }
+.lvl svg { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.lvl .code { font: 600 32px/1 var(--font-mono); }
+.lvl .name { font-size: 16px; line-height: 1.25; margin-top: 8px; }
+.lvl .pat { margin-top: auto; height: 6px; }
+.lvl.l1 .pat { background: currentColor; }
+.lvl.l2 .pat { background: repeating-linear-gradient(90deg, currentColor 0 16px, transparent 16px 22px); }
+.lvl.l3 .pat { background: repeating-linear-gradient(90deg, currentColor 0 4px, transparent 4px 10px); }
+.lvl.l4 .pat { background: repeating-linear-gradient(135deg, currentColor 0 3px, transparent 3px 8px); }
+.lvl.is-current {
+  color: var(--text); border-color: var(--hud-accent);
+  background: linear-gradient(180deg, var(--hud-accent-wash), transparent 80%), var(--surface-raised);
+  --bc: var(--hud-accent); --bl: 14px;
+}
+.lvl.is-current .code { font-size: 44px; }
+.lvl.is-current svg { stroke: var(--hud-accent); }
+.lvl.is-current .pat { background: var(--hud-accent); box-shadow: 0 0 10px var(--hud-accent); }
+.lvl .now { margin-left: auto; font: 700 11px var(--font-mono); letter-spacing: .14em; color: var(--hud-accent); border: 1px solid var(--hud-accent); padding: 2px 6px; }
+.fault {
+  height: 150px; display: flex; flex-direction: column; padding: 12px 14px;
+  border: 1px dashed var(--line-strong); background: var(--surface-inset);
+}
+.fault .top { display: flex; align-items: center; gap: 10px; }
+.fault svg { width: 28px; height: 28px; fill: none; stroke: var(--text-secondary); stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
+.fault .v { display: flex; align-items: center; gap: 10px; font: 700 30px/1 var(--font-mono); color: var(--status-ok); }
+.fault .n { font-size: 13px; line-height: 1.35; color: var(--text-muted); margin-top: auto; }
+
+/* right: PCU */
+.pcu li, .pcu-scale { display: grid; grid-template-columns: 32px 40px minmax(0, 1fr) 70px; gap: 12px; align-items: center; }
+.pcu li { height: 52px; }
+.pcu .ap { font: 700 28px var(--font-mono); }
+.pcu .pt { font: 600 11px var(--font-mono); letter-spacing: .1em; color: var(--text-muted); border: 1px solid var(--line-strong); padding: 3px 0; text-align: center; }
+.bar {
+  position: relative; height: 20px; border: 1px solid var(--line-strong);
+  background: repeating-linear-gradient(90deg, transparent 0 calc(12.5% - 1px), var(--line) calc(12.5% - 1px) 12.5%);
+}
+.bar i {
+  position: absolute; left: 0; top: 0; bottom: 0; width: var(--v);
+  background: linear-gradient(90deg, #5CD6F514, #5CD6F55C);
+  border-right: 2px solid var(--hud-accent); box-shadow: 6px 0 10px -6px var(--hud-accent);
+}
+.bar i.zero { border-right: 0; box-shadow: none; }
+.pcu .pv { font: 600 30px var(--font-mono); text-align: right; }
+.pcu .pv.zero { color: var(--text-faint); }
+.pcu-scale { margin-top: 2px; }
+.pcu-scale .sc { grid-column: 3; display: flex; justify-content: space-between; font: 12px var(--font-mono); color: var(--text-muted); }
+.pcu-scale .u { grid-column: 4; font: 12px var(--font-mono); color: var(--text-muted); text-align: right; letter-spacing: .1em; }
+
+/* right: counts */
+.counts-h { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 10px; }
+.counts-h .sec-h { margin-bottom: 0; }
+.hour { text-align: right; }
+.hour .k { display: block; font: 11px var(--font-mono); letter-spacing: .16em; color: var(--text-muted); text-transform: uppercase; }
+.hour .v { font: 700 40px/1 var(--font-mono); color: var(--hud-accent); }
+table.counts { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.counts th {
+  font: 600 13px var(--font-mono); letter-spacing: .12em; color: var(--text-muted);
+  text-align: right; padding: 0 8px 8px; border-bottom: 1px solid var(--line-strong);
+}
+.counts th:first-child, .counts td:first-child { text-align: left; padding-left: 0; }
+.counts td { height: 46px; text-align: right; padding: 0 8px; border-bottom: 1px solid var(--line); font: 500 22px var(--font-mono); }
+.counts td.cls { font: 500 17px var(--font-sans); line-height: 1.15; }
+.counts td.cls small { display: block; font: 12px var(--font-mono); color: var(--text-muted); letter-spacing: .04em; }
+.counts td.z { color: var(--text-faint); }
+.counts .sum { border-left: 1px solid var(--line-strong); color: var(--text-secondary); }
+.counts tfoot td { border-bottom: 0; border-top: 1px solid var(--line-strong); font-weight: 700; color: var(--text); }
+.counts tfoot td.cls { font: 600 13px var(--font-mono); letter-spacing: .14em; color: var(--text-muted); text-transform: uppercase; }
+.counts tfoot .sum { color: var(--hud-accent); }
+
+/* override dock */
+.dock {
+  display: grid; grid-template-columns: 400px minmax(0, 1fr); gap: 24px; align-items: center;
+  padding: 0 20px; border: 1px solid var(--line); background: var(--surface-panel);
+}
+.dock-id .t { display: flex; gap: 12px; align-items: center; font: 600 15px var(--font-mono); letter-spacing: .16em; text-transform: uppercase; }
+.dock-id .cur { display: flex; align-items: baseline; gap: 12px; margin-top: 10px; font-size: 15px; color: var(--text-muted); }
+.dock-id .cur b { font: 700 30px/1 var(--font-mono); color: var(--text); letter-spacing: .06em; }
+.dock-id .n { margin-top: 8px; font-size: 14px; color: var(--text-muted); }
+.ovr { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.btn-ovr {
+  height: 104px; display: grid; grid-template-columns: 44px 1fr; gap: 14px; align-items: center;
+  padding: 0 18px; text-align: left; cursor: pointer;
+  border: 1px solid var(--line-strong); background: var(--surface-inset); --bl: 12px;
+}
+.btn-ovr:hover { border-color: var(--hud-accent); }
+.btn-ovr:focus-visible { outline: 2px solid var(--hud-accent); outline-offset: 3px; }
+.btn-ovr svg { width: 42px; height: 42px; fill: none; stroke: var(--text-secondary); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.btn-ovr .l { display: block; font-size: 20px; font-weight: 600; line-height: 1.2; }
+.btn-ovr .s { display: block; margin-top: 5px; font: 12px var(--font-mono); letter-spacing: .08em; color: var(--text-muted); text-transform: uppercase; }
+.btn-ovr[aria-disabled="true"] { border-style: dashed; cursor: default; color: var(--text-faint); --bc: var(--line-strong); }
+.btn-ovr[aria-disabled="true"]:hover { border-color: var(--line-strong); }
+.btn-ovr[aria-disabled="true"] svg { stroke: var(--text-faint); }
+
+/* SVG schematic */
+.sx-ticks { stroke: var(--line-strong); stroke-width: 1; fill: none; }
+.sx-ring { fill: none; stroke: var(--grid-major); stroke-dasharray: 2 6; }
+.sx-curb { fill: none; stroke: var(--text-faint); stroke-width: 1.5; }
+.sx-center { fill: none; stroke: var(--line-strong); stroke-dasharray: 10 8; }
+.sx-box { fill: none; stroke: var(--line); stroke-dasharray: 3 5; }
+.sx-zone rect { fill: none; stroke: var(--hud-accent-dim); stroke-dasharray: 4 4; }
+.sx-fill rect { fill: var(--hud-accent); fill-opacity: .16; }
+.sx-cap { fill: none; stroke: var(--hud-accent); stroke-width: 2; }
+.sx-ap { font-family: var(--font-mono); font-size: 24px; font-weight: 700; fill: var(--text); }
+.sx-pcu { font-family: var(--font-mono); font-size: 14px; font-weight: 500; fill: var(--hud-accent); letter-spacing: .04em; }
+.sx-meta { font-family: var(--font-mono); font-size: 11px; fill: var(--text-muted); letter-spacing: .12em; }
+.sx-hs { fill: var(--housing); stroke: var(--line-strong); }
+.sx-l.r { fill: var(--lamp-red-off); stroke: var(--lamp-red-rim); }
+.sx-l.y { fill: var(--lamp-yellow-off); stroke: var(--lamp-yellow-rim); }
+.sx-l.g { fill: var(--lamp-green-off); stroke: var(--lamp-green-rim); }
+.sx-l.on.r { fill: var(--signal-red); stroke: var(--signal-red-core); }
+.sx-l.on.g { fill: var(--signal-green); stroke: var(--signal-green-core); }
+.sx-halo.r { fill: var(--signal-red); }
+.sx-halo.g { fill: var(--signal-green); }
+.sx-halo { opacity: .5; }
+.sx-stopbar { stroke-width: 3; stroke-linecap: square; }
+.sx-stopbar.go { stroke: var(--signal-green); }
+.sx-stopbar.stop { stroke: var(--signal-red); }
+.sx-flow { fill: none; stroke: var(--signal-green); stroke-width: 2; stroke-dasharray: 6 10; opacity: .6; }
+.sx-chev { fill: none; stroke: var(--signal-green); stroke-width: 2; opacity: .7; stroke-linecap: round; stroke-linejoin: round; }
+.sx-compass { fill: none; stroke: var(--text-secondary); stroke-width: 1.2; }
+/* stale variant of the schematic */
+.sx-stale .sx-l.on { fill-opacity: .35; stroke-dasharray: 3 2; stroke-width: 1.5; }
+.sx-stale .sx-l.on.r { stroke: var(--signal-red); }
+.sx-stale .sx-l.on.g { stroke: var(--signal-green); }
+.sx-stale .sx-stopbar { stroke-dasharray: 4 4; opacity: .45; }
+
+/* ---------- extras ---------- */
+.extras { width: 1920px; display: grid; grid-template-columns: 1120px minmax(0, 1fr); gap: 40px; margin-top: 44px; }
+.extras-r { display: flex; flex-direction: column; gap: 28px; }
+
+/* stale artboard */
+.artboard.sm { width: 1120px; height: 630px; }
+.s-app { position: absolute; inset: 0; padding: 14px; display: grid; grid-template-rows: 54px 48px minmax(0, 1fr); gap: 10px; }
+.s-top { display: flex; align-items: center; justify-content: space-between; padding: 0 14px; border: 1px solid var(--line); background: var(--surface-panel); --bl: 12px; }
+.s-brand { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 650; }
+.s-brand .int { font: 700 15px var(--font-mono); letter-spacing: .08em; border: 1px solid var(--line-strong); padding: 3px 8px; }
+.s-top .chip { padding: 4px 10px; }
+.s-top .chip .v { font-size: 14px; }
+.stale-banner {
+  display: flex; align-items: center; gap: 12px; padding: 0 16px;
+  border: 1px solid var(--status-warn); border-left-width: 4px; background: var(--surface-raised);
+  font-size: 16px; color: var(--text-secondary);
+}
+.stale-banner b { color: var(--status-warn); font-weight: 700; }
+.stale-banner .r { margin-left: auto; font: 13px var(--font-mono); letter-spacing: .06em; color: var(--text-muted); }
+.s-body { display: grid; grid-template-columns: 650px minmax(0, 1fr); gap: 12px; min-height: 0; }
+.s-body .panel { padding-bottom: 14px; }
+.s-body .ph { height: 40px; margin-bottom: 12px; }
+.s-sig { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 16px; }
+.s-sig .schematic { width: 340px; height: 340px; position: relative; }
+.s-sig .stale-over { position: absolute; left: 10px; bottom: 10px; }
+.s-read { display: flex; flex-direction: column; gap: 8px; }
+.s-phase { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; padding: 8px 12px; border: 1px solid var(--line); background: var(--surface-inset); }
+.s-phase .k { font: 600 12px var(--font-mono); letter-spacing: .14em; color: var(--text-muted); }
+.s-phase .w { font: 800 36px/1 var(--font-sans); letter-spacing: .04em; margin: 4px 0 6px; opacity: .5; }
+.s-phase .w.g { color: var(--signal-green); }
+.s-phase .w.r { color: var(--signal-red); }
+.cd-hidden {
+  flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 10px 12px;
+  border: 1px dashed var(--line-strong);
+  background: repeating-linear-gradient(135deg, var(--stale-hatch) 0 2px, transparent 2px 9px);
+}
+.cd-hidden .k { font: 600 12px var(--font-mono); letter-spacing: .14em; color: var(--text-muted); }
+.cd-hidden .v { font: 700 22px var(--font-mono); letter-spacing: .1em; color: var(--stale-ink); }
+.cd-hidden .n { font-size: 13px; color: var(--text-muted); }
+.s-side { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.card-s { padding: 12px 14px; border: 1px solid var(--line); background: var(--surface-panel); }
+.card-s .h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font: 600 12px var(--font-mono); letter-spacing: .14em; color: var(--text-secondary); text-transform: uppercase; }
+.dim { opacity: .5; }
+.s-lvl { display: flex; align-items: center; gap: 12px; }
+.s-lvl svg { width: 30px; height: 30px; fill: none; stroke: var(--text-secondary); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.s-lvl .code { font: 600 40px/1 var(--font-mono); }
+.s-lvl .name { font-size: 17px; }
+.s-flood { font: 700 32px/1 var(--font-mono); letter-spacing: .06em; display: flex; align-items: center; gap: 12px; }
+.s-pcu li { display: grid; grid-template-columns: 26px minmax(0, 1fr) 54px; gap: 10px; align-items: center; height: 34px; }
+.s-pcu .ap { font: 700 20px var(--font-mono); }
+.s-pcu .bar { height: 14px; }
+.s-pcu .pv { font: 600 20px var(--font-mono); text-align: right; }
+.s-pcu .pv.zero { color: var(--text-faint); }
+
+/* cards for loader + dialog */
+.card-h { margin-bottom: 10px; font: 600 13px var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); }
+.card-h b { color: var(--text); font-weight: 600; }
+.card-note { margin-top: 10px; font-size: 14px; line-height: 1.5; color: var(--text-muted); }
+.loader-stage {
+  height: 210px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+  border: 1px solid var(--line);
+}
+.ld-dots { display: flex; gap: 30px; }
+.ld-dots .d { position: relative; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--rim); background: var(--off); }
+.ld-dots .d::after {
+  content: ""; position: absolute; inset: -1px; border-radius: 50%;
+  background: var(--c); box-shadow: 0 0 10px 2px var(--glow), 0 0 26px 8px var(--halo); opacity: .35;
+}
+.ld-dots .d.r { --c: var(--signal-red); --glow: var(--signal-red-glow); --halo: var(--signal-red-halo); --rim: var(--lamp-red-rim); --off: var(--lamp-red-off); }
+.ld-dots .d.y { --c: var(--signal-yellow); --glow: var(--signal-yellow-glow); --halo: var(--signal-yellow-halo); --rim: var(--lamp-yellow-rim); --off: var(--lamp-yellow-off); }
+.ld-dots .d.g { --c: var(--signal-green); --glow: var(--signal-green-glow); --halo: var(--signal-green-halo); --rim: var(--lamp-green-rim); --off: var(--lamp-green-off); }
+.ld-bar {
+  position: relative; width: 360px; height: 2px; overflow: hidden;
+  background: linear-gradient(90deg, var(--deco-red) 0 33.33%, var(--deco-yellow) 0 66.66%, var(--deco-green) 0);
+}
+.ld-bar i { display: none; position: absolute; top: 0; bottom: 0; left: 0; width: 25%; background: currentColor; box-shadow: 0 0 8px currentColor; color: var(--signal-red); }
+.ld-cap { font: 600 14px var(--font-mono); letter-spacing: .2em; color: var(--text-secondary); text-transform: uppercase; }
+
+.dlg-stage { position: relative; height: 340px; display: grid; place-items: center; border: 1px solid var(--line); }
+.dlg-stage::after { content: ""; position: absolute; inset: 0; background: var(--scrim); }
+.dlg {
+  position: relative; z-index: 1; width: 620px; padding: 22px 28px 24px;
+  background: var(--surface-raised); border: 1px solid var(--line-strong); --bc: var(--hud-accent); --bl: 18px;
+}
+.dlg .k { display: flex; align-items: center; gap: 10px; font: 600 12px var(--font-mono); letter-spacing: .16em; color: var(--text-muted); text-transform: uppercase; }
+.dlg h3 { font-size: 30px; font-weight: 700; line-height: 1.2; margin: 12px 0 8px; }
+.dlg p { font-size: 20px; color: var(--text-secondary); }
+.dlg .who { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; padding: 5px 10px; border: 1px solid var(--line-strong); font: 700 14px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; }
+.dlg .who svg { width: 16px; height: 16px; fill: none; stroke: var(--text-secondary); stroke-width: 1.6; }
+.dlg-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 22px; }
+.btn { height: 54px; padding: 0 30px; font-size: 18px; font-weight: 650; letter-spacing: .02em; cursor: pointer; border: 1px solid var(--line-strong); background: transparent; color: var(--text); }
+.btn-pri { background: var(--action-primary); border-color: var(--action-primary); color: var(--action-on-primary); }
+.btn.is-focus, .btn:focus-visible { outline: 2px solid var(--hud-accent); outline-offset: 3px; }
+
+/* ---------- motion (all of it) ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes breathe { from { opacity: .55; } to { opacity: 1; } }
+  @keyframes flow { to { stroke-dashoffset: -32; } }
+  @keyframes ld-dot { 0%, 30% { opacity: 1; } 33.4%, 100% { opacity: .08; } }
+  @keyframes ld-sweep {
+    0%      { transform: translateX(-100%); color: var(--signal-red); }
+    33.32%  { transform: translateX(400%);  color: var(--signal-red); }
+    33.33%  { transform: translateX(-100%); color: var(--signal-yellow); }
+    66.65%  { transform: translateX(400%);  color: var(--signal-yellow); }
+    66.66%  { transform: translateX(-100%); color: var(--signal-green); }
+    100%    { transform: translateX(400%);  color: var(--signal-green); }
+  }
+  .lamp.on:not(.stale)::after { animation: breathe 3.6s ease-in-out infinite alternate; }
+  .sx-halo { animation: breathe 3.6s ease-in-out infinite alternate; }
+  .sx-flow { animation: flow 1.6s linear infinite; }
+  .ld-dots .d::after { animation: ld-dot 1.8s linear infinite; }
+  .ld-dots .d.y::after { animation-delay: -1.2s; }
+  .ld-dots .d.g::after { animation-delay: -.6s; }
+  .ld-bar { background: var(--line); }
+  .ld-bar i { display: block; animation: ld-sweep 1.8s linear infinite; }
+}
+</style>
+</head>
+<body>
+
+<!-- ================= DIRECTION STRIP ================= -->
+<header class="strip">
+  <div>
+    <div class="eyebrow">Design direction</div>
+    <h1>Control Room HUD</h1>
+    <div class="triad-line" aria-hidden="true"></div>
+  </div>
+  <p>A traffic-operations-centre screen: near-black navy on a faint grid, 1&nbsp;px line work, corner brackets and monospace telemetry. It is dense but calm. <b>Red, yellow and green exist only as light:</b> on the live screen a glow always means a live signal aspect (a lit lamp in a vertical head, a stop bar, a state word). The brand's R&rarr;Y&rarr;G appears only as a flat horizontal triad hairline or the loader. System health uses square pips and alerts use a rose triangle tag. When data goes stale the glow switches off and the lens turns hatched, so &ldquo;not live&rdquo; reads at a glance.</p>
+  <ul class="legend" aria-label="Color grammar">
+    <li><span class="sw"><span class="housing" aria-hidden="true"><span class="lamp r"></span><span class="lamp y"></span><span class="lamp g on"></span></span></span><span><b>Signal aspect</b>Glowing lens in a vertical head, stop bar, state word. Always labeled.</span></li>
+    <li><span class="sw"><span class="pip" aria-hidden="true"></span></span><span><b>System status</b>Flat square pip + word: links, flood, fault.</span></li>
+    <li><span class="sw"><svg class="tri" width="22" height="20" viewBox="0 0 22 20" aria-hidden="true"><path d="M11 2 L20.5 18.5 H1.5 Z" fill="none" stroke="#FF4F86" stroke-width="1.6" stroke-linejoin="round"/><path d="M11 8v4.5M11 15.2v.3" stroke="#FF4F86" stroke-width="1.8" stroke-linecap="round"/></svg></span><span><b>Alert</b>Rose triangle tag (breach, link lost). Never a lens.</span></li>
+    <li><span class="sw"><span class="triad" aria-hidden="true"><i></i><i></i><i></i></span></span><span><b>Decoration</b>Horizontal R&middot;Y&middot;G triad, flat, 40%, never one hue alone.</span></li>
+  </ul>
+</header>
+
+<!-- ================= HERO ARTBOARD ================= -->
+<div class="ab-label"><b>Hero &middot; Live status</b><span>route /</span><span>1920 &times; 1080 &middot; native size</span></div>
+<section class="artboard hero grid-bg" aria-label="Live status screen, 1920 by 1080">
+  <div class="app">
+
+    <!-- top bar -->
+    <header class="topbar brk">
+      <div class="brand">
+        <span class="triad" aria-hidden="true"><i></i><i></i><i></i></span>
+        <div>
+          <div class="brand-name">Catarman SMART Traffic Light</div>
+          <div class="brand-sub">Catarman, Northern Samar &middot; edge-only</div>
+        </div>
+        <div class="int-chip brk"><span class="k">INTERSECTION</span><span class="v">INT-01</span></div>
+      </div>
+      <nav class="nav" aria-label="Primary">
+        <a href="#" aria-current="page">Live</a>
+        <a href="#">Traffic peaks</a>
+        <a href="#">Breaches</a>
+        <a href="#">Override log</a>
+        <a href="#">State history</a>
+      </nav>
+      <div class="links" aria-label="Link health">
+        <div class="chip"><span class="k">Broker</span><span class="pip"></span><span class="v">CONNECTED</span></div>
+        <div class="chip"><span class="k">Controller</span><span class="pip"></span><span class="v">ONLINE <em>(sim)</em></span></div>
+        <div class="chip"><span class="k">Vision</span><span class="pip"></span><span class="v">ONLINE <em>(sim)</em></span></div>
+      </div>
+    </header>
+
+    <main class="panels">
+
+      <!-- LEFT: events + alerts -->
+      <aside class="panel brk" aria-label="Events and alerts">
+        <div class="ph"><span class="ph-idx">01</span><span class="ph-title">Events &amp; alerts</span><span class="ph-meta">INT-01</span></div>
+
+        <section class="sec">
+          <div class="sec-h">
+            <span class="tag tag-alert"><svg class="tri" width="14" height="13" viewBox="0 0 22 20" aria-hidden="true"><path d="M11 2 L20.5 18.5 H1.5 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M11 8v4.5M11 15.2v.3" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>Breach</span>
+            <span>Latest</span>
+          </div>
+          <div class="breach-body">
+            <div class="thumb brk" role="img" aria-label="Anonymized blurred crop of the vehicle">
+              <div class="blur"></div>
+              <div class="det brk"></div>
+              <div class="cap">BLURRED CROP</div>
+            </div>
+            <div class="bm">
+              <div><span class="k">Time</span><span class="t mono">14:32:08</span></div>
+              <div><span class="k">Approach</span><span class="v">East approach</span></div>
+              <div><span class="k">Class</span><span class="v">Motorcycle</span></div>
+            </div>
+          </div>
+          <div class="breach-foot"><span>Red-light running &middot; anonymized</span><a href="#">Breaches &rsaquo;</a></div>
+        </section>
+
+        <section class="sec">
+          <div class="sec-h">Link health</div>
+          <ul class="linklist">
+            <li><span class="ln">Broker<small>message broker</small></span><span class="lead"></span><span class="pip"></span><span class="lv">CONNECTED</span></li>
+            <li><span class="ln">Controller<small>ESP32 &middot; runs the signals</small></span><span class="lead"></span><span class="pip"></span><span class="lv">ONLINE <em>(sim)</em></span></li>
+            <li><span class="ln">Vision<small>camera node &middot; counts traffic</small></span><span class="lead"></span><span class="pip"></span><span class="lv">ONLINE <em>(sim)</em></span></li>
+          </ul>
+        </section>
+
+        <section class="sec">
+          <div class="sec-h">Flood sensor</div>
+          <div class="flood-now"><span class="pip"></span><span class="v">DRY</span><span class="n">No immersion</span></div>
+          <ol class="flood-steps">
+            <li class="is-now"><b>DRY</b><span>current</span></li>
+            <li><b>WET</b><span>immersion seen, debounce running</span></li>
+            <li><b>FLOODED</b><span>L4 cause</span></li>
+          </ol>
+        </section>
+      </aside>
+
+      <!-- CENTER: signal state -->
+      <section class="panel brk" aria-label="Signal state">
+        <div class="ph"><span class="ph-idx">02</span><span class="ph-title">Signal state</span><span class="ph-meta">src controller &middot; NS / EW</span></div>
+
+        <div class="center-body">
+          <figure class="schematic brk">
+            <svg viewBox="0 0 480 480" width="478" height="478" role="img" aria-label="INT-01 schematic. North and South heads green, East and West heads red.">
+              <defs>
+                <filter id="hx-glow" x="-100%" y="-100%" width="300%" height="300%">
+                  <feGaussianBlur stdDeviation="3" result="b"/>
+                  <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+                <filter id="hx-soft" x="-150%" y="-150%" width="400%" height="400%"><feGaussianBlur stdDeviation="5"/></filter>
+              </defs>
+              <!-- ruler ticks -->
+              <path class="sx-ticks" d="M40 0v6M80 0v6M120 0v11M160 0v6M200 0v6M240 0v11M280 0v6M320 0v6M360 0v11M400 0v6M440 0v6
+                M40 480v-6M80 480v-6M120 480v-11M160 480v-6M200 480v-6M240 480v-11M280 480v-6M320 480v-6M360 480v-11M400 480v-6M440 480v-6
+                M0 40h6M0 80h6M0 120h11M0 160h6M0 200h6M0 240h11M0 280h6M0 320h6M0 360h11M0 400h6M0 440h6
+                M480 40h-6M480 80h-6M480 120h-11M480 160h-6M480 200h-6M480 240h-11M480 280h-6M480 320h-6M480 360h-11M480 400h-6M480 440h-6"/>
+              <circle class="sx-ring" cx="240" cy="240" r="214"/>
+              <!-- curbs -->
+              <path class="sx-curb" d="M180 0V166Q180 180 166 180H0M300 0V166Q300 180 314 180H480M180 480V314Q180 300 166 300H0M300 480V314Q300 300 314 300H480"/>
+              <path class="sx-center" d="M240 0V170M240 310V480M0 240H170M310 240H480"/>
+              <rect class="sx-box" x="180" y="180" width="120" height="120"/>
+              <!-- PCU zones + fill (demand / 4 PCU) -->
+              <g class="sx-zone">
+                <rect x="186" y="40" width="48" height="124"/>
+                <rect x="246" y="316" width="48" height="124"/>
+                <rect x="316" y="186" width="124" height="48"/>
+                <rect x="40" y="246" width="124" height="48"/>
+              </g>
+              <g class="sx-fill">
+                <rect x="186" y="86.5" width="48" height="77.5"/>
+                <rect x="316" y="186" width="31" height="48"/>
+                <rect x="148.5" y="246" width="15.5" height="48"/>
+              </g>
+              <path class="sx-cap" d="M186 86.5H234M347 186V234M148.5 246V294"/>
+              <!-- stop bars: live aspect -->
+              <g filter="url(#hx-glow)">
+                <line class="sx-stopbar go" x1="186" y1="172" x2="234" y2="172"/>
+                <line class="sx-stopbar go" x1="246" y1="308" x2="294" y2="308"/>
+                <line class="sx-stopbar stop" x1="308" y1="186" x2="308" y2="234"/>
+                <line class="sx-stopbar stop" x1="172" y1="246" x2="172" y2="294"/>
+              </g>
+              <!-- NS permitted movement -->
+              <line class="sx-flow" x1="210" y1="184" x2="210" y2="292"/>
+              <line class="sx-flow" x1="270" y1="296" x2="270" y2="188"/>
+              <path class="sx-chev" d="M204 286l6 8 6-8M264 194l6-8 6 8"/>
+              <!-- heads: red top, yellow middle, green bottom -->
+              <g transform="translate(140 104)">
+                <rect class="sx-hs" width="26" height="70" rx="6"/>
+                <circle class="sx-halo g" cx="13" cy="56" r="13" filter="url(#hx-soft)"/>
+                <circle class="sx-l r" cx="13" cy="14" r="8"/><circle class="sx-l y" cx="13" cy="35" r="8"/><circle class="sx-l g on" cx="13" cy="56" r="8"/>
+              </g>
+              <g transform="translate(314 306)">
+                <rect class="sx-hs" width="26" height="70" rx="6"/>
+                <circle class="sx-halo g" cx="13" cy="56" r="13" filter="url(#hx-soft)"/>
+                <circle class="sx-l r" cx="13" cy="14" r="8"/><circle class="sx-l y" cx="13" cy="35" r="8"/><circle class="sx-l g on" cx="13" cy="56" r="8"/>
+              </g>
+              <g transform="translate(314 104)">
+                <rect class="sx-hs" width="26" height="70" rx="6"/>
+                <circle class="sx-halo r" cx="13" cy="14" r="13" filter="url(#hx-soft)"/>
+                <circle class="sx-l r on" cx="13" cy="14" r="8"/><circle class="sx-l y" cx="13" cy="35" r="8"/><circle class="sx-l g" cx="13" cy="56" r="8"/>
+              </g>
+              <g transform="translate(140 306)">
+                <rect class="sx-hs" width="26" height="70" rx="6"/>
+                <circle class="sx-halo r" cx="13" cy="14" r="13" filter="url(#hx-soft)"/>
+                <circle class="sx-l r on" cx="13" cy="14" r="8"/><circle class="sx-l y" cx="13" cy="35" r="8"/><circle class="sx-l g" cx="13" cy="56" r="8"/>
+              </g>
+              <!-- approach labels -->
+              <text class="sx-ap" x="170" y="56" text-anchor="end">N</text><text class="sx-pcu" x="170" y="76" text-anchor="end">2.5 PCU</text>
+              <text class="sx-ap" x="470" y="136" text-anchor="end">E</text><text class="sx-pcu" x="470" y="156" text-anchor="end">1.0 PCU</text>
+              <text class="sx-ap" x="350" y="412">S</text><text class="sx-pcu" x="350" y="432">0 PCU</text>
+              <text class="sx-ap" x="14" y="334">W</text><text class="sx-pcu" x="14" y="354">0.5 PCU</text>
+              <!-- compass + legend -->
+              <g transform="translate(450 34)"><path class="sx-compass" d="M0 -16L6 4L0 0L-6 4Z"/><text class="sx-meta" y="20" text-anchor="middle">N</text></g>
+              <text class="sx-meta" x="14" y="24">INT-01 &middot; 4-WAY</text>
+              <text class="sx-meta" x="14" y="466">ZONE FILL = PCU WAITING (0&ndash;4)</text>
+            </svg>
+          </figure>
+
+          <div class="readouts">
+            <div class="phase">
+              <div class="housing" role="img" aria-label="NS head: green lit"><span class="lamp r"></span><span class="lamp y"></span><span class="lamp g on"></span></div>
+              <div><div class="k">PHASE NS</div><div class="w g">GREEN</div><div class="s">North + South heads</div></div>
+            </div>
+            <div class="phase">
+              <div class="housing" role="img" aria-label="EW head: red lit"><span class="lamp r on"></span><span class="lamp y"></span><span class="lamp g"></span></div>
+              <div><div class="k">PHASE EW</div><div class="w r">RED</div><div class="s">East + West heads</div></div>
+            </div>
+            <div class="countdown brk">
+              <div class="cd-k"><span>Running interval</span><span class="asp"><i></i>NS GREEN</span></div>
+              <div class="cd-v"><span class="upto">up to</span><span class="num">14</span><span class="unit">s</span></div>
+              <div class="cd-note">Green can end early. Yellow, all-red and L3 counts are exact.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ladder-wrap">
+          <div>
+            <div class="sec-h">Degradation level</div>
+            <ol class="ladder">
+              <li class="lvl l1 is-current brk">
+                <div class="top"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M2 14C6 7 22 7 26 14C22 21 6 21 2 14Z"/><circle cx="14" cy="14" r="4"/></svg><span class="code mono">L1</span><span class="now">CURRENT</span></div>
+                <div class="name">Vision adaptive</div>
+                <div class="pat"></div>
+              </li>
+              <li class="lvl l2">
+                <div class="top"><svg viewBox="0 0 28 28" aria-hidden="true"><rect x="8" y="4" width="12" height="13" rx="2"/><path d="M3 22H25"/></svg><span class="code mono">L2</span></div>
+                <div class="name">Stop-bar presence</div>
+                <div class="pat"></div>
+              </li>
+              <li class="lvl l3">
+                <div class="top"><svg viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="10"/><path d="M14 8V14L18 17"/></svg><span class="code mono">L3</span></div>
+                <div class="name">Fixed timing</div>
+                <div class="pat"></div>
+              </li>
+              <li class="lvl l4">
+                <div class="top"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M2 12Q5 8 8 12T14 12T20 12T26 12M2 19Q5 15 8 19T14 19T20 19T26 19"/></svg><span class="code mono">L4</span></div>
+                <div class="name">Flashing Amber (flood)</div>
+                <div class="pat"></div>
+              </li>
+            </ol>
+          </div>
+          <div>
+            <div class="sec-h">Fault</div>
+            <div class="fault">
+              <div class="top"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M14 2L24.5 8V20L14 26L3.5 20V8Z"/><path d="M10 10L18 18M18 10L10 18"/></svg><span class="v"><span class="pip"></span>NONE</span></div>
+              <div class="n">Conflict fault shows here as FAULT, never as L4.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: demand -->
+      <aside class="panel brk" aria-label="Demand">
+        <div class="ph"><span class="ph-idx">03</span><span class="ph-title">Demand</span><span class="ph-meta">src vision</span></div>
+
+        <section class="sec">
+          <div class="sec-h">PCU demand <small>passenger-car units waiting per zone</small></div>
+          <ul class="pcu">
+            <li><span class="ap">N</span><span class="pt">NS</span><span class="bar"><i style="--v:62.5%"></i></span><span class="pv mono">2.5</span></li>
+            <li><span class="ap">S</span><span class="pt">NS</span><span class="bar"><i class="zero" style="--v:0%"></i></span><span class="pv mono zero">0</span></li>
+            <li><span class="ap">E</span><span class="pt">EW</span><span class="bar"><i style="--v:25%"></i></span><span class="pv mono">1.0</span></li>
+            <li><span class="ap">W</span><span class="pt">EW</span><span class="bar"><i style="--v:12.5%"></i></span><span class="pv mono">0.5</span></li>
+          </ul>
+          <div class="pcu-scale"><span class="sc"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span></span><span class="u">PCU</span></div>
+        </section>
+
+        <section class="sec">
+          <div class="counts-h">
+            <div class="sec-h">Vehicle counts &middot; this hour</div>
+            <div class="hour"><span class="k">Hour total</span><span class="v">210</span></div>
+          </div>
+          <table class="counts">
+            <thead><tr><th>Class</th><th>N</th><th>S</th><th>E</th><th>W</th><th class="sum">&Sigma;</th></tr></thead>
+            <tbody>
+              <tr><td class="cls">Car</td><td>14</td><td>9</td><td>11</td><td>6</td><td class="sum">40</td></tr>
+              <tr><td class="cls">Tricycle</td><td>31</td><td>18</td><td>26</td><td>12</td><td class="sum">87</td></tr>
+              <tr><td class="cls">Motorcycle<small>incl. habal-habal</small></td><td>22</td><td>17</td><td>19</td><td>9</td><td class="sum">67</td></tr>
+              <tr><td class="cls">Jeepney</td><td>3</td><td>2</td><td class="z">0</td><td>1</td><td class="sum">6</td></tr>
+              <tr><td class="cls">Utility van</td><td>4</td><td>1</td><td>3</td><td>2</td><td class="sum">10</td></tr>
+            </tbody>
+            <tfoot><tr><td class="cls">Total</td><td>74</td><td>47</td><td>59</td><td>30</td><td class="sum">210</td></tr></tfoot>
+          </table>
+        </section>
+      </aside>
+    </main>
+
+    <!-- override dock -->
+    <footer class="dock brk" aria-label="MDRRMO override">
+      <div class="dock-id">
+        <div class="t"><span class="ph-idx">04</span>MDRRMO override</div>
+        <div class="cur">Current override <b>NONE</b></div>
+        <div class="n">Automatic control. Every override asks for confirmation first.</div>
+      </div>
+      <div class="ovr">
+        <button type="button" class="btn-ovr brk">
+          <svg viewBox="0 0 42 42" aria-hidden="true"><rect x="15" y="8" width="12" height="26" rx="3"/><circle cx="21" cy="21" r="3.5"/><path d="M8 21H4M38 21H34M10 12L7 9M32 12L35 9M10 30L7 33M32 30L35 33"/></svg>
+          <span><span class="l">Flashing Amber</span><span class="s">all approaches</span></span>
+        </button>
+        <button type="button" class="btn-ovr brk">
+          <svg viewBox="0 0 42 42" aria-hidden="true"><path d="M21 4V38M15 10L21 4L27 10M15 32L21 38L27 32M6 21H14M28 21H36"/></svg>
+          <span><span class="l">Evacuation corridor &mdash; NS</span><span class="s">E + W go red</span></span>
+        </button>
+        <button type="button" class="btn-ovr brk">
+          <svg viewBox="0 0 42 42" aria-hidden="true"><path d="M4 21H38M10 15L4 21L10 27M32 15L38 21L32 27M21 6V14M21 28V36"/></svg>
+          <span><span class="l">Evacuation corridor &mdash; EW</span><span class="s">N + S go red</span></span>
+        </button>
+        <button type="button" class="btn-ovr brk" aria-disabled="true">
+          <svg viewBox="0 0 42 42" aria-hidden="true"><path d="M33 14A13 13 0 1 0 34 24"/><path d="M34 6V14H26"/><path d="M17 26L21 15L25 26M18.5 22H23.5"/></svg>
+          <span><span class="l">Release to automatic</span><span class="s">no override active</span></span>
+        </button>
+      </div>
+    </footer>
+  </div>
+</section>
+
+<!-- ================= EXTRAS ================= -->
+<div class="extras">
+
+  <!-- STATE VARIANT: STALE -->
+  <div>
+    <div class="ab-label"><b>State variant &middot; Stale</b><span>controller link lost</span><span>1120 &times; 630</span></div>
+    <section class="artboard sm grid-bg" aria-label="Stale state: controller link lost">
+      <div class="s-app">
+        <header class="s-top brk">
+          <div class="s-brand"><span class="triad" aria-hidden="true"><i></i><i></i><i></i></span>Catarman SMART Traffic Light<span class="int">INT-01</span></div>
+          <div class="links">
+            <div class="chip"><span class="k">Broker</span><span class="pip"></span><span class="v">CONNECTED</span></div>
+            <div class="chip warn"><span class="k">Controller</span><span class="pip warn"></span><span class="v">STALE</span></div>
+            <div class="chip"><span class="k">Vision</span><span class="pip"></span><span class="v">ONLINE <em>(sim)</em></span></div>
+          </div>
+        </header>
+        <div class="stale-banner" role="status">
+          <svg class="tri" width="22" height="20" viewBox="0 0 22 20" aria-hidden="true"><path d="M11 2 L20.5 18.5 H1.5 Z" fill="none" stroke="#F5A524" stroke-width="1.8" stroke-linejoin="round"/><path d="M11 8v4.5M11 15.2v.3" stroke="#F5A524" stroke-width="2" stroke-linecap="round"/></svg>
+          <span><b>Controller link lost.</b> Last values kept and marked STALE. Countdown hidden.</span>
+          <span class="r">The ESP32 keeps running the signals</span>
+        </div>
+        <div class="s-body">
+          <section class="panel" aria-label="Signal state, stale">
+            <div class="ph"><span class="ph-idx">02</span><span class="ph-title">Signal state</span><span class="ph-meta">src controller <span class="tag tag-stale">STALE</span></span></div>
+            <div class="s-sig">
+              <figure class="schematic">
+                <svg class="sx-stale" viewBox="0 0 480 480" width="338" height="338" role="img" aria-label="Last known schematic, stale: North and South green, East and West red">
+                  <circle class="sx-ring" cx="240" cy="240" r="214"/>
+                  <path class="sx-curb" d="M180 0V166Q180 180 166 180H0M300 0V166Q300 180 314 180H480M180 480V314Q180 300 166 300H0M300 480V314Q300 300 314 300H480"/>
+                  <path class="sx-center" d="M240 0V170M240 310V480M0 240H170M310 240H480"/>
+                  <rect class="sx-box" x="180" y="180" width="120" height="120"/>
+                  <g class="sx-zone">
+                    <rect x="186" y="40" width="48" height="124"/><rect x="246" y="316" width="48" height="124"/>
+                    <rect x="316" y="186" width="124" height="48"/><rect x="40" y="246" width="124" height="48"/>
+                  </g>
+                  <g class="sx-fill">
+                    <rect x="186" y="86.5" width="48" height="77.5"/><rect x="316" y="186" width="31" height="48"/><rect x="148.5" y="246" width="15.5" height="48"/>
+                  </g>
+                  <path class="sx-cap" d="M186 86.5H234M347 186V234M148.5 246V294"/>
+                  <line class="sx-stopbar go" x1="186" y1="172" x2="234" y2="172"/>
+                  <line class="sx-stopbar go" x1="246" y1="308" x2="294" y2="308"/>
+                  <line class="sx-stopbar stop" x1="308" y1="186" x2="308" y2="234"/>
+                  <line class="sx-stopbar stop" x1="172" y1="246" x2="172" y2="294"/>
+                  <g transform="translate(140 104)"><rect class="sx-hs" width="26" height="70" rx="6"/><circle class="sx-l r" cx="13" cy="14" r="8"/><circle class="sx-l y" cx="13" cy="35" r="8"/><circle class="sx-l g on" cx="13" cy="56" r="8"/></g>
+                  <g transform="translate(314 306)"><rect class="sx-hs" width="26" height="70" rx="6"/><circle class="sx-l r" cx="13" cy="14" r="8"/><circle class="sx-l y" cx="13" cy="35" r="8"/><circle class="sx-l g on" cx="13" cy="56" r="8"/></g>
+                  <g transform="translate(314 104)"><rect class="sx-hs" width="26" height="70" rx="6"/><circle class="sx-l r on" cx="13" cy="14" r="8"/><circle class="sx-l y" cx="13" cy="35" r="8"/><circle class="sx-l g" cx="13" cy="56" r="8"/></g>
+                  <g transform="translate(140 306)"><rect class="sx-hs" width="26" height="70" rx="6"/><circle class="sx-l r on" cx="13" cy="14" r="8"/><circle class="sx-l y" cx="13" cy="35" r="8"/><circle class="sx-l g" cx="13" cy="56" r="8"/></g>
+                  <text class="sx-ap" x="170" y="56" text-anchor="end">N</text>
+                  <text class="sx-ap" x="470" y="136" text-anchor="end">E</text>
+                  <text class="sx-ap" x="350" y="412">S</text>
+                  <text class="sx-ap" x="14" y="334">W</text>
+                </svg>
+                <span class="stale-over tag tag-stale">LAST RECEIVED</span>
+              </figure>
+              <div class="s-read">
+                <div class="s-phase">
+                  <div class="housing sm" role="img" aria-label="NS head: last known green, stale"><span class="lamp r"></span><span class="lamp y"></span><span class="lamp g on stale"></span></div>
+                  <div><div class="k">PHASE NS</div><div class="w g">GREEN</div><span class="tag tag-stale">STALE</span></div>
+                </div>
+                <div class="s-phase">
+                  <div class="housing sm" role="img" aria-label="EW head: last known red, stale"><span class="lamp r on stale"></span><span class="lamp y"></span><span class="lamp g"></span></div>
+                  <div><div class="k">PHASE EW</div><div class="w r">RED</div><span class="tag tag-stale">STALE</span></div>
+                </div>
+                <div class="cd-hidden">
+                  <div class="k">RUNNING INTERVAL</div>
+                  <div class="v">COUNTDOWN HIDDEN</div>
+                  <div class="n">A timer is not shown while the controller is stale.</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="s-side">
+            <div class="card-s">
+              <div class="h">Degradation level <span class="tag tag-stale">STALE</span></div>
+              <div class="s-lvl dim"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M2 14C6 7 22 7 26 14C22 21 6 21 2 14Z"/><circle cx="14" cy="14" r="4"/></svg><span class="code mono">L1</span><span class="name">Vision adaptive</span></div>
+            </div>
+            <div class="card-s">
+              <div class="h">Flood sensor <span class="tag tag-stale">STALE</span></div>
+              <div class="s-flood dim"><span class="pip"></span>DRY</div>
+            </div>
+            <div class="card-s">
+              <div class="h">PCU demand <span class="tag tag-live"><span class="pip"></span>LIVE &middot; vision</span></div>
+              <ul class="s-pcu">
+                <li><span class="ap">N</span><span class="bar"><i style="--v:62.5%"></i></span><span class="pv mono">2.5</span></li>
+                <li><span class="ap">S</span><span class="bar"><i class="zero" style="--v:0%"></i></span><span class="pv mono zero">0</span></li>
+                <li><span class="ap">E</span><span class="bar"><i style="--v:25%"></i></span><span class="pv mono">1.0</span></li>
+                <li><span class="ap">W</span><span class="bar"><i style="--v:12.5%"></i></span><span class="pv mono">0.5</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="extras-r">
+    <!-- LOADER -->
+    <div>
+      <div class="card-h"><b>Loader</b> &middot; red &rarr; yellow &rarr; green &middot; CSS keyframes</div>
+      <div class="loader-stage grid-bg brk" role="status" aria-label="Connecting to broker">
+        <div class="ld-dots" aria-hidden="true"><i class="d r"></i><i class="d y"></i><i class="d g"></i></div>
+        <div class="ld-bar" aria-hidden="true"><i></i></div>
+        <div class="ld-cap">Connecting to broker</div>
+      </div>
+      <p class="card-note">Three dots flash in sequence while a 2&nbsp;px bar sweeps red, then yellow, then green (1.8&nbsp;s cycle). The run is horizontal, so it reads as the brand, never as a vertical signal head. Under reduced motion it rests as a dim, static triad.</p>
+    </div>
+
+    <!-- CONFIRM DIALOG -->
+    <div>
+      <div class="card-h"><b>Override confirm</b> &middot; dialog over the live screen</div>
+      <div class="dlg-stage grid-bg">
+        <div class="dlg brk" role="dialog" aria-modal="true" aria-labelledby="dlg-t" aria-describedby="dlg-d">
+          <div class="k"><svg class="tri" width="18" height="16" viewBox="0 0 22 20" aria-hidden="true"><path d="M11 2 L20.5 18.5 H1.5 Z" fill="none" stroke="#A9BAD2" stroke-width="1.8" stroke-linejoin="round"/><path d="M11 8v4.5M11 15.2v.3" stroke="#A9BAD2" stroke-width="2" stroke-linecap="round"/></svg>MDRRMO override &middot; confirm</div>
+          <h3 id="dlg-t">Activate evacuation corridor NS?</h3>
+          <p id="dlg-d">All other approaches go red.</p>
+          <div class="who"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5L13.5 3.5V8C13.5 11 11 13.5 8 14.5C5 13.5 2.5 11 2.5 8V3.5Z"/></svg>MDRRMO only.</div>
+          <div class="dlg-actions">
+            <button type="button" class="btn is-focus">Cancel</button>
+            <button type="button" class="btn btn-pri">Confirm</button>
+          </div>
+        </div>
+      </div>
+      <p class="card-note">Focus starts on Cancel. No signal color on either button: the dialog describes an outcome, it is not one.</p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

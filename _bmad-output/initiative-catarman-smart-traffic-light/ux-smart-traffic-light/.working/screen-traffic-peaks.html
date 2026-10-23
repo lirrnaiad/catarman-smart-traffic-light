@@ -1,0 +1,879 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Traffic Peaks Screen</title>
+<style>
+/* =====================================================================
+   DIRECTION: SIGNAL HARDWARE
+   Design tokens. Every concrete hex value used on this page is listed
+   here. Names follow Tailwind v4 @theme conventions (--color-*, --font-*).
+   ---------------------------------------------------------------------
+   SURFACES (matte charcoal / black signal housings)
+   --color-surface-page          #0B0C0D  page + artboard floor
+   --color-surface-page-hi       #15171A  artboard centre lift (vignette)
+   --color-surface-housing       #1A1C1F  panel housing body
+   --color-surface-housing-hi    #24272B  housing top-light (gradient start)
+   --color-surface-housing-lo    #151719  housing bottom (gradient end)
+   --color-surface-title-hi      #202327  panel title strip, top
+   --color-surface-title-lo      #191B1E  panel title strip, bottom
+   --color-surface-recess        #0F1012  recessed wells, table rows, link bar
+   --color-surface-plate         #2C3035  raised stencil plates, buttons
+   --color-surface-plate-hi      #383D43  button top-light
+   --color-surface-backplate     #08090A  signal-head backplate (matte black)
+   --color-surface-head-lo       #131517  signal-head housing, shadow side
+   --color-surface-head-hi       #262A2E  signal-head housing, lit side
+   --color-visor                 #0C0D0E  lamp visor hoods
+   --color-lens-socket           #070809  ring the lens sits in
+   --color-lens-bezel            #2E3237  bezel highlight around the socket
+   --color-edge-light            #3A3F45  bevel highlight, dividers
+   --color-edge-dark             #050607  outlines, bevel shadow
+   --color-rivet                 #555B62  rivet heads
+   --color-rivet-hi              #8A9097  rivet glint
+   --color-reflector             #6B7178  backplate border (neutral grey, never yellow)
+   MAP (top-down junction)
+   --color-map-asphalt           #232528
+   --color-map-block             #141618
+   --color-map-block-hatch       #1B1E21
+   --color-map-sidewalk          #34383D
+   --color-map-paint             #D8DBDE  ALL road paint is white (no yellow road paint)
+   --color-map-zone              #8C939A  dashed demand-zone outline
+   --color-flood-water           #3B82B5  flood water hatch (L4 map only)
+   TEXT
+   --color-text                  #F1F1EC  primary, warm white
+   --color-text-2                #AEB3B8  secondary
+   --color-text-3                #737A81  captions
+   --color-text-inverse          #0B0B0B  on white plates and hazard paint
+   SIGNAL ASPECTS (SEMANTIC ONLY). Lit + glowing only as a round lens,
+   or as the text label of a live aspect. Never decorative when lit.
+   --color-signal-red            #FF3B2F  lit lens / RED label
+   --color-signal-red-core       #FFC2B8  lens hot-spot
+   --color-signal-red-deep       #B0150C  lens rim fall-off
+   --color-signal-red-glass      #3A110E  UNLIT tinted glass
+   --color-signal-red-glass-hi   #5A1B16  unlit glass sheen
+   --color-signal-yellow         #FFB000  lit lens / YELLOW + FLASHING_AMBER label
+   --color-signal-yellow-core    #FFE3A3
+   --color-signal-yellow-deep    #B26A00
+   --color-signal-yellow-glass   #3A2A08
+   --color-signal-yellow-glass-hi #5C440F
+   --color-signal-green          #19E68C  lit lens / GREEN label
+   --color-signal-green-core     #BDFFE0
+   --color-signal-green-deep     #04935A
+   --color-signal-green-glass    #0B2C1F
+   --color-signal-green-glass-hi #154A35
+   (glows = the lit hex at 55% and 22% alpha)
+   HAZARD (alert + override zones). Matte paint, diagonal stripes,
+   rectangles only: never round, never glowing.
+   --color-hazard-paint          #EBC81A
+   --color-hazard-ink            #0D0D0D
+   SYSTEM STATUS (link health). Square pilots, deliberately not R/Y/G.
+   --color-status-ok             #6EC6F2
+   --color-status-ok-deep        #1D5E80
+   --color-status-off            #2A2D31  unlit square pilot
+   --color-focus                 #6EC6F2  keyboard focus ring
+   MEDIA PLACEHOLDER (anonymized breach crop, blurred)
+   --color-thumb-1               #8A8F95
+   --color-thumb-2               #5E6369
+   --color-thumb-3               #4A4F55
+   VEHICLE CLASS (data series). Matte chart fills only, never round, never
+   glowing, never signal red / yellow / green and never the status cyan.
+   Validated with the dataviz palette checks on --color-surface-recess
+   (dark band, chroma floor, adjacent CVD >= 11.6, normal >= 17.0, >= 3:1).
+   Fixed order = stack order bottom to top = legend order.
+   --color-class-car             #9D3EB1  orchid violet
+   --color-class-tricycle        #5A8FF3  signal-blue (not status cyan)
+   --color-class-motorcycle      #C770A8  mauve (incl. habal-habal)
+   --color-class-jeepney         #4C55BC  indigo
+   --color-class-van             #028A9B  petrol
+   CHART CHROME (reuses existing tokens)
+   gridlines = --color-edge-light at 55%, baseline = --color-reflector,
+   peak-hour band = --color-text at 4%, live hour = --color-status-ok
+   ===================================================================== */
+
+:root {
+  --color-surface-page: #0B0C0D;
+  --color-surface-page-hi: #15171A;
+  --color-surface-housing: #1A1C1F;
+  --color-surface-housing-hi: #24272B;
+  --color-surface-housing-lo: #151719;
+  --color-surface-title-hi: #202327;
+  --color-surface-title-lo: #191B1E;
+  --color-surface-recess: #0F1012;
+  --color-surface-plate: #2C3035;
+  --color-surface-plate-hi: #383D43;
+  --color-surface-backplate: #08090A;
+  --color-surface-head-lo: #131517;
+  --color-surface-head-hi: #262A2E;
+  --color-visor: #0C0D0E;
+  --color-lens-socket: #070809;
+  --color-lens-bezel: #2E3237;
+  --color-edge-light: #3A3F45;
+  --color-edge-dark: #050607;
+  --color-rivet: #555B62;
+  --color-rivet-hi: #8A9097;
+  --color-reflector: #6B7178;
+
+  --color-map-asphalt: #232528;
+  --color-map-block: #141618;
+  --color-map-block-hatch: #1B1E21;
+  --color-map-sidewalk: #34383D;
+  --color-map-paint: #D8DBDE;
+  --color-map-zone: #8C939A;
+  --color-flood-water: #3B82B5;
+
+  --color-text: #F1F1EC;
+  --color-text-2: #AEB3B8;
+  --color-text-3: #737A81;
+  --color-text-inverse: #0B0B0B;
+
+  --color-signal-red: #FF3B2F;
+  --color-signal-red-core: #FFC2B8;
+  --color-signal-red-deep: #B0150C;
+  --color-signal-red-glass: #3A110E;
+  --color-signal-red-glass-hi: #5A1B16;
+  --color-signal-yellow: #FFB000;
+  --color-signal-yellow-core: #FFE3A3;
+  --color-signal-yellow-deep: #B26A00;
+  --color-signal-yellow-glass: #3A2A08;
+  --color-signal-yellow-glass-hi: #5C440F;
+  --color-signal-green: #19E68C;
+  --color-signal-green-core: #BDFFE0;
+  --color-signal-green-deep: #04935A;
+  --color-signal-green-glass: #0B2C1F;
+  --color-signal-green-glass-hi: #154A35;
+
+  --color-hazard-paint: #EBC81A;
+  --color-hazard-ink: #0D0D0D;
+
+  --color-status-ok: #6EC6F2;
+  --color-status-ok-deep: #1D5E80;
+  --color-status-off: #2A2D31;
+  --color-focus: #6EC6F2;
+
+  --color-thumb-1: #8A8F95;
+  --color-thumb-2: #5E6369;
+  --color-thumb-3: #4A4F55;
+
+  --hazard-stripes: repeating-linear-gradient(-45deg,
+      var(--color-hazard-paint) 0 12px, var(--color-hazard-ink) 12px 24px);
+
+  --font-stencil: "Bahnschrift", "DIN Condensed", "Roboto Condensed", "Arial Narrow",
+      "Liberation Sans Narrow", "Nimbus Sans Narrow", "Helvetica Neue", "Noto Sans",
+      "DejaVu Sans Condensed", system-ui, sans-serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans",
+      "Helvetica Neue", Arial, sans-serif;
+
+  --color-class-car: #9D3EB1;
+  --color-class-tricycle: #5A8FF3;
+  --color-class-motorcycle: #C770A8;
+  --color-class-jeepney: #4C55BC;
+  --color-class-van: #028A9B;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  background: var(--color-surface-page);
+  color: var(--color-text);
+  font-family: var(--font-body);
+}
+body { min-width: 1920px; }
+
+/* ---------- Screen strip (slim) ---------- */
+.strip {
+  width: 1920px;
+  display: flex;
+  gap: 32px;
+  align-items: center;
+  padding: 12px 24px;
+  background: var(--color-surface-recess);
+  border-bottom: 1px solid var(--color-edge-light);
+}
+.strip-name {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+.strip-name small {
+  display: block;
+  font-size: 12px;
+  letter-spacing: .2em;
+  color: var(--color-text-3);
+  font-weight: 700;
+}
+.strip p {
+  margin: 0;
+  max-width: 1400px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--color-text-2);
+}
+.strip p b { color: var(--color-text); }
+
+/* ---------- Artboard ---------- */
+.artboard {
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 42%, var(--color-surface-page-hi) 0%, var(--color-surface-page) 72%);
+}
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- Top bar ---------- */
+.topbar {
+  height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background: linear-gradient(180deg, var(--color-surface-housing-hi), var(--color-surface-housing-lo));
+  border-bottom: 2px solid var(--color-edge-dark);
+}
+.brand { display: flex; align-items: center; gap: 18px; }
+.brand-mark {
+  position: relative;
+  padding: 4px;
+  background: var(--color-surface-backplate);
+  border: 1px solid var(--color-reflector);
+  border-radius: 4px;
+}
+.brand-title {
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: .05em;
+}
+.brand-sub {
+  margin-top: 7px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  color: var(--color-text-3);
+}
+.int-plate {
+  margin-left: 8px;
+  display: flex;
+  flex-direction: column;
+  padding: 6px 16px 7px;
+  background: linear-gradient(180deg, var(--color-surface-plate-hi), var(--color-surface-plate));
+  border: 1px solid var(--color-edge-dark);
+  border-radius: 4px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 3px 0 var(--color-edge-dark);
+}
+.int-plate span { font-size: 11px; font-weight: 700; letter-spacing: .22em; color: var(--color-text-2); }
+.int-plate b { font-size: 30px; font-weight: 800; line-height: 1; letter-spacing: .06em; }
+
+.nav { display: flex; gap: 8px; height: 54px; }
+.tab {
+  display: flex;
+  align-items: center;
+  padding: 0 22px;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  color: var(--color-text-2);
+  text-decoration: none;
+  background: linear-gradient(180deg, var(--color-surface-housing-hi), var(--color-surface-housing));
+  border: 1px solid var(--color-edge-dark);
+  border-radius: 6px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 3px 0 var(--color-edge-dark);
+}
+.tab[aria-current="page"] {
+  background: var(--color-text);
+  color: var(--color-text-inverse);
+  box-shadow: inset 0 -4px 0 rgba(0,0,0,.22), 0 3px 0 var(--color-edge-dark);
+}
+.tab:focus-visible, .ovr-btn:focus-visible, .dlg-btn:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+/* ---------- Link health bar ---------- */
+.linkbar {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 34px;
+  padding: 0 24px;
+  background: var(--color-surface-recess);
+  border-bottom: 1px solid var(--color-edge-light);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+.lb-label { color: var(--color-text-3); font-size: 14px; letter-spacing: .18em; }
+.pilot-item { display: flex; align-items: center; gap: 10px; }
+.pilot-item b { color: var(--color-text-2); font-weight: 700; }
+.pilot {
+  width: 14px; height: 14px;
+  border-radius: 2px;              /* square pilot: system status, not a signal lens */
+  background: var(--color-status-ok);
+  border: 2px solid var(--color-status-ok-deep);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.45);
+}
+.sim {
+  font-style: normal;
+  font-size: 12px;
+  padding: 2px 6px;
+  border: 1px solid var(--color-text-3);
+  border-radius: 3px;
+  color: var(--color-text-2);
+  letter-spacing: .14em;
+}
+.lb-right { margin-left: auto; color: var(--color-text-3); font-size: 14px; letter-spacing: .16em; }
+
+/* ---------- Panel = signal housing ---------- */
+.panel {
+  position: relative;
+  padding: 0 20px 18px;
+  background: linear-gradient(180deg, var(--color-surface-housing-hi) 0%, var(--color-surface-housing) 35%, var(--color-surface-housing-lo) 100%);
+  border: 1px solid var(--color-edge-dark);
+  border-radius: 10px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.07),
+    0 4px 0 var(--color-edge-dark),
+    0 14px 30px rgba(0,0,0,.55);
+}
+.panel::after { /* four rivets */
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  --r: radial-gradient(circle, var(--color-rivet-hi) 0 1px, var(--color-rivet) 1.5px 2.8px, var(--color-edge-dark) 3.3px, transparent 4px);
+  background:
+    var(--r) 6px 6px / 10px 10px no-repeat,
+    var(--r) calc(100% - 6px) 6px / 10px 10px no-repeat,
+    var(--r) 6px calc(100% - 6px) / 10px 10px no-repeat,
+    var(--r) calc(100% - 6px) calc(100% - 6px) / 10px 10px no-repeat;
+}
+.panel-title {
+  margin: 0 -20px 14px;
+  height: 46px;
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: linear-gradient(180deg, var(--color-surface-title-hi), var(--color-surface-title-lo));
+  border-bottom: 2px solid var(--color-edge-dark);
+  border-radius: 10px 10px 0 0;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  color: var(--color-text-2);
+}
+.pt-tag { font-size: 12px; font-weight: 700; letter-spacing: .16em; color: var(--color-text-3); }
+.well {
+  background: var(--color-surface-recess);
+  border: 1px solid var(--color-edge-dark);
+  border-radius: 6px;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,.65);
+}
+
+/* ---------- Signal lamps (the only place lit R/Y/G glow) ---------- */
+.head {
+  --s: 64px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--s) * .16);
+  padding: calc(var(--s) * .26) calc(var(--s) * .22);
+  background: linear-gradient(90deg, var(--color-surface-head-lo) 0%, var(--color-surface-head-hi) 45%, var(--color-surface-housing) 100%);
+  border-radius: calc(var(--s) * .16);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.08),
+    inset 0 -2px 0 rgba(0,0,0,.6),
+    0 0 0 1px var(--color-edge-dark);
+}
+.head--mini  { --s: 20px; }
+.head--brand { --s: 13px; }
+.head--l4    { --s: 32px; }
+.head--loader{ --s: 76px; }
+
+.lamp {
+  position: relative;
+  display: block;
+  flex: none;
+  width: var(--s);
+  height: var(--s);
+  border-radius: 50%;
+  background:
+    repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,.045) 0 1px, transparent 1px 4px),
+    radial-gradient(circle at 50% 30%, var(--glass-hi) 0%, var(--glass) 55%, var(--color-edge-dark) 100%);
+  box-shadow:
+    0 0 0 calc(var(--s) * .06) var(--color-lens-socket),
+    0 0 0 calc(var(--s) * .08) var(--color-lens-bezel),
+    inset 0 calc(var(--s) * .16) calc(var(--s) * .2) calc(var(--s) * -.08) rgba(0,0,0,.85);
+}
+.lamp::after { /* lit layer: lens + glow */
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 50%;
+  opacity: 0;
+  background:
+    repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,.13) 0 1px, transparent 1px 4px),
+    radial-gradient(circle at 50% 58%, var(--core) 0%, var(--lit) 36%, var(--deep) 100%);
+  box-shadow:
+    0 0 calc(var(--s) * .3) calc(var(--s) * .06) var(--glow),
+    0 0 calc(var(--s) * .95) calc(var(--s) * .24) var(--glow-soft),
+    inset 0 calc(var(--s) * .15) calc(var(--s) * .16) calc(var(--s) * -.06) rgba(0,0,0,.55);
+}
+.lamp::before { /* visor hood */
+  content: "";
+  position: absolute;
+  z-index: 2;
+  left: calc(var(--s) * -.14);
+  right: calc(var(--s) * -.14);
+  top: calc(var(--s) * -.16);
+  height: calc(var(--s) * .64);
+  border: calc(var(--s) * .1) solid var(--color-visor);
+  border-bottom: 0;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  box-shadow: 0 -1px 0 rgba(255,255,255,.07);
+}
+.head--brand .lamp::before, .head--mini .lamp::before { border-width: calc(var(--s) * .12); }
+.lamp.is-lit::after, .lamp.is-flash::after { opacity: 1; }
+
+.lamp--red    { --lit: var(--color-signal-red);    --core: var(--color-signal-red-core);    --deep: var(--color-signal-red-deep);    --glass: var(--color-signal-red-glass);    --glass-hi: var(--color-signal-red-glass-hi);    --glow: rgba(255,59,47,.55); --glow-soft: rgba(255,59,47,.22); }
+.lamp--yellow { --lit: var(--color-signal-yellow); --core: var(--color-signal-yellow-core); --deep: var(--color-signal-yellow-deep); --glass: var(--color-signal-yellow-glass); --glass-hi: var(--color-signal-yellow-glass-hi); --glow: rgba(255,176,0,.55); --glow-soft: rgba(255,176,0,.22); }
+.lamp--green  { --lit: var(--color-signal-green);  --core: var(--color-signal-green-core);  --deep: var(--color-signal-green-deep);  --glass: var(--color-signal-green-glass);  --glass-hi: var(--color-signal-green-glass-hi);  --glow: rgba(25,230,140,.55); --glow-soft: rgba(25,230,140,.22); }
+
+/* Stencil label: heavy, condensed, uppercase. Used for every label. */
+.st, .panel-title, .tab, .linkbar, .int-plate, .brand-title, .brand-sub, .strip-name,
+.dbtn, .date-plate, .stat, .legend, .peak-plate, .live-plate, .appr, .mix, .live-hour, .foot {
+  font-family: var(--font-stencil);
+  font-stretch: condensed;
+  text-transform: uppercase;
+}
+
+/* ---------- Grid ---------- */
+.grid {
+  display: grid;
+  grid-template-columns: 1392px 456px;
+  gap: 24px;
+  padding: 20px 24px 24px;
+  height: 948px;
+}
+.col { display: flex; flex-direction: column; gap: 20px; min-height: 0; }
+
+/* ---------- Date picker + day stats ---------- */
+.ctrl { display: flex; align-items: center; gap: 12px; height: 84px; margin-bottom: 12px; }
+.dbtn {
+  height: 68px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px 0 14px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  color: var(--color-text);
+  background: linear-gradient(180deg, var(--color-surface-plate-hi), var(--color-surface-plate));
+  border: 1px solid var(--color-edge-dark);
+  border-radius: 6px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 4px 0 var(--color-edge-dark);
+  text-decoration: none;
+  cursor: pointer;
+}
+.dbtn--next { padding: 0 14px 0 20px; }
+.dbtn svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.dbtn[aria-disabled="true"] {
+  color: var(--color-text-3);
+  background: linear-gradient(180deg, var(--color-surface-housing-hi), var(--color-surface-housing));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 2px 0 var(--color-edge-dark);
+  cursor: not-allowed;
+}
+.dbtn:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 3px; }
+.date-plate {
+  height: 68px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0 14px 0 20px;
+  background: var(--color-surface-recess);
+  border: 1px solid var(--color-edge-light);
+  border-radius: 6px;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,.65);
+}
+.dp-k { display: block; font-size: 12px; font-weight: 700; letter-spacing: .22em; color: var(--color-text-3); }
+.dp-v { display: block; margin-top: 2px; font-size: 38px; font-weight: 800; line-height: 1; letter-spacing: .05em; font-variant-numeric: tabular-nums; }
+.flag {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .16em;
+  padding: 6px 9px;
+  border-radius: 3px;
+  background: var(--color-text);
+  color: var(--color-text-inverse);
+}
+.ctrl-stats { margin-left: auto; display: flex; gap: 12px; height: 68px; }
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 18px;
+  font-weight: 800;
+}
+.stat-k { font-size: 14px; letter-spacing: .14em; color: var(--color-text-2); line-height: 1.25; }
+.stat-k small { display: block; font-size: 12px; color: var(--color-text-3); letter-spacing: .14em; }
+.stat-v { font-size: 46px; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.stat-v small { font-size: 22px; color: var(--color-text-2); letter-spacing: .06em; }
+
+/* ---------- Chart ---------- */
+.chart-well { position: relative; height: 676px; }
+.chart-well svg { display: block; }
+.band { fill: var(--color-text); fill-opacity: .04; }
+.band-cap { fill: var(--color-text-3); fill-opacity: .7; }
+.band-lab, .ahead-lab { fill: var(--color-text-3); font: 800 15px var(--font-stencil); font-stretch: condensed; letter-spacing: .14em; text-transform: uppercase; }
+.gl { stroke: var(--color-edge-light); stroke-opacity: .55; stroke-width: 1; }
+.baseline { stroke: var(--color-reflector); stroke-width: 2; }
+.ytick, .xtick { fill: var(--color-text-2); font: 800 22px var(--font-stencil); font-stretch: condensed; font-variant-numeric: tabular-nums; }
+.xtick--ahead { fill: var(--color-text-3); }
+.xtick--live { fill: var(--color-text); }
+.axis-title { fill: var(--color-text-3); font: 800 15px var(--font-stencil); font-stretch: condensed; letter-spacing: .14em; text-transform: uppercase; }
+.direct { fill: var(--color-text); font: 800 26px var(--font-stencil); font-stretch: condensed; font-variant-numeric: tabular-nums; }
+.s-car { fill: var(--color-class-car); }
+.s-tricycle { fill: var(--color-class-tricycle); }
+.s-motorcycle { fill: var(--color-class-motorcycle); }
+.s-jeepney { fill: var(--color-class-jeepney); }
+.s-van { fill: var(--color-class-van); }
+.hit { fill: transparent; }
+.bar:hover .hit { fill: var(--color-text); fill-opacity: .05; }
+.bar:hover .seg { filter: brightness(1.18); }
+.ahead { fill: none; stroke: var(--color-text-3); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.leader { fill: none; stroke: var(--color-text); stroke-width: 2; }
+.leader-tip { fill: var(--color-text); }
+.live-conn { stroke: var(--color-status-ok); stroke-width: 2; }
+.live-frame { fill: none; stroke: var(--color-status-ok); stroke-width: 2; stroke-dasharray: 5 4; }
+.live-chev { fill: none; stroke: var(--color-status-ok); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+
+/* peak callout: white stencil plate (white = "the one to look at") */
+.peak-plate {
+  position: absolute;
+  left: 618px;
+  top: 74px;
+  width: 290px;
+  padding: 10px 16px 12px;
+  color: var(--color-text-inverse);
+  background: var(--color-text);
+  border: 1px solid var(--color-edge-dark);
+  border-radius: 6px;
+  box-shadow: inset 0 -4px 0 rgba(0,0,0,.22), 0 4px 0 var(--color-edge-dark), 0 12px 24px rgba(0,0,0,.55);
+  font-weight: 800;
+}
+.pp-k { display: block; font-size: 12px; letter-spacing: .18em; color: var(--color-surface-plate); }
+.pp-v { display: block; margin-top: 4px; font-size: 35px; line-height: 1.02; letter-spacing: .03em; font-variant-numeric: tabular-nums; }
+
+/* live hour plate: square cyan pilot = live system status, never a lamp */
+.live-plate {
+  position: absolute;
+  left: 1022px;
+  top: 198px;
+  padding: 7px 12px 8px;
+  background: rgba(11,12,13,.92);
+  border: 1px solid var(--color-status-ok-deep);
+  border-radius: 4px;
+  font-weight: 800;
+}
+.lp-k { display: flex; align-items: center; gap: 8px; font-size: 18px; letter-spacing: .16em; }
+.lp-v { display: block; margin-top: 2px; font-size: 15px; letter-spacing: .1em; color: var(--color-text-2); font-variant-numeric: tabular-nums; }
+.pilot--live { width: 12px; height: 12px; }
+
+/* legend */
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  height: 40px;
+  margin-top: 12px;
+  padding: 0 6px;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  color: var(--color-text);
+}
+.lg { display: flex; align-items: center; gap: 9px; white-space: nowrap; }
+.sw { width: 18px; height: 18px; border-radius: 3px; flex: none; }
+.sw--car { background: var(--color-class-car); }
+.sw--tricycle { background: var(--color-class-tricycle); }
+.sw--motorcycle { background: var(--color-class-motorcycle); }
+.sw--jeepney { background: var(--color-class-jeepney); }
+.sw--van { background: var(--color-class-van); }
+.lg-k { color: var(--color-text-3); font-size: 15px; letter-spacing: .16em; }
+.lg--aux { font-size: 15px; letter-spacing: .12em; color: var(--color-text-2); }
+.legend .sep { margin-left: auto; }
+.sw--band { background: rgba(241,241,236,.12); border-top: 3px solid var(--color-text-3); border-radius: 2px; width: 22px; }
+.sw--live { background: none; border: 2px dashed var(--color-status-ok); }
+.sw--ahead { background: none; border: 1.5px dashed var(--color-text-3); height: 10px; align-self: center; }
+
+/* ---------- Right: approach totals ---------- */
+.appr-list { display: flex; flex-direction: column; gap: 8px; }
+.appr {
+  display: grid;
+  grid-template-columns: 50px 1fr auto;
+  align-items: center;
+  gap: 14px;
+  height: 60px;
+  padding: 0 14px 0 12px;
+  font-weight: 800;
+  box-shadow: inset 4px 0 0 var(--color-surface-plate);
+}
+.appr-l { font-size: 42px; line-height: 1; text-align: center; }
+.appr-name { font-size: 17px; letter-spacing: .1em; color: var(--color-text-2); }
+.appr-sub { margin-top: 3px; font-size: 12px; letter-spacing: .14em; color: var(--color-text-3); }
+.share { margin-top: 5px; height: 6px; border-radius: 3px; background: var(--color-surface-plate); overflow: hidden; }
+.share i { display: block; height: 100%; border-radius: 3px; background: var(--color-text-2); }
+.appr-v { text-align: right; font-size: 38px; line-height: 1; font-variant-numeric: tabular-nums; }
+.appr-v small { display: block; margin-top: 3px; font-size: 14px; letter-spacing: .1em; color: var(--color-text-3); }
+.foot { margin: 10px 2px 0; font-size: 12px; font-weight: 700; letter-spacing: .12em; color: var(--color-text-3); }
+.foot b { color: var(--color-text-2); }
+
+/* ---------- Right: class mix ---------- */
+.mix-list { display: flex; flex-direction: column; gap: 6px; }
+.mix {
+  display: grid;
+  grid-template-columns: 18px 1fr 64px 62px;
+  grid-template-rows: auto 5px;
+  column-gap: 12px;
+  row-gap: 4px;
+  align-items: center;
+  padding: 4px 12px 5px;
+  font-weight: 800;
+}
+.mix-name { font-size: 19px; line-height: 1; letter-spacing: .08em; }
+.mix-v { text-align: right; font-size: 24px; line-height: 1; font-variant-numeric: tabular-nums; }
+.mix-p { text-align: right; font-size: 14px; letter-spacing: .08em; color: var(--color-text-3); font-variant-numeric: tabular-nums; }
+.mix-bar { grid-column: 2 / -1; height: 5px; border-radius: 3px; background: var(--color-surface-plate); overflow: hidden; }
+.mix-bar i { display: block; height: 100%; border-radius: 3px; }
+
+/* ---------- Right: live hour ---------- */
+.live-hour { display: flex; align-items: center; gap: 16px; padding: 8px 14px; font-weight: 800; }
+.lh-v { font-size: 54px; line-height: 1; font-variant-numeric: tabular-nums; }
+.lh-k { font-size: 16px; letter-spacing: .12em; color: var(--color-text-2); line-height: 1.3; }
+.lh-k small { display: block; font-size: 12px; letter-spacing: .14em; color: var(--color-text-3); }
+.lh-r { margin-left: auto; text-align: right; }
+.lh-r b { display: block; font-size: 24px; letter-spacing: .06em; font-variant-numeric: tabular-nums; }
+.pt-live { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; letter-spacing: .16em; color: var(--color-text-2); }
+
+/* ---------- Motion (only when the viewer allows it) ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .bar .segs {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    animation: bar-rise .7s cubic-bezier(.2,.7,.2,1) both;
+    animation-delay: calc(var(--i) * 30ms);
+  }
+  .live-frame { animation: dash-march 1s linear infinite; }
+  .live-chev { animation: chev-rise 1.6s ease-in-out infinite; }
+  .pilot--live { animation: pilot-blink 1.6s ease-in-out infinite; }
+}
+@keyframes bar-rise { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes dash-march { to { stroke-dashoffset: -18; } }
+@keyframes chev-rise { 0%, 100% { opacity: .35; transform: translateY(4px); } 50% { opacity: 1; transform: translateY(0); } }
+@keyframes pilot-blink { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+
+</style>
+</head>
+<body>
+
+<!-- ================= SCREEN STRIP ================= -->
+<header class="strip">
+  <div class="strip-name">
+    <div class="head head--brand" aria-hidden="true" style="--s:13px">
+      <span class="lamp lamp--red"></span><span class="lamp lamp--yellow"></span><span class="lamp lamp--green"></span>
+    </div>
+    <div>Traffic peaks<small>Key screen · /traffic/ · CAP-4 · Signal Hardware</small></div>
+  </div>
+  <p>Hourly vehicle throughput at INT-01 for one Asia/Manila date, stacked by vehicle class, so a POSO enforcer can see when the junction peaks. <b>Colour discipline:</b> class fills are matte orchid, blue, mauve, indigo and petrol, checked for colour-blind separation. Red, yellow and green still glow only as signal lamps, and the live hour uses the square cyan status pilot, never a lens.</p>
+</header>
+
+<!-- ================= ARTBOARD 1920x1080 ================= -->
+<section class="artboard" aria-label="Traffic peaks, 1920 by 1080">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <div class="head head--brand"><span class="lamp lamp--red"></span><span class="lamp lamp--yellow"></span><span class="lamp lamp--green"></span></div>
+      </div>
+      <div>
+        <div class="brand-title">Catarman SMART Traffic Light</div>
+        <div class="brand-sub">Edge-only adaptive signal · Catarman, Northern Samar</div>
+      </div>
+      <div class="int-plate"><span>Intersection</span><b>INT-01</b></div>
+    </div>
+    <nav class="nav" aria-label="Main">
+      <a class="tab" href="#live">Live</a>
+      <a class="tab" href="#peaks" aria-current="page">Traffic peaks</a>
+      <a class="tab" href="#breaches">Breaches</a>
+      <a class="tab" href="#override-log">Override log</a>
+      <a class="tab" href="#state-history">State history</a>
+    </nav>
+  </div>
+
+  <div class="linkbar" role="status" aria-label="Link health">
+    <span class="lb-label">Link health</span>
+    <span class="pilot-item"><i class="pilot" aria-hidden="true"></i><b>Broker</b> Connected</span>
+    <span class="pilot-item"><i class="pilot" aria-hidden="true"></i><b>Controller</b> Online <em class="sim">Sim</em></span>
+    <span class="pilot-item"><i class="pilot" aria-hidden="true"></i><b>Vision</b> Online <em class="sim">Sim</em></span>
+    <span class="lb-right">Data source · simulated (midterm)</span>
+  </div>
+
+  <main class="grid">
+
+    <!-- ===== LEFT: hourly chart ===== -->
+    <div class="col">
+      <section class="panel" style="flex:1" aria-label="Hourly vehicle throughput">
+        <h2 class="panel-title"><span>Hourly vehicle throughput · all approaches</span><span class="pt-tag">Stacked by vehicle class · vehicles per hour</span></h2>
+
+        <div class="ctrl">
+          <a class="dbtn" href="#peaks?date=2026-10-21" aria-label="Previous day, Wed 21 Oct 2026"><svg viewBox="0 0 26 26" aria-hidden="true"><path d="M16 5l-8 8 8 8"/></svg>Prev day</a>
+          <div class="date-plate" aria-label="Date shown">
+            <div><span class="dp-k">Date · Asia/Manila</span><span class="dp-v">Thu 22 Oct 2026</span></div>
+            <span class="flag">Today</span>
+          </div>
+          <a class="dbtn dbtn--next" aria-disabled="true" aria-label="Next day, not available yet">Next day<svg viewBox="0 0 26 26" aria-hidden="true"><path d="M10 5l8 8-8 8"/></svg></a>
+          <div class="ctrl-stats">
+            <div class="stat well"><span class="stat-k">Day so far<small>00:00–18:42</small></span><span class="stat-v">2,444</span></div>
+            <div class="stat well"><span class="stat-k">AM peak<small>Morning high</small></span><span class="stat-v">08:00 <small>· 236</small></span></div>
+          </div>
+        </div>
+
+        <div class="chart-well well">
+          <svg width="1348" height="674" viewBox="0 0 1348 674" role="img" aria-label="Stacked bar chart, vehicles per hour by class, 00:00 to 23:00. Morning peak 08:00 with 236 vehicles, day peak 17:00 with 248 vehicles. 18:00 is live with 163 so far. 19:00 to 23:00 not yet counted.">
+            <rect class="band" x="455.3" y="64" width="154" height="530"/><rect class="band-cap" x="455.3" y="64" width="154" height="3"/><text class="band-lab" x="532.3" y="92" text-anchor="middle">AM peak · 07–09</text><rect class="band" x="917.3" y="64" width="154" height="530"/><rect class="band-cap" x="917.3" y="64" width="154" height="3"/><text class="band-lab" x="994.3" y="92" text-anchor="middle">PM peak · 16–18</text><text class="ytick" x="82" y="601" text-anchor="end">0</text><line class="gl" x1="96" y1="505.7" x2="1328" y2="505.7"/><text class="ytick" x="82" y="512.7" text-anchor="end">50</text><line class="gl" x1="96" y1="417.3" x2="1328" y2="417.3"/><text class="ytick" x="82" y="424.3" text-anchor="end">100</text><line class="gl" x1="96" y1="329" x2="1328" y2="329"/><text class="ytick" x="82" y="336" text-anchor="end">150</text><line class="gl" x1="96" y1="240.7" x2="1328" y2="240.7"/><text class="ytick" x="82" y="247.7" text-anchor="end">200</text><line class="gl" x1="96" y1="152.3" x2="1328" y2="152.3"/><text class="ytick" x="82" y="159.3" text-anchor="end">250</text><line class="gl" x1="96" y1="64" x2="1328" y2="64"/><text class="ytick" x="82" y="71" text-anchor="end">300</text><text class="axis-title" transform="translate(28 329) rotate(-90)" text-anchor="middle">Vehicles per hour</text><g class="bar" style="--i:0"><title>00:00–00:59 · 18 vehicles · Car 4, Tricycle 4, Motorcycle 9, Jeepney 0, Utility van 1</title><rect class="hit" x="98" y="64" width="47.3" height="530"/><g class="segs"><rect class="seg s-car" x="104.7" y="586.9" width="34" height="5.1"/><rect class="seg s-tricycle" x="104.7" y="579.9" width="34" height="5.1"/><rect class="seg s-motorcycle" x="104.7" y="564" width="34" height="13.9"/><path class="seg s-van" d="M104.7 564V564Q104.7 562.2 106.4 562.2H136.9Q138.7 562.2 138.7 564V564Z"/></g></g><g class="bar" style="--i:1"><title>01:00–01:59 · 11 vehicles · Car 2, Tricycle 2, Motorcycle 6, Jeepney 0, Utility van 1</title><rect class="hit" x="149.3" y="64" width="47.3" height="530"/><g class="segs"><rect class="seg s-car" x="156" y="590.5" width="34" height="1.5"/><rect class="seg s-tricycle" x="156" y="586.9" width="34" height="1.5"/><rect class="seg s-motorcycle" x="156" y="576.3" width="34" height="8.6"/><path class="seg s-van" d="M156 576.3V576.3Q156 574.6 157.8 574.6H188.2Q190 574.6 190 576.3V576.3Z"/></g></g><g class="bar" style="--i:2"><title>02:00–02:59 · 8 vehicles · Car 1, Tricycle 2, Motorcycle 4, Jeepney 0, Utility van 1</title><rect class="hit" x="200.7" y="64" width="47.3" height="530"/><g class="segs"><rect class="seg s-car" x="207.3" y="592.2" width="34" height="1"/><rect class="seg s-tricycle" x="207.3" y="588.7" width="34" height="1.5"/><rect class="seg s-motorcycle" x="207.3" y="581.6" width="34" height="5.1"/><path class="seg s-van" d="M207.3 581.6V581.6Q207.3 579.9 209.1 579.9H239.6Q241.3 579.9 241.3 581.6V581.6Z"/></g></g><g class="bar" style="--i:3"><title>03:00–03:59 · 9 vehicles · Car 2, Tricycle 2, Motorcycle 4, Jeepney 0, Utility van 1</title><rect class="hit" x="252" y="64" width="47.3" height="530"/><g class="segs"><rect class="seg s-car" x="258.7" y="590.5" width="34" height="1.5"/><rect class="seg s-tricycle" x="258.7" y="586.9" width="34" height="1.5"/><rect class="seg s-motorcycle" x="258.7" y="579.9" width="34" height="5.1"/><path class="seg s-van" d="M258.7 579.9V579.9Q258.7 578.1 260.4 578.1H290.9Q292.7 578.1 292.7 579.9V579.9Z"/></g></g><g class="bar" style="--i:4"><title>04:00–04:59 · 22 vehicles · Car 3, Tricycle 8, Motorcycle 7, Jeepney 2, Utility van 2</title><rect class="hit" x="303.3" y="64" width="47.3" height="530"/><g class="segs"><rect class="seg s-car" x="310" y="588.7" width="34" height="3.3"/><rect class="seg s-tricycle" x="310" y="574.6" width="34" height="12.1"/><rect class="seg s-motorcycle" x="310" y="562.2" width="34" height="10.4"/><rect class="seg s-jeepney" x="310" y="558.7" width="34" height="1.5"/><path class="seg s-van" d="M310 558.7V558.7Q310 555.1 313.5 555.1H340.5Q344 555.1 344 558.7V558.7Z"/></g></g><g class="bar" style="--i:5"><title>05:00–05:59 · 61 vehicles · Car 9, Tricycle 23, Motorcycle 18, Jeepney 5, Utility van 6</title><rect class="hit" x="354.7" y="64" width="47.3" height="530"/><g class="segs"><rect class="seg s-car" x="361.3" y="578.1" width="34" height="13.9"/><rect class="seg s-tricycle" x="361.3" y="537.5" width="34" height="38.6"/><rect class="seg s-motorcycle" x="361.3" y="505.7" width="34" height="29.8"/><rect class="seg s-jeepney" x="361.3" y="496.8" width="34" height="6.8"/><path class="seg s-van" d="M361.3 496.8V490.2Q361.3 486.2 365.3 486.2H391.3Q395.3 486.2 395.3 490.2V496.8Z"/></g></g><g class="bar" style="--i:6"><title>06:00–06:59 · 128 vehicles · Car 19, Tricycle 49, Motorcycle 38, Jeepney 10, Utility van 12</title><rect class="hit" x="406" y="64" width="47.3" height="530"/><g class="segs"><rect class="seg s-car" x="412.7" y="560.4" width="34" height="31.6"/><rect class="seg s-tricycle" x="412.7" y="473.9" width="34" height="84.6"/><rect class="seg s-motorcycle" x="412.7" y="406.7" width="34" height="65.1"/><rect class="seg s-jeepney" x="412.7" y="389.1" width="34" height="15.7"/><path class="seg s-van" d="M412.7 389.1V371.9Q412.7 367.9 416.7 367.9H442.7Q446.7 367.9 446.7 371.9V389.1Z"/></g></g><g class="bar" style="--i:7"><title>07:00–07:59 · 214 vehicles · Car 41, Tricycle 90, Motorcycle 64, Jeepney 8, Utility van 11</title><rect class="hit" x="457.3" y="64" width="47.3" height="530"/><g class="segs"><rect class="seg s-car" x="464" y="521.6" width="34" height="70.4"/><rect class="seg s-tricycle" x="464" y="362.6" width="34" height="157"/><rect class="seg s-motorcycle" x="464" y="249.5" width="34" height="111.1"/><rect class="seg s-jeepney" x="464" y="235.4" width="34" height="12.1"/><path class="seg s-van" d="M464 235.4V219.9Q464 215.9 468 215.9H494Q498 215.9 498 219.9V235.4Z"/></g></g><g class="bar" style="--i:8"><title>08:00–08:59 · 236 vehicles · Car 45, Tricycle 99, Motorcycle 71, Jeepney 9, Utility van 12</title><rect class="hit" x="508.7" y="64" width="47.3" height="530"/><g class="segs"><rect class="seg s-car" x="515.3" y="514.5" width="34" height="77.5"/><rect class="seg s-tricycle" x="515.3" y="339.6" width="34" height="172.9"/><rect class="seg s-motorcycle" x="515.3" y="214.2" width="34" height="123.4"/><rect class="seg s-jeepney" x="515.3" y="198.3" width="34" height="13.9"/><path class="seg s-van" d="M515.3 198.3V181.1Q515.3 177.1 519.3 177.1H545.3Q549.3 177.1 549.3 181.1V198.3Z"/></g></g><g class="bar" style="--i:9"><title>09:00–09:59 · 187 vehicles · Car 36, Tricycle 79, Motorcycle 56, Jeepney 7, Utility van 9</title><rect class="hit" x="560" y="64" width="47.3" height="530"/><g class="segs"><rect class="seg s-car" x="566.7" y="530.4" width="34" height="61.6"/><rect class="seg s-tricycle" x="566.7" y="390.8" width="34" height="137.6"/><rect class="seg s-motorcycle" x="566.7" y="291.9" width="34" height="96.9"/><rect class="seg s-jeepney" x="566.7" y="279.5" width="34" height="10.4"/><path class="seg s-van" d="M566.7 279.5V267.6Q566.7 263.6 570.7 263.6H596.7Q600.7 263.6 600.7 267.6V279.5Z"/></g></g><g class="bar" style="--i:10"><title>10:00–10:59 · 142 vehicles · Car 28, Tricycle 57, Motorcycle 44, Jeepney 6, Utility van 7</title><rect class="hit" x="611.3" y="64" width="47.3" height="530"/><g class="segs"><rect class="seg s-car" x="618" y="544.5" width="34" height="47.5"/><rect class="seg s-tricycle" x="618" y="443.8" width="34" height="98.7"/><rect class="seg s-motorcycle" x="618" y="366.1" width="34" height="75.7"/><rect class="seg s-jeepney" x="618" y="355.5" width="34" height="8.6"/><path class="seg s-van" d="M618 355.5V347.1Q618 343.1 622 343.1H648Q652 343.1 652 347.1V355.5Z"/></g></g><g class="bar" style="--i:11"><title>11:00–11:59 · 151 vehicles · Car 30, Tricycle 60, Motorcycle 47, Jeepney 6, Utility van 8</title><rect class="hit" x="662.7" y="64" width="47.3" height="530"/><g class="segs"><rect class="seg s-car" x="669.3" y="541" width="34" height="51"/><rect class="seg s-tricycle" x="669.3" y="435" width="34" height="104"/><rect class="seg s-motorcycle" x="669.3" y="352" width="34" height="81"/><rect class="seg s-jeepney" x="669.3" y="341.4" width="34" height="8.6"/><path class="seg s-van" d="M669.3 341.4V331.2Q669.3 327.2 673.3 327.2H699.3Q703.3 327.2 703.3 331.2V341.4Z"/></g></g><g class="bar" style="--i:12"><title>12:00–12:59 · 168 vehicles · Car 34, Tricycle 67, Motorcycle 52, Jeepney 7, Utility van 8</title><rect class="hit" x="714" y="64" width="47.3" height="530"/><g class="segs"><rect class="seg s-car" x="720.7" y="533.9" width="34" height="58.1"/><rect class="seg s-tricycle" x="720.7" y="415.6" width="34" height="116.4"/><rect class="seg s-motorcycle" x="720.7" y="323.7" width="34" height="89.9"/><rect class="seg s-jeepney" x="720.7" y="311.3" width="34" height="10.4"/><path class="seg s-van" d="M720.7 311.3V301.2Q720.7 297.2 724.7 297.2H750.7Q754.7 297.2 754.7 301.2V311.3Z"/></g></g><g class="bar" style="--i:13"><title>13:00–13:59 · 139 vehicles · Car 28, Tricycle 56, Motorcycle 43, Jeepney 5, Utility van 7</title><rect class="hit" x="765.3" y="64" width="47.3" height="530"/><g class="segs"><rect class="seg s-car" x="772" y="544.5" width="34" height="47.5"/><rect class="seg s-tricycle" x="772" y="445.6" width="34" height="96.9"/><rect class="seg s-motorcycle" x="772" y="369.6" width="34" height="74"/><rect class="seg s-jeepney" x="772" y="360.8" width="34" height="6.8"/><path class="seg s-van" d="M772 360.8V352.4Q772 348.4 776 348.4H802Q806 348.4 806 352.4V360.8Z"/></g></g><g class="bar" style="--i:14"><title>14:00–14:59 · 146 vehicles · Car 29, Tricycle 59, Motorcycle 45, Jeepney 6, Utility van 7</title><rect class="hit" x="816.7" y="64" width="47.3" height="530"/><g class="segs"><rect class="seg s-car" x="823.3" y="542.8" width="34" height="49.2"/><rect class="seg s-tricycle" x="823.3" y="438.5" width="34" height="102.2"/><rect class="seg s-motorcycle" x="823.3" y="359" width="34" height="77.5"/><rect class="seg s-jeepney" x="823.3" y="348.4" width="34" height="8.6"/><path class="seg s-van" d="M823.3 348.4V340.1Q823.3 336.1 827.3 336.1H853.3Q857.3 336.1 857.3 340.1V348.4Z"/></g></g><g class="bar" style="--i:15"><title>15:00–15:59 · 172 vehicles · Car 34, Tricycle 69, Motorcycle 53, Jeepney 7, Utility van 9</title><rect class="hit" x="868" y="64" width="47.3" height="530"/><g class="segs"><rect class="seg s-car" x="874.7" y="533.9" width="34" height="58.1"/><rect class="seg s-tricycle" x="874.7" y="412" width="34" height="119.9"/><rect class="seg s-motorcycle" x="874.7" y="318.4" width="34" height="91.6"/><rect class="seg s-jeepney" x="874.7" y="306" width="34" height="10.4"/><path class="seg s-van" d="M874.7 306V294.1Q874.7 290.1 878.7 290.1H904.7Q908.7 290.1 908.7 294.1V306Z"/></g></g><g class="bar" style="--i:16"><title>16:00–16:59 · 221 vehicles · Car 44, Tricycle 91, Motorcycle 68, Jeepney 7, Utility van 11</title><rect class="hit" x="919.3" y="64" width="47.3" height="530"/><g class="segs"><rect class="seg s-car" x="926" y="516.3" width="34" height="75.7"/><rect class="seg s-tricycle" x="926" y="355.5" width="34" height="158.8"/><rect class="seg s-motorcycle" x="926" y="235.4" width="34" height="118.1"/><rect class="seg s-jeepney" x="926" y="223" width="34" height="10.4"/><path class="seg s-van" d="M926 223V207.6Q926 203.6 930 203.6H956Q960 203.6 960 207.6V223Z"/></g></g><g class="bar" style="--i:17"><title>17:00–17:59 · 248 vehicles · Car 47, Tricycle 101, Motorcycle 78, Jeepney 9, Utility van 13</title><rect class="hit" x="970.7" y="64" width="47.3" height="530"/><g class="segs"><rect class="seg s-car" x="977.3" y="511" width="34" height="81"/><rect class="seg s-tricycle" x="977.3" y="332.5" width="34" height="176.4"/><rect class="seg s-motorcycle" x="977.3" y="194.7" width="34" height="135.8"/><rect class="seg s-jeepney" x="977.3" y="178.8" width="34" height="13.9"/><path class="seg s-van" d="M977.3 178.8V159.9Q977.3 155.9 981.3 155.9H1007.3Q1011.3 155.9 1011.3 159.9V178.8Z"/></g></g><g class="bar bar--live" style="--i:18"><title>18:00–18:59 · 163 vehicles so far (live, still counting) · Car 34, Tricycle 65, Motorcycle 52, Jeepney 5, Utility van 7</title><rect class="hit" x="1022" y="64" width="47.3" height="530"/><g class="segs"><rect class="seg s-car" x="1028.7" y="533.9" width="34" height="58.1"/><rect class="seg s-tricycle" x="1028.7" y="419.1" width="34" height="112.8"/><rect class="seg s-motorcycle" x="1028.7" y="327.2" width="34" height="89.9"/><rect class="seg s-jeepney" x="1028.7" y="318.4" width="34" height="6.8"/><path class="seg s-van" d="M1028.7 318.4V310Q1028.7 306 1032.7 306H1058.7Q1062.7 306 1062.7 310V318.4Z"/></g></g><rect class="ahead" x="1081" y="582" width="32" height="11" rx="2"/><rect class="ahead" x="1132.3" y="582" width="32" height="11" rx="2"/><rect class="ahead" x="1183.7" y="582" width="32" height="11" rx="2"/><rect class="ahead" x="1235" y="582" width="32" height="11" rx="2"/><rect class="ahead" x="1286.3" y="582" width="32" height="11" rx="2"/><text class="ahead-lab" x="1199.7" y="560" text-anchor="middle">Not yet counted</text><line class="baseline" x1="96" y1="594" x2="1328" y2="594"/><text class="xtick" x="121.7" y="628" text-anchor="middle">00</text><text class="xtick" x="173" y="628" text-anchor="middle">01</text><text class="xtick" x="224.3" y="628" text-anchor="middle">02</text><text class="xtick" x="275.7" y="628" text-anchor="middle">03</text><text class="xtick" x="327" y="628" text-anchor="middle">04</text><text class="xtick" x="378.3" y="628" text-anchor="middle">05</text><text class="xtick" x="429.7" y="628" text-anchor="middle">06</text><text class="xtick" x="481" y="628" text-anchor="middle">07</text><text class="xtick" x="532.3" y="628" text-anchor="middle">08</text><text class="xtick" x="583.7" y="628" text-anchor="middle">09</text><text class="xtick" x="635" y="628" text-anchor="middle">10</text><text class="xtick" x="686.3" y="628" text-anchor="middle">11</text><text class="xtick" x="737.7" y="628" text-anchor="middle">12</text><text class="xtick" x="789" y="628" text-anchor="middle">13</text><text class="xtick" x="840.3" y="628" text-anchor="middle">14</text><text class="xtick" x="891.7" y="628" text-anchor="middle">15</text><text class="xtick" x="943" y="628" text-anchor="middle">16</text><text class="xtick" x="994.3" y="628" text-anchor="middle">17</text><text class="xtick xtick--live" x="1045.7" y="628" text-anchor="middle">18</text><text class="xtick xtick--ahead" x="1097" y="628" text-anchor="middle">19</text><text class="xtick xtick--ahead" x="1148.3" y="628" text-anchor="middle">20</text><text class="xtick xtick--ahead" x="1199.7" y="628" text-anchor="middle">21</text><text class="xtick xtick--ahead" x="1251" y="628" text-anchor="middle">22</text><text class="xtick xtick--ahead" x="1302.3" y="628" text-anchor="middle">23</text><text class="axis-title" x="712" y="662" text-anchor="middle">Hour starting · Asia/Manila (UTC+8)</text><text class="direct" x="532.3" y="165.1" text-anchor="middle">236</text><path class="leader" d="M908 128H994.3V145.9"/><path class="leader-tip" d="M987.3 144.9H1001.3L994.3 152.9Z"/><g class="live-cap"><path class="live-conn" d="M1045.7 256V268"/><rect class="live-frame" x="1028.7" y="270" width="34" height="34" rx="3"/><path class="live-chev" d="M1037.7 292l8-8 8 8"/></g>
+          </svg>
+          <div class="peak-plate" aria-label="Peak 17:00 · 248 vehicles"><span class="pp-k">Busiest hour today</span><span class="pp-v">Peak 17:00 ·<br>248 vehicles</span></div>
+          <div class="live-plate" aria-label="Live hour 18:00, 163 vehicles so far"><span class="lp-k"><i class="pilot pilot--live" aria-hidden="true"></i>Live</span><span class="lp-v">163 so far</span></div>
+          <table class="sr-only"><caption>Vehicles per hour by class, Thu 22 Oct 2026, Asia/Manila</caption><thead><tr><th>Hour</th><th>Car</th><th>Tricycle</th><th>Motorcycle</th><th>Jeepney</th><th>Utility van</th><th>Total</th></tr></thead><tbody><tr><th>00:00</th><td>4</td><td>4</td><td>9</td><td>0</td><td>1</td><td>18</td></tr><tr><th>01:00</th><td>2</td><td>2</td><td>6</td><td>0</td><td>1</td><td>11</td></tr><tr><th>02:00</th><td>1</td><td>2</td><td>4</td><td>0</td><td>1</td><td>8</td></tr><tr><th>03:00</th><td>2</td><td>2</td><td>4</td><td>0</td><td>1</td><td>9</td></tr><tr><th>04:00</th><td>3</td><td>8</td><td>7</td><td>2</td><td>2</td><td>22</td></tr><tr><th>05:00</th><td>9</td><td>23</td><td>18</td><td>5</td><td>6</td><td>61</td></tr><tr><th>06:00</th><td>19</td><td>49</td><td>38</td><td>10</td><td>12</td><td>128</td></tr><tr><th>07:00</th><td>41</td><td>90</td><td>64</td><td>8</td><td>11</td><td>214</td></tr><tr><th>08:00</th><td>45</td><td>99</td><td>71</td><td>9</td><td>12</td><td>236</td></tr><tr><th>09:00</th><td>36</td><td>79</td><td>56</td><td>7</td><td>9</td><td>187</td></tr><tr><th>10:00</th><td>28</td><td>57</td><td>44</td><td>6</td><td>7</td><td>142</td></tr><tr><th>11:00</th><td>30</td><td>60</td><td>47</td><td>6</td><td>8</td><td>151</td></tr><tr><th>12:00</th><td>34</td><td>67</td><td>52</td><td>7</td><td>8</td><td>168</td></tr><tr><th>13:00</th><td>28</td><td>56</td><td>43</td><td>5</td><td>7</td><td>139</td></tr><tr><th>14:00</th><td>29</td><td>59</td><td>45</td><td>6</td><td>7</td><td>146</td></tr><tr><th>15:00</th><td>34</td><td>69</td><td>53</td><td>7</td><td>9</td><td>172</td></tr><tr><th>16:00</th><td>44</td><td>91</td><td>68</td><td>7</td><td>11</td><td>221</td></tr><tr><th>17:00</th><td>47</td><td>101</td><td>78</td><td>9</td><td>13</td><td>248</td></tr><tr><th>18:00 (live)</th><td>34</td><td>65</td><td>52</td><td>5</td><td>7</td><td>163</td></tr></tbody></table>
+        </div>
+
+        <div class="legend" aria-label="Legend">
+          <span class="lg-k">Class</span>
+          <span class="lg"><i class="sw sw--car"></i>Car</span>
+          <span class="lg"><i class="sw sw--tricycle"></i>Tricycle</span>
+          <span class="lg"><i class="sw sw--motorcycle"></i>Motorcycle*</span>
+          <span class="lg"><i class="sw sw--jeepney"></i>Jeepney</span>
+          <span class="lg"><i class="sw sw--van"></i>Utility van</span>
+          <span class="lg lg--aux sep"><i class="sw sw--band"></i>Peak band</span>
+          <span class="lg lg--aux"><i class="sw sw--live"></i>Live hour · counting</span>
+          <span class="lg lg--aux"><i class="sw sw--ahead"></i>Hours ahead</span>
+        </div>
+      </section>
+    </div>
+
+    <!-- ===== RIGHT ===== -->
+    <div class="col">
+      <section class="panel" aria-label="Approach totals for the day">
+        <h2 class="panel-title"><span>Approach totals</span><span class="pt-tag">Day so far · Thu 22 Oct</span></h2>
+        <div class="appr-list">
+          <div class="appr well">
+            <span class="appr-l">N</span>
+            <div>
+              <div class="appr-name">North approach</div>
+              <div class="appr-sub">Phase NS · peak 17:00</div>
+              <div class="share"><i style="width:35.3%"></i></div>
+            </div>
+            <div class="appr-v">862<small>35.3%</small></div>
+          </div>
+          <div class="appr well">
+            <span class="appr-l">S</span>
+            <div>
+              <div class="appr-name">South approach</div>
+              <div class="appr-sub">Phase NS · peak 08:00</div>
+              <div class="share"><i style="width:22.0%"></i></div>
+            </div>
+            <div class="appr-v">537<small>22.0%</small></div>
+          </div>
+          <div class="appr well">
+            <span class="appr-l">E</span>
+            <div>
+              <div class="appr-name">East approach</div>
+              <div class="appr-sub">Phase EW · peak 17:00</div>
+              <div class="share"><i style="width:28.4%"></i></div>
+            </div>
+            <div class="appr-v">693<small>28.4%</small></div>
+          </div>
+          <div class="appr well">
+            <span class="appr-l">W</span>
+            <div>
+              <div class="appr-name">West approach</div>
+              <div class="appr-sub">Phase EW · peak 07:00</div>
+              <div class="share"><i style="width:14.4%"></i></div>
+            </div>
+            <div class="appr-v">352<small>14.4%</small></div>
+          </div>
+        </div>
+        <p class="foot">Sum of approaches = day total <b>2,444</b></p>
+      </section>
+
+      <section class="panel" aria-label="Class mix for the day">
+        <h2 class="panel-title"><span>Class mix</span><span class="pt-tag">Day so far</span></h2>
+        <div class="mix-list">
+          <div class="mix well">
+            <i class="sw sw--car"></i>
+            <span class="mix-name">Car</span>
+            <span class="mix-v">470</span>
+            <span class="mix-p">19.2%</span>
+            <span class="mix-bar"><i style="width:47.8%;background:var(--color-class-car)"></i></span>
+          </div>
+          <div class="mix well">
+            <i class="sw sw--tricycle"></i>
+            <span class="mix-name">Tricycle</span>
+            <span class="mix-v">983</span>
+            <span class="mix-p">40.2%</span>
+            <span class="mix-bar"><i style="width:100.0%;background:var(--color-class-tricycle)"></i></span>
+          </div>
+          <div class="mix well">
+            <i class="sw sw--motorcycle"></i>
+            <span class="mix-name">Motorcycle*</span>
+            <span class="mix-v">759</span>
+            <span class="mix-p">31.1%</span>
+            <span class="mix-bar"><i style="width:77.2%;background:var(--color-class-motorcycle)"></i></span>
+          </div>
+          <div class="mix well">
+            <i class="sw sw--jeepney"></i>
+            <span class="mix-name">Jeepney</span>
+            <span class="mix-v">99</span>
+            <span class="mix-p">4.1%</span>
+            <span class="mix-bar"><i style="width:10.1%;background:var(--color-class-jeepney)"></i></span>
+          </div>
+          <div class="mix well">
+            <i class="sw sw--van"></i>
+            <span class="mix-name">Utility van</span>
+            <span class="mix-v">133</span>
+            <span class="mix-p">5.4%</span>
+            <span class="mix-bar"><i style="width:13.5%;background:var(--color-class-van)"></i></span>
+          </div>
+        </div>
+        <p class="foot">* Motorcycle includes habal-habal</p>
+      </section>
+
+      <section class="panel" style="flex:1" aria-label="Live hour">
+        <h2 class="panel-title"><span>Live hour</span><span class="pt-live"><i class="pilot pilot--live" aria-hidden="true"></i>Counting</span></h2>
+        <div class="live-hour well">
+          <span class="lh-v">163</span>
+          <span class="lh-k">Vehicles so far<small>Bar still filling</small></span>
+          <span class="lh-r lh-k"><b>18:00–18:59</b><small>Updated 18:42:15</small></span>
+        </div>
+      </section>
+    </div>
+  </main>
+</section>
+</body>
+</html>

@@ -1,0 +1,834 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920">
+<title>Road Sign Direction</title>
+<style>
+/* =====================================================================
+   DIRECTION: ROAD SIGN  -  token sheet (every concrete color used below)
+   ---------------------------------------------------------------------
+   Surfaces (asphalt and pavement)
+     --surface-page          #131517   page behind the artboards
+     --surface-asphalt       #2C2F32   artboard canvas (asphalt)
+     --surface-asphalt-dot   #3A3E42   asphalt aggregate speckle
+     --surface-asphalt-pit   #000000 @ 22%  asphalt pits (texture)
+     --surface-road          #1D1F21   carriageway inside the intersection
+     --surface-block         #35393D   corner blocks around the intersection
+     --surface-curb          #5B6065   curb edge lines
+     --surface-raised        #3A3E42   raised asphalt rows (current ladder rung, phase rows)
+     --surface-scrim         #0B0C0D @ 74%  dialog backdrop
+   Markings (structure only: always white, never yellow, never a state)
+     --marking-white         #F2F2EA   lane dividers, stop lines, zebra, sign borders
+     --marking-zone          #F2F2EA @ 7%   detection-zone fill
+   Text
+     --text-on-asphalt       #F4F4EE
+     --text-muted            #B3B8BD
+     --text-on-light         #111214   black legend on white / yellow plates
+     --text-on-dark          #FFFFFF   white legend on green / red plates
+   Sign plates (PAINTED: flat, matte, white-bordered, never glow; color = sign category)
+     --sign-guide            #00693E   green guide sign: information and flow (counts, L1, title)
+     --sign-guide-rule       #FFFFFF @ 32%  row rules on guide plates
+     --sign-warning          #FFD200   yellow warning sign: caution (flood, L3, L4)
+     --sign-regulatory       #B5122A   red regulatory sign: MDRRMO authority, breaches, FAULT
+     --sign-white            #F7F7F2   white plate: neutral data (PCU, countdown, link health, L2)
+     --sign-black            #121314   legend and ring on light plates
+     --sign-post             #8A9096   galvanized sign post
+   Signal aspects (LIT: only lamps inside black housings, always glowing, always text-labelled)
+     --signal-red            #FF3B2F   RED lamp          deep #A3150C  glow #FF3B2F @ 55%  haze @ 22%
+     --signal-amber          #FF9F0A   YELLOW / FLASHING AMBER lamp   deep #B86A00  glow #FF9F0A @ 55%  haze @ 22%
+     --signal-green          #1EF0A6   GREEN lamp (LED blue-green)    deep #08855A  glow #1EF0A6 @ 50%  haze @ 20%
+     --lamp-core             #FFF7EC   hot centre of a lit lens
+     --lamp-off              #25282A   unlit lens
+     --housing               #0A0B0C   signal head, beacon bar, LED countdown window
+     --housing-edge          #474B50   head backplate edge
+     --visor                 #18191B   lamp visor
+   Illustration (neutral, never red / yellow / green)
+     --vehicle-body          #C6CBD0
+     --vehicle-glass         #4E555B
+     --thumb-light           #B4B8BC   blurred breach crop tones
+     --thumb-mid             #8A8F94
+     --thumb-dark            #5E6368
+   Shadow
+     --shadow-plate          #000000 @ 40%  flat drop under plates (a shadow, not a glow)
+   ===================================================================== */
+:root{
+  --surface-page:#131517;
+  --surface-asphalt:#2C2F32;
+  --surface-asphalt-dot:#3A3E42;
+  --surface-asphalt-pit:rgba(0,0,0,.22);
+  --surface-road:#1D1F21;
+  --surface-block:#35393D;
+  --surface-curb:#5B6065;
+  --surface-raised:#3A3E42;
+  --surface-scrim:rgba(11,12,13,.74);
+  --marking-white:#F2F2EA;
+  --marking-zone:rgba(242,242,234,.07);
+  --text-on-asphalt:#F4F4EE;
+  --text-muted:#B3B8BD;
+  --text-on-light:#111214;
+  --text-on-dark:#FFFFFF;
+  --sign-guide:#00693E;
+  --sign-guide-rule:rgba(255,255,255,.32);
+  --sign-warning:#FFD200;
+  --sign-regulatory:#B5122A;
+  --sign-white:#F7F7F2;
+  --sign-black:#121314;
+  --sign-post:#8A9096;
+  --signal-red:#FF3B2F;
+  --signal-red-deep:#A3150C;
+  --signal-red-glow:rgba(255,59,47,.55);
+  --signal-red-haze:rgba(255,59,47,.22);
+  --signal-amber:#FF9F0A;
+  --signal-amber-deep:#B86A00;
+  --signal-amber-glow:rgba(255,159,10,.55);
+  --signal-amber-haze:rgba(255,159,10,.22);
+  --signal-green:#1EF0A6;
+  --signal-green-deep:#08855A;
+  --signal-green-glow:rgba(30,240,166,.5);
+  --signal-green-haze:rgba(30,240,166,.2);
+  --lamp-core:#FFF7EC;
+  --lamp-off:#25282A;
+  --housing:#0A0B0C;
+  --housing-edge:#474B50;
+  --visor:#18191B;
+  --vehicle-body:#C6CBD0;
+  --vehicle-glass:#4E555B;
+  --thumb-light:#B4B8BC;
+  --thumb-mid:#8A8F94;
+  --thumb-dark:#5E6368;
+  --shadow-plate:rgba(0,0,0,.4);
+  --font-highway:"Overpass","Interstate","Highway Gothic",Verdana,"DejaVu Sans","Segoe UI",Roboto,Arial,sans-serif;
+  --octagon:polygon(29.3% 0,70.7% 0,100% 29.3%,100% 70.7%,70.7% 100%,29.3% 100%,0 70.7%,0 29.3%);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--surface-page)}
+body{
+  width:1920px;color:var(--text-on-asphalt);font-family:var(--font-highway);font-weight:700;
+  text-transform:uppercase;letter-spacing:.02em;-webkit-font-smoothing:antialiased;
+}
+.num{font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- asphalt + markings ---------- */
+.asphalt{
+  background-color:var(--surface-asphalt);
+  background-image:radial-gradient(var(--surface-asphalt-dot) 1px,transparent 1.6px),radial-gradient(var(--surface-asphalt-pit) 1px,transparent 1.6px);
+  background-size:9px 9px,13px 13px;background-position:0 0,4px 6px;
+}
+.lane-h{height:6px;align-self:center;background:repeating-linear-gradient(90deg,var(--marking-white) 0 52px,transparent 52px 88px)}
+.lane-v{width:6px;justify-self:center;height:100%;background:repeating-linear-gradient(180deg,var(--marking-white) 0 52px,transparent 52px 88px)}
+
+/* ---------- sign plates (painted, flat) ---------- */
+.plate{
+  position:relative;border-radius:16px;background:var(--plate-bg);color:var(--plate-ink);
+  box-shadow:inset 0 0 0 5px var(--plate-bg),inset 0 0 0 10px var(--plate-ring),0 5px 0 var(--shadow-plate);
+}
+.plate--guide{--plate-bg:var(--sign-guide);--plate-ring:var(--marking-white);--plate-ink:var(--text-on-dark)}
+.plate--warning{--plate-bg:var(--sign-warning);--plate-ring:var(--sign-black);--plate-ink:var(--text-on-light)}
+.plate--reg{--plate-bg:var(--sign-regulatory);--plate-ring:var(--marking-white);--plate-ink:var(--text-on-dark)}
+.plate--white{--plate-bg:var(--sign-white);--plate-ring:var(--sign-black);--plate-ink:var(--text-on-light)}
+.eyebrow{font-size:15px;letter-spacing:.08em}
+.muted{color:var(--text-muted)}
+
+/* diamond warning plate */
+.diamond{position:relative;width:var(--d,200px);height:var(--d,200px);display:grid;place-items:center;filter:drop-shadow(0 5px 0 var(--shadow-plate))}
+.diamond::before{
+  content:"";position:absolute;inset:14.65%;transform:rotate(45deg);border-radius:var(--dr,14px);background:var(--plate-bg);
+  box-shadow:inset 0 0 0 var(--dm,5px) var(--plate-bg),inset 0 0 0 calc(var(--dm,5px) + var(--dw,5px)) var(--plate-ring);
+}
+.diamond > *{position:relative}
+.diamond-content{display:flex;flex-direction:column;align-items:center;text-align:center;color:var(--plate-ink)}
+
+/* octagon regulatory plate */
+.octagon{position:relative;width:var(--o,140px);height:var(--o,140px);display:grid;place-items:center;color:var(--text-on-dark);background:var(--sign-regulatory);clip-path:var(--octagon)}
+.octagon::before,.octagon::after{content:"";position:absolute;clip-path:var(--octagon)}
+.octagon::before{inset:var(--om,4px);background:var(--marking-white)}
+.octagon::after{inset:calc(var(--om,4px) + var(--ow,5px));background:var(--sign-regulatory)}
+.octagon > *{position:relative;z-index:1}
+.oct-wrap{filter:drop-shadow(0 5px 0 var(--shadow-plate))}
+
+/* ---------- signal heads (lit, semantic) ---------- */
+.housing{
+  display:flex;flex-direction:column;align-items:center;gap:var(--lg,10px);padding:12px var(--lp,12px);
+  background:var(--housing);border-radius:14px;box-shadow:0 0 0 4px var(--housing-edge),0 6px 0 4px var(--shadow-plate);
+}
+.lamp{position:relative;width:var(--ls,46px);height:var(--ls,46px);border-radius:50%;background:var(--lamp-off);box-shadow:inset 0 3px 6px rgba(0,0,0,.7)}
+.lamp::before{content:"";position:absolute;z-index:1;left:-5px;right:-5px;top:-6px;height:55%;border:5px solid var(--visor);border-bottom:0;border-radius:999px 999px 0 0}
+.lamp::after{
+  content:"";position:absolute;inset:0;border-radius:50%;opacity:0;
+  background:radial-gradient(circle at 40% 35%,var(--lamp-core) 0 9%,var(--lamp-color) 44%,var(--lamp-deep) 100%);
+  box-shadow:0 0 16px 3px var(--lamp-glow),0 0 46px 12px var(--lamp-haze);
+}
+.lamp.is-lit::after,.lamp.is-flashing::after{opacity:1}
+.lamp--red{--lamp-color:var(--signal-red);--lamp-deep:var(--signal-red-deep);--lamp-glow:var(--signal-red-glow);--lamp-haze:var(--signal-red-haze)}
+.lamp--amber{--lamp-color:var(--signal-amber);--lamp-deep:var(--signal-amber-deep);--lamp-glow:var(--signal-amber-glow);--lamp-haze:var(--signal-amber-haze)}
+.lamp--green{--lamp-color:var(--signal-green);--lamp-deep:var(--signal-green-deep);--lamp-glow:var(--signal-green-glow);--lamp-haze:var(--signal-green-haze)}
+.aspect{flex:none;display:grid;place-items:center;width:var(--as,56px);height:var(--as,56px);border-radius:50%;background:var(--housing);box-shadow:0 0 0 3px var(--housing-edge)}
+.aspect .lamp::before{display:none}
+.head-label{background:var(--housing);border-radius:8px;padding:4px 10px 5px;text-align:center;line-height:1.1;box-shadow:0 0 0 2px var(--housing-edge)}
+.head-label b{display:block;font-size:22px}
+.head-label span{display:block;font-size:13px;letter-spacing:.06em}
+
+/* beacons on the flood sign */
+.beacons{position:relative;z-index:2;display:flex;justify-content:space-between;width:var(--bw,150px);padding:6px 10px;background:var(--housing);border-radius:10px;box-shadow:0 0 0 3px var(--housing-edge)}
+.beacons .lamp{--ls:24px}
+.beacons .lamp::before{display:none}
+
+/* ===================== top strip ===================== */
+.strip{display:flex;gap:36px;align-items:center;padding:30px 32px 30px}
+.strip-sign{position:relative;padding-top:30px;flex:none}
+.strip-plate{padding:20px 34px 18px;font-size:40px;letter-spacing:.06em}
+.strip-text{max-width:1440px;font-size:19px;line-height:1.55;font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-on-asphalt)}
+.strip-text strong{font-weight:700}
+
+/* exit tab (shared) */
+.exit-tab{
+  position:absolute;top:0;left:24px;z-index:2;height:40px;padding:0 16px;line-height:32px;font-size:19px;letter-spacing:.08em;
+  background:var(--sign-guide);color:var(--text-on-dark);border:5px solid var(--marking-white);border-bottom:0;border-radius:10px 10px 0 0;
+  box-shadow:0 -5px 0 0 var(--sign-guide),-5px -5px 0 0 var(--sign-guide),5px -5px 0 0 var(--sign-guide);
+}
+
+/* ===================== hero artboard ===================== */
+.artboard{position:relative;width:1920px;height:1080px;overflow:hidden}
+.hero{display:grid;grid-template-rows:124px 28px 900px;padding:0 32px 28px}
+
+/* header */
+.hdr{display:flex;align-items:center;justify-content:space-between;gap:36px}
+.brand{position:relative;padding-top:30px}
+.brand-plate{height:84px;display:flex;align-items:center;gap:18px;padding:0 32px 0 24px}
+.brand-plate svg{width:38px;height:46px;flex:none}
+.brand-name small{display:block;font-size:15px;letter-spacing:.28em;line-height:1.2}
+.brand-name span{display:block;font-size:29px;line-height:1.1;letter-spacing:.03em}
+.nav{display:flex;align-items:center;gap:28px;align-self:stretch}
+.nav a{position:relative;font-size:17px;letter-spacing:.06em;color:var(--text-muted);text-decoration:none;padding:12px 0}
+.nav a.is-active{color:var(--text-on-asphalt)}
+.nav a.is-active::after{content:"";position:absolute;left:0;right:0;bottom:-4px;height:8px;background:var(--marking-white)}
+.nav a:focus-visible{outline:4px solid var(--marking-white);outline-offset:6px}
+.links{padding:14px 22px;display:grid;gap:3px;min-width:352px}
+.link-row{display:flex;justify-content:space-between;align-items:center;gap:20px;font-size:15px;line-height:24px}
+.link-row .k{opacity:.72;letter-spacing:.06em}
+.link-row .v{display:flex;align-items:center;gap:7px}
+.link-row svg{width:16px;height:16px}
+
+/* body grid */
+.body{display:grid;grid-template-columns:430px 44px 740px 44px 1fr;height:900px}
+.col{display:flex;flex-direction:column;min-height:0}
+.col-left{gap:30px}
+
+/* level plate */
+.level-plate{height:236px;padding:30px 30px}
+.level-main{display:flex;align-items:center;gap:20px;margin-top:22px}
+.level-num{font-size:124px;line-height:.95;letter-spacing:-.01em}
+.level-name{font-size:30px;line-height:1.12}
+.level-icon{position:absolute;right:30px;top:24px;width:58px;height:42px}
+
+/* ladder */
+.ladder{display:flex;flex-direction:column;gap:8px}
+.rungs{list-style:none;display:grid;gap:8px}
+.rung{display:flex;align-items:center;gap:16px;height:60px;padding:0 14px 0 10px;border-radius:10px;font-size:19px;color:var(--text-muted)}
+.rung.is-current{background:var(--surface-raised);color:var(--text-on-asphalt);box-shadow:inset 0 0 0 3px var(--marking-white)}
+.rung-sign{position:relative;flex:none;width:60px;height:42px;display:grid;place-items:center;font-size:17px;border-radius:7px}
+.rung-sign--l1{background:var(--sign-guide);color:var(--text-on-dark);box-shadow:inset 0 0 0 3px var(--sign-guide),inset 0 0 0 5px var(--marking-white)}
+.rung-sign--l2{background:var(--sign-white);color:var(--text-on-light);box-shadow:inset 0 0 0 3px var(--sign-white),inset 0 0 0 5px var(--sign-black)}
+.rung-sign--l3{background:var(--sign-warning);color:var(--text-on-light);box-shadow:inset 0 0 0 3px var(--sign-warning),inset 0 0 0 5px var(--sign-black)}
+.rung-sign--l4{color:var(--text-on-light);--plate-bg:var(--sign-warning);--plate-ring:var(--sign-black)}
+.rung-sign--l4::before{content:"";position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;transform:rotate(45deg);border-radius:5px;background:var(--sign-warning);box-shadow:inset 0 0 0 2px var(--sign-warning),inset 0 0 0 4px var(--sign-black)}
+.rung-sign--l4 i{position:relative;font-style:normal;font-size:15px}
+.now-tag{margin-left:auto;background:var(--marking-white);color:var(--text-on-light);font-size:14px;letter-spacing:.08em;padding:4px 10px;border-radius:6px}
+.footnote{font-size:13px;line-height:1.4;letter-spacing:.04em;color:var(--text-muted)}
+
+/* flood assembly */
+.flood{display:grid;grid-template-columns:210px 1fr;gap:16px;align-items:center}
+.flood-sign{display:flex;flex-direction:column;align-items:center}
+.flood-sign .beacons{margin-bottom:-14px}
+.flood-sign .diamond{--d:210px}
+.flood-sign .diamond-content svg{width:70px;height:34px}
+.flood-sign .diamond-content b{font-size:26px;line-height:1;margin-top:4px}
+.supp{padding:18px 20px 20px}
+.supp-label{display:block;font-size:14px;letter-spacing:.08em}
+.supp-value{display:block;font-size:54px;line-height:1.05;margin:4px 0 10px}
+.track{display:flex;gap:5px;font-size:12px;letter-spacing:.04em}
+.track span{padding:3px 6px;border-radius:5px;box-shadow:inset 0 0 0 2px currentColor;opacity:.55}
+.track span.is-on{opacity:1;background:var(--sign-black);color:var(--sign-white);box-shadow:none}
+
+/* phase strip + countdown */
+.phase-strip{height:146px;display:grid;grid-template-columns:1fr 372px;gap:20px;margin-bottom:14px}
+.phases{display:grid;grid-template-rows:1fr 1fr;gap:10px}
+.phase{display:flex;align-items:center;gap:16px;padding:0 20px 0 10px;background:var(--surface-raised);border-radius:12px}
+.phase .aspect{--as:52px}
+.phase .lamp{--ls:38px}
+.phase-k{line-height:1.2;white-space:nowrap}
+.phase-k b{display:block;font-size:17px;letter-spacing:.06em}
+.phase-k span{display:block;font-size:13px;color:var(--text-muted);letter-spacing:.06em}
+.phase-v{margin-left:auto;font-size:34px}
+.countdown{display:grid;grid-template-columns:1fr 176px;align-items:center;gap:12px;padding:16px 18px 16px 26px}
+.cd-title{font-size:26px;line-height:1.05}
+.cd-sub{font-size:15px;letter-spacing:.06em;margin-top:4px}
+.cd-note{font-size:12px;letter-spacing:.06em;margin-top:12px;opacity:.75}
+.cd-window{height:110px;border-radius:12px;background:var(--housing);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.cd-upto{font-size:15px;letter-spacing:.1em;color:var(--signal-green)}
+.cd-num{font-size:76px;color:var(--signal-green);text-shadow:0 0 14px var(--signal-green-glow),0 0 34px var(--signal-green-haze)}
+.cd-num small{font-size:26px;margin-left:4px}
+
+/* intersection */
+.xing{position:relative;width:740px;height:740px;border-radius:20px;overflow:hidden}
+.xing svg{display:block}
+.m-block{fill:var(--surface-block)}
+.m-road{fill:var(--surface-road)}
+.m-curb{stroke:var(--surface-curb);stroke-width:4;fill:none}
+.m-line{stroke:var(--marking-white);stroke-width:4;fill:none}
+.m-center{stroke:var(--marking-white);stroke-width:5;fill:none}
+.m-dash{stroke:var(--marking-white);stroke-width:5;fill:none;stroke-dasharray:26 18}
+.m-paint{fill:var(--marking-white)}
+.m-zone{fill:var(--marking-zone);stroke:var(--marking-white);stroke-width:2.5;stroke-dasharray:10 8}
+.m-veh{fill:var(--vehicle-body)}
+.m-glass{fill:var(--vehicle-glass)}
+.m-letter{fill:var(--marking-white);opacity:.5;font:700 46px var(--font-highway);text-anchor:middle}
+.m-int{fill:var(--marking-white);opacity:.16;font:700 30px var(--font-highway);text-anchor:middle;letter-spacing:.1em}
+.head{position:absolute;display:flex;flex-direction:column;align-items:center;gap:10px}
+.head .housing{width:76px}
+.pcu{position:absolute;width:136px;height:164px;padding:20px 12px 12px;display:flex;flex-direction:column;align-items:center;text-align:center;border-radius:12px}
+.pcu-k{font-size:13px;letter-spacing:.06em}
+.pcu-u{font-size:24px;margin-top:2px;letter-spacing:.06em}
+.pcu-v{font-size:52px;line-height:1;margin-top:8px}
+
+/* counts */
+.counts{padding:22px 28px 20px}
+.counts-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px}
+.counts-title{font-size:32px;line-height:1.1;margin-top:2px}
+.counts-total{text-align:right}
+.counts-total .big{display:block;font-size:62px;line-height:1}
+table{width:100%;border-collapse:collapse}
+thead th{height:50px;text-align:center}
+thead th:first-child{text-align:left}
+.dir{display:inline-grid;place-items:center;width:42px;height:42px;border-radius:50%;background:var(--marking-white);color:var(--sign-guide);font-size:21px}
+tbody tr{border-top:2px solid var(--sign-guide-rule)}
+tbody th{text-align:left;font-size:20px;height:54px;line-height:1.1;font-weight:700}
+tbody th small{display:block;font-size:12px;letter-spacing:.04em;opacity:.85}
+tbody td{text-align:center;font-size:40px;width:80px}
+
+/* override */
+.override{display:grid;gap:12px;margin-top:14px}
+.ovr-head{display:grid;grid-template-columns:1fr 178px;gap:12px}
+.ovr-title{height:80px;padding:16px 22px;display:flex;flex-direction:column;justify-content:center}
+.ovr-title b{font-size:24px;line-height:1.1}
+.ovr-title span{font-size:11.5px;letter-spacing:.04em;margin-top:5px;white-space:nowrap}
+.ovr-current{height:80px;padding:14px 16px;display:flex;flex-direction:column;justify-content:center}
+.ovr-current span{font-size:11px;letter-spacing:.03em;white-space:nowrap}
+.ovr-current b{font-size:32px;line-height:1.05}
+.ovr-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ovr-btn{
+  appearance:none;border:0;cursor:pointer;font:inherit;text-transform:inherit;letter-spacing:inherit;text-align:left;
+  display:flex;align-items:center;gap:14px;height:78px;padding:0 18px;border-radius:14px;font-size:18px;line-height:1.15;
+  background:var(--sign-white);color:var(--text-on-light);
+  box-shadow:inset 0 0 0 4px var(--sign-white),inset 0 0 0 9px var(--sign-regulatory),0 5px 0 var(--shadow-plate);
+}
+.ovr-btn--release{background:var(--sign-guide);color:var(--text-on-dark);box-shadow:inset 0 0 0 4px var(--sign-guide),inset 0 0 0 9px var(--marking-white),0 5px 0 var(--shadow-plate)}
+.ovr-btn:focus-visible{outline:4px solid var(--marking-white);outline-offset:4px}
+.ovr-icon{flex:none;width:46px;height:46px;display:grid;place-items:center}
+.ovr-icon .diamond{--d:48px;--dr:4px;--dm:1px;--dw:3px;filter:none;--plate-bg:var(--sign-warning);--plate-ring:var(--sign-black)}
+.ovr-icon .octagon{--o:46px;--om:2px;--ow:3px}
+.ovr-icon .octagon svg{width:16px;height:24px}
+.ovr-icon .octagon svg.ew{transform:rotate(90deg)}
+.ovr-icon .rel{width:44px;height:40px;border-radius:7px;display:grid;place-items:center;background:var(--sign-guide);box-shadow:inset 0 0 0 2px var(--sign-guide),inset 0 0 0 4px var(--marking-white)}
+.ovr-icon .rel svg{width:24px;height:24px}
+
+/* breach */
+.breach{display:flex;gap:20px;align-items:center;height:150px;padding:18px 24px 18px 18px;margin-top:14px}
+.breach-thumb{position:relative;flex:none;width:150px;height:110px;border-radius:8px;overflow:hidden;background:var(--thumb-mid)}
+.breach-thumb .blur{position:absolute;inset:-14px;filter:blur(8px);
+  background:radial-gradient(circle at 30% 60%,var(--thumb-dark) 0 18%,transparent 34%),radial-gradient(circle at 66% 40%,var(--thumb-light) 0 16%,transparent 32%),radial-gradient(circle at 55% 78%,var(--thumb-dark) 0 12%,transparent 26%),var(--thumb-mid)}
+.breach-thumb .tag{position:absolute;left:6px;bottom:6px;background:var(--housing);color:var(--text-on-dark);font-size:11px;letter-spacing:.06em;padding:3px 6px;border-radius:4px}
+.breach-k{font-size:14px;letter-spacing:.08em}
+.breach-kind{font-size:19px;margin-top:2px}
+.breach-time{font-size:46px;line-height:1.05;margin-top:2px}
+.breach-meta{font-size:20px}
+
+/* ===================== extras ===================== */
+.extras{display:grid;grid-template-columns:1240px 584px;gap:40px 32px;padding:48px 32px 80px}
+.extra-label{display:flex;align-items:center;gap:14px;font-size:18px;letter-spacing:.08em;color:var(--text-muted);margin-bottom:14px}
+.extra-label::before{content:"";width:36px;height:6px;background:var(--marking-white)}
+.panel{position:relative;overflow:hidden;border-radius:6px}
+
+/* L4 variant */
+.l4{height:600px;padding:22px 32px 30px;display:grid;grid-template-rows:56px 26px 1fr}
+.mini-head{display:flex;align-items:center;justify-content:space-between}
+.mini-brand{display:flex;align-items:center;gap:14px;font-size:22px}
+.mini-brand .plate{padding:10px 18px;font-size:18px;border-radius:10px;box-shadow:inset 0 0 0 3px var(--plate-bg),inset 0 0 0 6px var(--plate-ring),0 4px 0 var(--shadow-plate)}
+.l4-body{display:grid;grid-template-columns:380px 40px 330px 40px 1fr;align-items:center;min-height:0}
+.l4-sign{display:flex;flex-direction:column;align-items:center}
+.l4-sign .beacons{--bw:200px;margin-bottom:-20px}
+.l4-sign .beacons .lamp{--ls:30px}
+.l4-sign .diamond{--d:340px;--dr:22px;--dm:6px;--dw:7px}
+.l4-sign .diamond-content .lv{font-size:22px;letter-spacing:.1em;margin-bottom:6px}
+.l4-sign .diamond-content b{font-size:31px;line-height:1.18}
+.l4-heads{display:flex;justify-content:center;gap:44px}
+.l4-heads figure{display:flex;flex-direction:column;align-items:center;gap:12px}
+.l4-heads .housing{--ls:54px;width:88px}
+.l4-heads figcaption{background:var(--housing);border-radius:8px;padding:6px 12px;text-align:center;line-height:1.15;box-shadow:0 0 0 2px var(--housing-edge)}
+.l4-heads figcaption b{display:block;font-size:19px}
+.l4-heads figcaption span{display:block;font-size:12px;letter-spacing:.06em}
+.l4-heads-note{grid-column:1/-1;text-align:center;font-size:14px;letter-spacing:.06em;color:var(--text-muted);margin-top:18px}
+.l4-info{display:flex;flex-direction:column;gap:18px}
+.l4-info .supp-value{font-size:46px}
+.cd-off{padding:16px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cd-off .supp-label{font-size:13px}
+.cd-off b{font-size:18px;line-height:1.2}
+.cd-off .dash{font-size:40px;letter-spacing:.1em;opacity:.4}
+.mini-ladder{display:flex;align-items:flex-end;gap:16px}
+.mini-ladder .rung-col{display:flex;flex-direction:column;align-items:center;gap:10px;font-size:11px;letter-spacing:.06em;color:var(--text-muted)}
+.mini-ladder .rung-col.is-current{color:var(--text-on-asphalt)}
+.mini-ladder .rung-col.is-current .rung-sign{outline:3px solid var(--marking-white);outline-offset:4px;border-radius:8px}
+.l4-foot{font-size:13px;letter-spacing:.05em;color:var(--text-muted);line-height:1.45}
+
+/* loader */
+.loader-stage{height:600px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.loader-plate{padding:30px 34px;border-radius:20px}
+.loader .housing{--ls:64px;--lg:16px;--lp:16px;border-radius:18px}
+.loader .lamp::after{opacity:.6}
+.post{width:16px;background:var(--sign-post);box-shadow:inset -4px 0 0 rgba(0,0,0,.25)}
+.loader-supp{position:relative;padding:16px 26px 18px;text-align:center;min-width:300px;border-radius:12px}
+.loader-supp .eyebrow{font-size:16px}
+.cycle{position:relative;height:34px;margin-top:6px;font-size:28px}
+.cycle span{position:absolute;inset:0;opacity:0}
+.cycle .word-static{opacity:1}
+
+/* dialog */
+.dialog-stage{height:540px;display:grid;place-items:center}
+.dialog-ghost{position:absolute;inset:0}
+.dialog-ghost i{position:absolute;border-radius:14px;opacity:.9}
+.dialog-scrim{position:absolute;inset:0;background:var(--surface-scrim)}
+.dialog{position:relative;z-index:1;width:900px;padding:40px 44px 36px;border-radius:24px;display:grid;grid-template-columns:150px 1fr;gap:34px;
+  background:var(--sign-white);color:var(--text-on-light);
+  box-shadow:inset 0 0 0 6px var(--sign-white),inset 0 0 0 18px var(--sign-regulatory),0 8px 0 var(--shadow-plate)}
+.dlg-picto{width:150px;height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;border-radius:14px;background:var(--sign-white);box-shadow:inset 0 0 0 4px var(--sign-black)}
+.dlg-picto svg{width:56px;height:92px}
+.dlg-picto b{font-size:30px}
+.dlg-q{font-size:36px;line-height:1.15}
+.dlg-sub{font-size:24px;margin-top:10px}
+.dlg-preview{display:flex;gap:22px;margin-top:18px}
+.dlg-preview .chip{display:flex;align-items:center;gap:10px;font-size:18px}
+.dlg-preview .aspect{--as:40px}
+.dlg-preview .lamp{--ls:28px}
+.dlg-row{display:flex;align-items:center;justify-content:space-between;margin-top:22px}
+.only{display:inline-block;background:var(--sign-black);color:var(--sign-white);font-size:19px;letter-spacing:.08em;padding:10px 18px;border-radius:8px}
+.dlg-actions{display:flex;align-items:center;gap:24px}
+.btn-cancel{appearance:none;border:0;cursor:pointer;font:inherit;text-transform:inherit;letter-spacing:.06em;font-size:22px;height:76px;padding:0 34px;border-radius:12px;
+  background:var(--sign-white);color:var(--text-on-light);box-shadow:inset 0 0 0 4px var(--sign-white),inset 0 0 0 8px var(--sign-black),0 5px 0 var(--shadow-plate)}
+.btn-confirm{appearance:none;border:0;background:none;cursor:pointer;font:inherit;text-transform:inherit;padding:0}
+.btn-confirm .octagon{--o:140px;--om:5px;--ow:6px;font-size:18px;letter-spacing:.06em}
+.btn-cancel:focus-visible,.btn-confirm:focus-visible{outline:4px solid var(--sign-black);outline-offset:6px}
+
+/* sign key */
+.key{height:540px;padding:26px 30px;display:flex;flex-direction:column;gap:12px}
+.key-row{display:grid;grid-template-columns:84px 1fr;gap:18px;align-items:center;min-height:66px}
+.key-ico{display:grid;place-items:center;height:62px}
+.key-row b{display:block;font-size:17px;letter-spacing:.04em}
+.key-row span{display:block;line-height:1.4;letter-spacing:.03em;color:var(--text-muted);text-transform:none;font-weight:400;font-size:15px}
+.key-plate{width:74px;height:46px;border-radius:9px;box-shadow:inset 0 0 0 3px var(--plate-bg),inset 0 0 0 6px var(--plate-ring)}
+.key-mark{width:74px;height:6px;background:repeating-linear-gradient(90deg,var(--marking-white) 0 18px,transparent 18px 30px)}
+
+/* ===================== motion (all wrapped) ===================== */
+@media (prefers-reduced-motion: no-preference){
+  .lamp.is-lit::after{animation:lamp-glow 2.8s ease-in-out infinite}
+  .lamp.is-flashing::after{animation:flash-amber 1s steps(1,end) infinite}
+  .beacons .lamp.is-flashing:nth-child(2)::after{animation-delay:-.5s}
+  .loader .lamp::after{animation:sequence 3s linear infinite}
+  .loader .lamp--amber::after{animation-delay:-2s}
+  .loader .lamp--green::after{animation-delay:-1s}
+  .cycle .word-static{display:none}
+  .cycle .word{animation:sequence 3s linear infinite}
+  .cycle .word--amber{animation-delay:-2s}
+  .cycle .word--green{animation-delay:-1s}
+  @keyframes lamp-glow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.2)}}
+  @keyframes flash-amber{0%{opacity:1}50%{opacity:0}}
+  @keyframes sequence{0%{opacity:1}29%{opacity:1}33.3%{opacity:0}96%{opacity:0}100%{opacity:1}}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ TOP STRIP ============ -->
+<section class="strip">
+  <div class="strip-sign">
+    <div class="exit-tab">Direction</div>
+    <div class="plate plate--guide strip-plate">Road Sign</div>
+  </div>
+  <p class="strip-text">
+    <strong>The dashboard speaks the grammar drivers in Catarman already obey:</strong> asphalt, white lane markings, and sign plates whose shape and color name the category before a word is read.
+    Painted plates are flat and never glow (green guide plate = information and flow, yellow diamond = caution and flood, red plate or octagon = MDRRMO authority and breaches), while real signal aspects appear only as lamps lit inside black signal housings, so a green plate can never be read as a green light.
+    Wide uppercase highway lettering and very large numerals keep every value legible from 3 to 4 m.
+  </p>
+</section>
+
+<!-- ============ HERO 1920x1080 ============ -->
+<section class="artboard asphalt hero" aria-label="Live status, INT-01">
+  <header class="hdr">
+    <div class="brand">
+      <div class="exit-tab">INT-01</div>
+      <div class="plate plate--guide brand-plate">
+        <svg viewBox="0 0 38 46" aria-hidden="true"><path d="M19 1 L37 21 H26 V45 H12 V21 H1 Z" fill="currentColor"/></svg>
+        <div class="brand-name"><small>Catarman</small><span>SMART Traffic Light</span></div>
+      </div>
+    </div>
+    <nav class="nav" aria-label="Main">
+      <a href="#" class="is-active" aria-current="page">Live</a>
+      <a href="#">Traffic peaks</a>
+      <a href="#">Breaches</a>
+      <a href="#">Override log</a>
+      <a href="#">State history</a>
+    </nav>
+    <div class="plate plate--white links" aria-label="Link health">
+      <div class="link-row"><span class="k">Broker</span><span class="v"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8.5 6 12.5 14 3.5" stroke="currentColor" stroke-width="3" fill="none"/></svg>Connected</span></div>
+      <div class="link-row"><span class="k">Controller</span><span class="v"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8.5 6 12.5 14 3.5" stroke="currentColor" stroke-width="3" fill="none"/></svg>Online (sim)</span></div>
+      <div class="link-row"><span class="k">Vision</span><span class="v"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8.5 6 12.5 14 3.5" stroke="currentColor" stroke-width="3" fill="none"/></svg>Online (sim)</span></div>
+    </div>
+  </header>
+
+  <div class="lane-h" aria-hidden="true"></div>
+
+  <main class="body">
+    <!-- LEFT: level, ladder, flood -->
+    <div class="col col-left">
+      <div class="plate plate--guide level-plate">
+        <div class="eyebrow">Degradation level</div>
+        <div class="level-main"><span class="level-num">L1</span><span class="level-name">Vision<br>adaptive</span></div>
+        <svg class="level-icon" viewBox="0 0 58 42" aria-hidden="true"><rect x="1" y="7" width="40" height="30" rx="6" fill="currentColor"/><path d="M41 16 57 8V36L41 28Z" fill="currentColor"/><circle cx="16" cy="22" r="8" style="fill:var(--sign-guide)"/><circle cx="16" cy="22" r="4" fill="currentColor"/></svg>
+      </div>
+
+      <div class="ladder">
+        <div class="eyebrow muted">Level ladder</div>
+        <ol class="rungs">
+          <li class="rung is-current"><span class="rung-sign rung-sign--l1">L1</span><span>Vision adaptive</span><span class="now-tag">Now</span></li>
+          <li class="rung"><span class="rung-sign rung-sign--l2">L2</span><span>Stop-bar presence</span></li>
+          <li class="rung"><span class="rung-sign rung-sign--l3">L3</span><span>Fixed timing</span></li>
+          <li class="rung"><span class="rung-sign rung-sign--l4"><i>L4</i></span><span>Flashing Amber (flood)</span></li>
+        </ol>
+        <p class="footnote">A conflict fault shows as a separate red FAULT plate, never as L4</p>
+      </div>
+
+      <div class="flood">
+        <div class="flood-sign">
+          <div class="beacons" aria-hidden="true"><span class="lamp lamp--amber"></span><span class="lamp lamp--amber"></span></div>
+          <div class="diamond plate--warning">
+            <div class="diamond-content">
+              <svg viewBox="0 0 70 34" aria-hidden="true"><path d="M3 11q8-8 16 0t16 0 16 0 16 0M3 27q8-8 16 0t16 0 16 0 16 0" stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round"/></svg>
+              <b>Flood</b>
+            </div>
+          </div>
+        </div>
+        <div class="plate plate--white supp">
+          <span class="supp-label">Flood sensor</span>
+          <span class="supp-value">Dry</span>
+          <div class="track"><span class="is-on">Dry</span><span>Wet</span><span>Flooded</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lane-v" aria-hidden="true"></div>
+
+    <!-- CENTER: phases, countdown, intersection -->
+    <div class="col">
+      <div class="phase-strip">
+        <div class="phases">
+          <div class="phase">
+            <span class="aspect"><span class="lamp lamp--green is-lit"></span></span>
+            <div class="phase-k"><b>Phase NS</b><span>N + S heads</span></div>
+            <div class="phase-v">Green</div>
+          </div>
+          <div class="phase">
+            <span class="aspect"><span class="lamp lamp--red is-lit"></span></span>
+            <div class="phase-k"><b>Phase EW</b><span>E + W heads</span></div>
+            <div class="phase-v">Red</div>
+          </div>
+        </div>
+        <div class="plate plate--white countdown">
+          <div>
+            <div class="cd-title">NS green</div>
+            <div class="cd-sub">ends in</div>
+            <div class="cd-note">Can end early</div>
+          </div>
+          <div class="cd-window num" aria-label="Up to 14 seconds">
+            <span class="cd-upto">Up to</span>
+            <span class="cd-num">14<small>s</small></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="xing">
+        <svg viewBox="0 0 740 740" width="740" height="740" aria-hidden="true">
+          <defs>
+            <pattern id="zebra-v" x="266" y="0" width="24" height="10" patternUnits="userSpaceOnUse"><rect class="m-paint" width="12" height="10"/></pattern>
+            <pattern id="zebra-h" x="0" y="266" width="10" height="24" patternUnits="userSpaceOnUse"><rect class="m-paint" width="10" height="12"/></pattern>
+          </defs>
+          <rect class="m-block" width="740" height="740"/>
+          <rect class="m-road" x="250" y="0" width="240" height="740"/>
+          <rect class="m-road" x="0" y="250" width="740" height="240"/>
+          <path class="m-curb" d="M250 0V250H0M490 0V250H740M250 740V490H0M490 740V490H740"/>
+          <path class="m-line" d="M260 0V200M480 0V200M260 540V740M480 540V740M0 260H200M0 480H200M540 260H740M540 480H740"/>
+          <path class="m-dash" d="M370 0V130M370 610V740M0 370H130M610 370H740"/>
+          <path class="m-center" d="M370 130V200M370 540V610M130 370H200M540 370H610"/>
+          <rect x="262" y="206" width="216" height="36" fill="url(#zebra-v)"/>
+          <rect x="262" y="498" width="216" height="36" fill="url(#zebra-v)"/>
+          <rect x="206" y="262" width="36" height="216" fill="url(#zebra-h)"/>
+          <rect x="498" y="262" width="36" height="216" fill="url(#zebra-h)"/>
+          <rect class="m-paint" x="260" y="188" width="108" height="10"/>
+          <rect class="m-paint" x="372" y="542" width="108" height="10"/>
+          <rect class="m-paint" x="542" y="260" width="10" height="108"/>
+          <rect class="m-paint" x="188" y="372" width="10" height="108"/>
+          <rect class="m-zone" x="266" y="16" width="98" height="164" rx="6"/>
+          <rect class="m-zone" x="376" y="560" width="98" height="164" rx="6"/>
+          <rect class="m-zone" x="560" y="266" width="164" height="98" rx="6"/>
+          <rect class="m-zone" x="16" y="376" width="164" height="98" rx="6"/>
+          <text class="m-letter" x="430" y="96">N</text>
+          <text class="m-letter" x="310" y="680">S</text>
+          <text class="m-letter" x="660" y="452">E</text>
+          <text class="m-letter" x="80" y="326">W</text>
+          <text class="m-int" x="370" y="381">INT-01</text>
+          <!-- N queue: tricycle, car, motorcycle (southbound, nose down) -->
+          <rect class="m-veh" x="290" y="30" width="40" height="52" rx="10"/><rect class="m-glass" x="296" y="64" width="28" height="11" rx="3"/>
+          <rect class="m-veh" x="284" y="94" width="46" height="80" rx="12"/><rect class="m-glass" x="290" y="146" width="34" height="16" rx="4"/>
+          <rect class="m-veh" x="340" y="118" width="16" height="48" rx="8"/>
+          <!-- E queue: car (westbound, nose left) -->
+          <rect class="m-veh" x="568" y="288" width="80" height="46" rx="12"/><rect class="m-glass" x="580" y="294" width="16" height="34" rx="4"/>
+          <!-- W queue: motorcycle (eastbound, nose right) -->
+          <rect class="m-veh" x="124" y="422" width="48" height="16" rx="8"/>
+        </svg>
+
+        <!-- N head (NW corner), S head (SE), E head (NE), W head (SW) -->
+        <div class="head" style="left:164px;top:8px">
+          <div class="housing"><span class="lamp lamp--red"></span><span class="lamp lamp--amber"></span><span class="lamp lamp--green is-lit"></span></div>
+          <div class="head-label"><b>N</b><span>Green</span></div>
+        </div>
+        <div class="head" style="left:500px;top:8px">
+          <div class="housing"><span class="lamp lamp--red is-lit"></span><span class="lamp lamp--amber"></span><span class="lamp lamp--green"></span></div>
+          <div class="head-label"><b>E</b><span>Red</span></div>
+        </div>
+        <div class="head" style="left:500px;top:494px">
+          <div class="housing"><span class="lamp lamp--red"></span><span class="lamp lamp--amber"></span><span class="lamp lamp--green is-lit"></span></div>
+          <div class="head-label"><b>S</b><span>Green</span></div>
+        </div>
+        <div class="head" style="left:164px;top:494px">
+          <div class="housing"><span class="lamp lamp--red is-lit"></span><span class="lamp lamp--amber"></span><span class="lamp lamp--green"></span></div>
+          <div class="head-label"><b>W</b><span>Red</span></div>
+        </div>
+
+        <div class="plate plate--white pcu" style="left:16px;top:36px"><span class="pcu-k">N · waiting</span><span class="pcu-u">PCU</span><span class="pcu-v num">2.5</span></div>
+        <div class="plate plate--white pcu" style="left:592px;top:36px"><span class="pcu-k">E · waiting</span><span class="pcu-u">PCU</span><span class="pcu-v num">1.0</span></div>
+        <div class="plate plate--white pcu" style="left:592px;top:540px"><span class="pcu-k">S · waiting</span><span class="pcu-u">PCU</span><span class="pcu-v num">0</span></div>
+        <div class="plate plate--white pcu" style="left:16px;top:540px"><span class="pcu-k">W · waiting</span><span class="pcu-u">PCU</span><span class="pcu-v num">0.5</span></div>
+      </div>
+    </div>
+
+    <div class="lane-v" aria-hidden="true"></div>
+
+    <!-- RIGHT: counts, override, breach -->
+    <div class="col">
+      <div class="plate plate--guide counts">
+        <div class="counts-head">
+          <div><div class="eyebrow">Vehicle counts</div><div class="counts-title">This hour</div></div>
+          <div class="counts-total"><span class="eyebrow">Hour total</span><span class="big num">210</span></div>
+        </div>
+        <table class="num">
+          <thead><tr><th><span class="sr">Class</span></th><th><span class="dir">N</span></th><th><span class="dir">S</span></th><th><span class="dir">E</span></th><th><span class="dir">W</span></th></tr></thead>
+          <tbody>
+            <tr><th>Car</th><td>14</td><td>9</td><td>11</td><td>6</td></tr>
+            <tr><th>Tricycle</th><td>31</td><td>18</td><td>26</td><td>12</td></tr>
+            <tr><th>Motorcycle<small>incl. habal-habal</small></th><td>22</td><td>17</td><td>19</td><td>9</td></tr>
+            <tr><th>Jeepney</th><td>3</td><td>2</td><td>0</td><td>1</td></tr>
+            <tr><th>Utility van</th><td>4</td><td>1</td><td>3</td><td>2</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <section class="override" aria-label="MDRRMO override">
+        <div class="ovr-head">
+          <div class="plate plate--reg ovr-title"><b>MDRRMO override</b><span>Every override asks for confirmation first</span></div>
+          <div class="plate plate--white ovr-current"><span>Current override</span><b>None</b></div>
+        </div>
+        <div class="ovr-grid">
+          <button class="ovr-btn" type="button">
+            <span class="ovr-icon"><span class="diamond" aria-hidden="true"></span></span>
+            <span>Flashing Amber</span>
+          </button>
+          <button class="ovr-btn" type="button">
+            <span class="ovr-icon oct-wrap"><span class="octagon" aria-hidden="true"><svg viewBox="0 0 16 24"><path d="M8 0 16 8H11V16H16L8 24 0 16H5V8H0Z" fill="currentColor"/></svg></span></span>
+            <span>Evacuation corridor — NS</span>
+          </button>
+          <button class="ovr-btn" type="button">
+            <span class="ovr-icon oct-wrap"><span class="octagon" aria-hidden="true"><svg class="ew" viewBox="0 0 16 24"><path d="M8 0 16 8H11V16H16L8 24 0 16H5V8H0Z" fill="currentColor"/></svg></span></span>
+            <span>Evacuation corridor — EW</span>
+          </button>
+          <button class="ovr-btn ovr-btn--release" type="button">
+            <span class="ovr-icon"><span class="rel" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18 21V10a6 6 0 0 0-12 0v4" stroke="currentColor" stroke-width="3.2" fill="none"/><path d="M1.5 12.5 6 19l4.5-6.5Z" fill="currentColor"/></svg></span></span>
+            <span>Release to automatic</span>
+          </button>
+        </div>
+      </section>
+
+      <div class="plate plate--reg breach">
+        <div class="breach-thumb" role="img" aria-label="Blurred, anonymized crop"><div class="blur"></div><span class="tag">Blurred</span></div>
+        <div>
+          <div class="breach-k">Latest breach</div>
+          <div class="breach-kind">Red-light running</div>
+          <div class="breach-time num">14:32:08</div>
+          <div class="breach-meta">East approach · Motorcycle</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</section>
+
+<!-- ============ EXTRAS ============ -->
+<section class="extras">
+
+  <!-- State variant: L4 -->
+  <div>
+    <div class="extra-label">State variant · L4 Flashing Amber (flood mode)</div>
+    <div class="panel asphalt l4" aria-label="L4 flood mode">
+      <div class="mini-head">
+        <div class="mini-brand"><span class="plate plate--guide">INT-01</span><span>Live</span></div>
+        <div class="mini-brand"><span class="muted" style="font-size:15px;letter-spacing:.08em">Current override</span><span class="plate plate--white">None</span></div>
+      </div>
+      <div class="lane-h" aria-hidden="true"></div>
+      <div class="l4-body">
+        <div class="l4-sign">
+          <div class="beacons" aria-hidden="true"><span class="lamp lamp--amber is-flashing"></span><span class="lamp lamp--amber is-flashing"></span></div>
+          <div class="diamond plate--warning">
+            <div class="diamond-content"><span class="lv">Level L4</span><b>Flood —</b><b>Flashing</b><b>Amber</b></div>
+          </div>
+        </div>
+        <div class="lane-v" aria-hidden="true"></div>
+        <div>
+          <div class="l4-heads">
+            <figure>
+              <div class="housing"><span class="lamp lamp--red"></span><span class="lamp lamp--amber is-flashing"></span><span class="lamp lamp--green"></span></div>
+              <figcaption><b>Phase NS</b><span>Flashing amber</span></figcaption>
+            </figure>
+            <figure>
+              <div class="housing"><span class="lamp lamp--red"></span><span class="lamp lamp--amber is-flashing"></span><span class="lamp lamp--green"></span></div>
+              <figcaption><b>Phase EW</b><span>Flashing amber</span></figcaption>
+            </figure>
+          </div>
+          <p class="l4-heads-note">Flashing Amber on all approaches</p>
+        </div>
+        <div class="lane-v" aria-hidden="true"></div>
+        <div class="l4-info">
+          <div class="plate plate--warning supp">
+            <span class="supp-label">Flood sensor</span>
+            <span class="supp-value">Flooded</span>
+            <div class="track"><span>Dry</span><span>Wet</span><span class="is-on">Flooded</span></div>
+          </div>
+          <div class="plate plate--white cd-off">
+            <div><span class="supp-label">Countdown</span><b>None while<br>flashing</b></div>
+            <span class="dash" aria-hidden="true">--</span>
+          </div>
+          <div class="mini-ladder" aria-label="Level ladder, L4 current">
+            <div class="rung-col"><span class="rung-sign rung-sign--l1">L1</span>Vision</div>
+            <div class="rung-col"><span class="rung-sign rung-sign--l2">L2</span>Stop-bar</div>
+            <div class="rung-col"><span class="rung-sign rung-sign--l3">L3</span>Fixed</div>
+            <div class="rung-col is-current"><span class="rung-sign rung-sign--l4"><i>L4</i></span>Now</div>
+          </div>
+          <p class="l4-foot">Resumes normal cycling at an all-red clearance after 30 s dry</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loader -->
+  <div>
+    <div class="extra-label">Loader · red, then yellow, then green</div>
+    <div class="panel asphalt loader-stage loader" role="status" aria-label="Loading">
+      <div class="plate plate--white loader-plate">
+        <div class="housing">
+          <span class="lamp lamp--red"></span>
+          <span class="lamp lamp--amber"></span>
+          <span class="lamp lamp--green"></span>
+        </div>
+      </div>
+      <div class="post" style="height:28px"></div>
+      <div class="plate plate--white loader-supp">
+        <div class="eyebrow">Connecting to INT-01</div>
+        <div class="cycle" aria-hidden="true">
+          <span class="word-static">Loading</span>
+          <span class="word word--red">Red</span>
+          <span class="word word--amber">Yellow</span>
+          <span class="word word--green">Green</span>
+        </div>
+      </div>
+      <div class="post" style="height:46px"></div>
+    </div>
+  </div>
+
+  <!-- Override confirm dialog -->
+  <div>
+    <div class="extra-label">Override confirm dialog</div>
+    <div class="panel asphalt dialog-stage">
+      <div class="dialog-ghost" aria-hidden="true">
+        <i style="left:32px;top:30px;width:430px;height:150px;background:var(--sign-guide)"></i>
+        <i style="left:520px;top:30px;width:420px;height:470px;background:var(--surface-road)"></i>
+        <i style="left:990px;top:30px;width:220px;height:250px;background:var(--sign-guide)"></i>
+        <i style="left:990px;top:300px;width:220px;height:90px;background:var(--sign-white)"></i>
+        <i style="left:32px;top:210px;width:430px;height:120px;background:var(--surface-raised)"></i>
+      </div>
+      <div class="dialog-scrim" aria-hidden="true"></div>
+      <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlg-q">
+        <div class="dlg-picto" aria-hidden="true">
+          <svg viewBox="0 0 16 24"><path d="M8 0 16 8H11V16H16L8 24 0 16H5V8H0Z" fill="currentColor"/></svg>
+          <b>NS</b>
+        </div>
+        <div>
+          <p class="dlg-q" id="dlg-q">Activate evacuation corridor NS?</p>
+          <p class="dlg-sub">All other approaches go red.</p>
+          <div class="dlg-preview">
+            <span class="chip"><span class="aspect"><span class="lamp lamp--green is-lit"></span></span>NS green</span>
+            <span class="chip"><span class="aspect"><span class="lamp lamp--red is-lit"></span></span>EW red</span>
+          </div>
+          <div class="dlg-row">
+            <span class="only">MDRRMO only.</span>
+            <div class="dlg-actions">
+              <button class="btn-cancel" type="button">Cancel</button>
+              <button class="btn-confirm oct-wrap" type="button"><span class="octagon"><span>Confirm</span></span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sign key -->
+  <div>
+    <div class="extra-label">Sign key · how color is read</div>
+    <div class="panel asphalt key">
+      <div class="key-row">
+        <div class="key-ico"><span class="aspect" style="--as:58px"><span class="lamp lamp--green is-lit" style="--ls:40px"></span></span></div>
+        <div><b>Lit lamp in a black housing</b><span>The only place red, yellow and green glow. Always a signal aspect, always with a text label.</span></div>
+      </div>
+      <div class="key-row">
+        <div class="key-ico"><span class="key-plate" style="--plate-bg:var(--sign-guide);--plate-ring:var(--marking-white);background:var(--sign-guide)"></span></div>
+        <div><b>Green guide plate</b><span>Information and flow: level L1, vehicle counts. Flat, never a lamp.</span></div>
+      </div>
+      <div class="key-row">
+        <div class="key-ico"><span class="diamond plate--warning" style="--d:64px;--dr:5px;--dm:2px;--dw:3px"></span></div>
+        <div><b>Yellow warning plate</b><span>Caution: flood sensor, L3, L4. Diamond means a hazard.</span></div>
+      </div>
+      <div class="key-row">
+        <div class="key-ico oct-wrap"><span class="octagon" style="--o:60px;--om:3px;--ow:3px"></span></div>
+        <div><b>Red regulatory plate or octagon</b><span>MDRRMO authority, breaches and FAULT. Octagon marks a stop-type action.</span></div>
+      </div>
+      <div class="key-row">
+        <div class="key-ico"><span class="key-plate" style="--plate-bg:var(--sign-white);--plate-ring:var(--sign-black);background:var(--sign-white)"></span></div>
+        <div><b>White plate</b><span>Neutral data: PCU, countdown, link health, L2.</span></div>
+      </div>
+      <div class="key-row">
+        <div class="key-ico"><span class="key-mark"></span></div>
+        <div><b>White pavement marking</b><span>Structure only: dividers and lanes. Never yellow.</span></div>
+      </div>
+    </div>
+  </div>
+
+</section>
+</body>
+</html>

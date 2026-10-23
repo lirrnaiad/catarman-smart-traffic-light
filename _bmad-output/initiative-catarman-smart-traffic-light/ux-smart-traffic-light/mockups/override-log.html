@@ -1,0 +1,942 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Override Log Screen</title>
+<style>
+/* =====================================================================
+   SCREEN: OVERRIDE LOG (/log/overrides/, CAP-5) · direction SIGNAL HARDWARE
+   Design tokens. Every concrete hex value used on this page is listed
+   here. Names follow Tailwind v4 @theme conventions (--color-*, --font-*).
+   Token block identical to direction-signal-hardware.html.
+   ---------------------------------------------------------------------
+   SURFACES (matte charcoal / black signal housings)
+   --color-surface-page          #0B0C0D  page + artboard floor
+   --color-surface-page-hi       #15171A  artboard centre lift (vignette)
+   --color-surface-housing       #1A1C1F  panel housing body
+   --color-surface-housing-hi    #24272B  housing top-light (gradient start)
+   --color-surface-housing-lo    #151719  housing bottom (gradient end)
+   --color-surface-title-hi      #202327  panel title strip, top
+   --color-surface-title-lo      #191B1E  panel title strip, bottom
+   --color-surface-recess        #0F1012  recessed wells, table rows, link bar
+   --color-surface-plate         #2C3035  raised stencil plates, buttons
+   --color-surface-plate-hi      #383D43  button top-light
+   --color-surface-backplate     #08090A  signal-head backplate (matte black)
+   --color-surface-head-lo       #131517  signal-head housing, shadow side
+   --color-surface-head-hi       #262A2E  signal-head housing, lit side
+   --color-visor                 #0C0D0E  lamp visor hoods
+   --color-lens-socket           #070809  ring the lens sits in
+   --color-lens-bezel            #2E3237  bezel highlight around the socket
+   --color-edge-light            #3A3F45  bevel highlight, dividers
+   --color-edge-dark             #050607  outlines, bevel shadow
+   --color-rivet                 #555B62  rivet heads
+   --color-rivet-hi              #8A9097  rivet glint
+   --color-reflector             #6B7178  backplate border (neutral grey, never yellow)
+   TEXT
+   --color-text                  #F1F1EC  primary, warm white
+   --color-text-2                #AEB3B8  secondary
+   --color-text-3                #737A81  captions
+   --color-text-inverse          #0B0B0B  on white plates and hazard paint
+   SIGNAL ASPECTS (SEMANTIC ONLY). Lit + glowing only as a round lens,
+   or as the text label of a live aspect. Never decorative when lit.
+   On this screen they appear ONLY in the active-override strip (the live
+   NS and EW aspects). Command statuses never use them.
+   --color-signal-red            #FF3B2F  lit lens / RED label
+   --color-signal-red-core       #FFC2B8  lens hot-spot
+   --color-signal-red-deep       #B0150C  lens rim fall-off
+   --color-signal-red-glass      #3A110E  UNLIT tinted glass
+   --color-signal-red-glass-hi   #5A1B16  unlit glass sheen
+   --color-signal-yellow         #FFB000  lit lens / YELLOW + FLASHING_AMBER label
+   --color-signal-yellow-core    #FFE3A3
+   --color-signal-yellow-deep    #B26A00
+   --color-signal-yellow-glass   #3A2A08
+   --color-signal-yellow-glass-hi #5C440F
+   --color-signal-green          #19E68C  lit lens / GREEN label
+   --color-signal-green-core     #BDFFE0
+   --color-signal-green-deep     #04935A
+   --color-signal-green-glass    #0B2C1F
+   --color-signal-green-glass-hi #154A35
+   (glows = the lit hex at 55% and 22% alpha)
+   HAZARD (alert + override zones). Matte paint, diagonal stripes,
+   rectangles only: never round, never glowing.
+   --color-hazard-paint          #EBC81A
+   --color-hazard-ink            #0D0D0D
+   SYSTEM STATUS (link health, pending commands). Square pilots, not R/Y/G.
+   --color-status-ok             #6EC6F2
+   --color-status-ok-deep        #1D5E80
+   --color-status-off            #2A2D31  unlit square pilot
+   --color-focus                 #6EC6F2  keyboard focus ring
+   COMMAND STATUS PLATES (composed from the tokens above, no new hex)
+   REQUESTED  recess plate, cyan --color-status-ok frame, blinking square pilot
+   APPLIED    raised --color-surface-plate-hi plate, check glyph
+   REJECTED   --hazard-stripes frame around a --color-hazard-ink plate, cross glyph
+   TIMEOUT    dashed --color-text-2 outline, hourglass glyph (not final)
+   IN EFFECT  warm-white --color-text flag (only the command the controller reports)
+   ===================================================================== */
+
+:root {
+  --color-surface-page: #0B0C0D;
+  --color-surface-page-hi: #15171A;
+  --color-surface-housing: #1A1C1F;
+  --color-surface-housing-hi: #24272B;
+  --color-surface-housing-lo: #151719;
+  --color-surface-title-hi: #202327;
+  --color-surface-title-lo: #191B1E;
+  --color-surface-recess: #0F1012;
+  --color-surface-plate: #2C3035;
+  --color-surface-plate-hi: #383D43;
+  --color-surface-backplate: #08090A;
+  --color-surface-head-lo: #131517;
+  --color-surface-head-hi: #262A2E;
+  --color-visor: #0C0D0E;
+  --color-lens-socket: #070809;
+  --color-lens-bezel: #2E3237;
+  --color-edge-light: #3A3F45;
+  --color-edge-dark: #050607;
+  --color-rivet: #555B62;
+  --color-rivet-hi: #8A9097;
+  --color-reflector: #6B7178;
+
+  --color-text: #F1F1EC;
+  --color-text-2: #AEB3B8;
+  --color-text-3: #737A81;
+  --color-text-inverse: #0B0B0B;
+
+  --color-signal-red: #FF3B2F;
+  --color-signal-red-core: #FFC2B8;
+  --color-signal-red-deep: #B0150C;
+  --color-signal-red-glass: #3A110E;
+  --color-signal-red-glass-hi: #5A1B16;
+  --color-signal-yellow: #FFB000;
+  --color-signal-yellow-core: #FFE3A3;
+  --color-signal-yellow-deep: #B26A00;
+  --color-signal-yellow-glass: #3A2A08;
+  --color-signal-yellow-glass-hi: #5C440F;
+  --color-signal-green: #19E68C;
+  --color-signal-green-core: #BDFFE0;
+  --color-signal-green-deep: #04935A;
+  --color-signal-green-glass: #0B2C1F;
+  --color-signal-green-glass-hi: #154A35;
+
+  --color-hazard-paint: #EBC81A;
+  --color-hazard-ink: #0D0D0D;
+
+  --color-status-ok: #6EC6F2;
+  --color-status-ok-deep: #1D5E80;
+  --color-status-off: #2A2D31;
+  --color-focus: #6EC6F2;
+
+  --hazard-stripes: repeating-linear-gradient(-45deg,
+      var(--color-hazard-paint) 0 12px, var(--color-hazard-ink) 12px 24px);
+  --hazard-stripes-fine: repeating-linear-gradient(-45deg,
+      var(--color-hazard-paint) 0 6px, var(--color-hazard-ink) 6px 12px);
+
+  --font-stencil: "Bahnschrift", "DIN Condensed", "Roboto Condensed", "Arial Narrow",
+      "Liberation Sans Narrow", "Nimbus Sans Narrow", "Helvetica Neue", "Noto Sans",
+      "DejaVu Sans Condensed", system-ui, sans-serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans",
+      "Helvetica Neue", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  background: var(--color-surface-page);
+  color: var(--color-text);
+  font-family: var(--font-body);
+}
+body { min-width: 1920px; }
+
+/* Stencil label: heavy, condensed, uppercase. */
+.panel-title, .tab, .int-plate, .brand-title, .brand-sub, .strip-name, .linkbar,
+.st, .stat, .flag, .log thead th, .t-time, .t-cap, .mode, .day td, .as-label,
+.as-mode, .as-sub, .as-since, .as-asp, .as-pend, .key p, .reasons dt, .reasons small,
+.load-btn, .note, .rule p, .r-code {
+  font-family: var(--font-stencil);
+  font-stretch: condensed;
+  text-transform: uppercase;
+}
+
+/* ---------- Screen strip (slim) ---------- */
+.strip {
+  width: 1920px;
+  display: flex;
+  gap: 36px;
+  align-items: center;
+  padding: 12px 24px;
+  background: var(--color-surface-recess);
+  border-bottom: 1px solid var(--color-edge-light);
+}
+.strip-name {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+.strip-name small {
+  display: block;
+  font-size: 12px;
+  letter-spacing: .18em;
+  color: var(--color-text-3);
+  font-weight: 700;
+}
+.strip p { margin: 0; max-width: 1340px; font-size: 15px; line-height: 1.45; color: var(--color-text-2); }
+.strip p b { color: var(--color-text); }
+
+/* ---------- Artboard ---------- */
+.artboard {
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 42%, var(--color-surface-page-hi) 0%, var(--color-surface-page) 72%);
+}
+
+/* ---------- Top bar ---------- */
+.topbar {
+  height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background: linear-gradient(180deg, var(--color-surface-housing-hi), var(--color-surface-housing-lo));
+  border-bottom: 2px solid var(--color-edge-dark);
+}
+.brand { display: flex; align-items: center; gap: 18px; }
+.brand-mark {
+  position: relative;
+  padding: 4px;
+  background: var(--color-surface-backplate);
+  border: 1px solid var(--color-reflector);
+  border-radius: 4px;
+}
+.brand-title { font-size: 32px; font-weight: 800; line-height: 1; letter-spacing: .05em; }
+.brand-sub { margin-top: 7px; font-size: 14px; font-weight: 700; letter-spacing: .16em; color: var(--color-text-3); }
+.int-plate {
+  margin-left: 8px;
+  display: flex;
+  flex-direction: column;
+  padding: 6px 16px 7px;
+  background: linear-gradient(180deg, var(--color-surface-plate-hi), var(--color-surface-plate));
+  border: 1px solid var(--color-edge-dark);
+  border-radius: 4px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 3px 0 var(--color-edge-dark);
+}
+.int-plate span { font-size: 11px; font-weight: 700; letter-spacing: .22em; color: var(--color-text-2); }
+.int-plate b { font-size: 30px; font-weight: 800; line-height: 1; letter-spacing: .06em; }
+
+.nav { display: flex; gap: 8px; height: 54px; }
+.tab {
+  display: flex;
+  align-items: center;
+  padding: 0 22px;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  color: var(--color-text-2);
+  text-decoration: none;
+  background: linear-gradient(180deg, var(--color-surface-housing-hi), var(--color-surface-housing));
+  border: 1px solid var(--color-edge-dark);
+  border-radius: 6px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 3px 0 var(--color-edge-dark);
+}
+.tab[aria-current="page"] {
+  background: var(--color-text);
+  color: var(--color-text-inverse);
+  box-shadow: inset 0 -4px 0 rgba(0,0,0,.22), 0 3px 0 var(--color-edge-dark);
+}
+.tab:focus-visible, .load-btn:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+/* ---------- Link health bar ---------- */
+.linkbar {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 34px;
+  padding: 0 24px;
+  background: var(--color-surface-recess);
+  border-bottom: 1px solid var(--color-edge-light);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+.lb-label { color: var(--color-text-3); font-size: 14px; letter-spacing: .18em; }
+.pilot-item { display: flex; align-items: center; gap: 10px; }
+.pilot-item b { color: var(--color-text-2); font-weight: 700; }
+.pilot {
+  width: 14px; height: 14px;
+  border-radius: 2px;              /* square pilot: system status, not a signal lens */
+  background: var(--color-status-ok);
+  border: 2px solid var(--color-status-ok-deep);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.45);
+}
+.sim {
+  font-style: normal;
+  font-size: 12px;
+  padding: 2px 6px;
+  border: 1px solid var(--color-text-3);
+  border-radius: 3px;
+  color: var(--color-text-2);
+  letter-spacing: .14em;
+}
+.lb-right { margin-left: auto; color: var(--color-text-3); font-size: 14px; letter-spacing: .16em; }
+
+/* ---------- Panel = signal housing ---------- */
+.panel {
+  position: relative;
+  padding: 0 20px 16px;
+  background: linear-gradient(180deg, var(--color-surface-housing-hi) 0%, var(--color-surface-housing) 35%, var(--color-surface-housing-lo) 100%);
+  border: 1px solid var(--color-edge-dark);
+  border-radius: 10px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.07),
+    0 4px 0 var(--color-edge-dark),
+    0 14px 30px rgba(0,0,0,.55);
+}
+.panel::after { /* four rivets */
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  --r: radial-gradient(circle, var(--color-rivet-hi) 0 1px, var(--color-rivet) 1.5px 2.8px, var(--color-edge-dark) 3.3px, transparent 4px);
+  background:
+    var(--r) 6px 6px / 10px 10px no-repeat,
+    var(--r) calc(100% - 6px) 6px / 10px 10px no-repeat,
+    var(--r) 6px calc(100% - 6px) / 10px 10px no-repeat,
+    var(--r) calc(100% - 6px) calc(100% - 6px) / 10px 10px no-repeat;
+}
+.panel-title {
+  margin: 0 -20px 10px;
+  height: 46px;
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: linear-gradient(180deg, var(--color-surface-title-hi), var(--color-surface-title-lo));
+  border-bottom: 2px solid var(--color-edge-dark);
+  border-radius: 10px 10px 0 0;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  color: var(--color-text-2);
+}
+.pt-tag { font-size: 12px; font-weight: 700; letter-spacing: .16em; color: var(--color-text-3); }
+.well {
+  background: var(--color-surface-recess);
+  border: 1px solid var(--color-edge-dark);
+  border-radius: 6px;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,.65);
+}
+
+/* ---------- Signal lamps (the only place lit R/Y/G glow) ---------- */
+.head {
+  --s: 64px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--s) * .16);
+  padding: calc(var(--s) * .26) calc(var(--s) * .22);
+  background: linear-gradient(90deg, var(--color-surface-head-lo) 0%, var(--color-surface-head-hi) 45%, var(--color-surface-housing) 100%);
+  border-radius: calc(var(--s) * .16);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.08),
+    inset 0 -2px 0 rgba(0,0,0,.6),
+    0 0 0 1px var(--color-edge-dark);
+}
+.head--mini  { --s: 17px; }
+.head--brand { --s: 13px; }
+.lamp {
+  position: relative;
+  display: block;
+  flex: none;
+  width: var(--s);
+  height: var(--s);
+  border-radius: 50%;
+  background:
+    repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,.045) 0 1px, transparent 1px 4px),
+    radial-gradient(circle at 50% 30%, var(--glass-hi) 0%, var(--glass) 55%, var(--color-edge-dark) 100%);
+  box-shadow:
+    0 0 0 calc(var(--s) * .06) var(--color-lens-socket),
+    0 0 0 calc(var(--s) * .08) var(--color-lens-bezel),
+    inset 0 calc(var(--s) * .16) calc(var(--s) * .2) calc(var(--s) * -.08) rgba(0,0,0,.85);
+}
+.lamp::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 50%;
+  opacity: 0;
+  background:
+    repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,.13) 0 1px, transparent 1px 4px),
+    radial-gradient(circle at 50% 58%, var(--core) 0%, var(--lit) 36%, var(--deep) 100%);
+  box-shadow:
+    0 0 calc(var(--s) * .3) calc(var(--s) * .06) var(--glow),
+    0 0 calc(var(--s) * .95) calc(var(--s) * .24) var(--glow-soft),
+    inset 0 calc(var(--s) * .15) calc(var(--s) * .16) calc(var(--s) * -.06) rgba(0,0,0,.55);
+}
+.lamp::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  left: calc(var(--s) * -.14);
+  right: calc(var(--s) * -.14);
+  top: calc(var(--s) * -.16);
+  height: calc(var(--s) * .64);
+  border: calc(var(--s) * .12) solid var(--color-visor);
+  border-bottom: 0;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  box-shadow: 0 -1px 0 rgba(255,255,255,.07);
+}
+.lamp.is-lit::after { opacity: 1; }
+.lamp--red    { --lit: var(--color-signal-red);    --core: var(--color-signal-red-core);    --deep: var(--color-signal-red-deep);    --glass: var(--color-signal-red-glass);    --glass-hi: var(--color-signal-red-glass-hi);    --glow: rgba(255,59,47,.55); --glow-soft: rgba(255,59,47,.22); }
+.lamp--yellow { --lit: var(--color-signal-yellow); --core: var(--color-signal-yellow-core); --deep: var(--color-signal-yellow-deep); --glass: var(--color-signal-yellow-glass); --glass-hi: var(--color-signal-yellow-glass-hi); --glow: rgba(255,176,0,.55); --glow-soft: rgba(255,176,0,.22); }
+.lamp--green  { --lit: var(--color-signal-green);  --core: var(--color-signal-green-core);  --deep: var(--color-signal-green-deep);  --glass: var(--color-signal-green-glass);  --glass-hi: var(--color-signal-green-glass-hi);  --glow: rgba(25,230,140,.55); --glow-soft: rgba(25,230,140,.22); }
+.is-green { color: var(--color-signal-green); }
+.is-red   { color: var(--color-signal-red); }
+
+/* =====================================================================
+   OVERRIDE LOG LAYOUT
+   ===================================================================== */
+.main {
+  height: 948px;
+  padding: 20px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ---------- Active override strip (hazard zone, from the controller) ---------- */
+.active-strip {
+  flex: none;
+  height: 112px;
+  display: flex;
+  padding: 8px;
+  border-radius: 12px;
+  background: var(--hazard-stripes);
+  box-shadow: 0 4px 0 var(--color-edge-dark), 0 14px 30px rgba(0,0,0,.55);
+}
+.as-inner {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 0 14px 0 22px;
+  background: linear-gradient(180deg, var(--color-surface-housing-hi), var(--color-surface-housing-lo));
+  border-radius: 5px;
+  box-shadow: 0 0 0 2px var(--color-edge-dark);
+}
+.as-label {
+  flex: none;
+  width: 176px;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  line-height: 1.1;
+  color: var(--color-text);
+}
+.as-label small {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  letter-spacing: .14em;
+  line-height: 1.3;
+  color: var(--color-text-3);
+}
+.as-sep { flex: none; align-self: stretch; margin: 14px 0; width: 2px; background: var(--color-edge-dark); box-shadow: 1px 0 0 var(--color-edge-light); }
+.as-ico { flex: none; width: 56px; height: 56px; fill: none; stroke: var(--color-text); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.as-mode { font-size: 44px; font-weight: 800; line-height: 1; letter-spacing: .03em; white-space: nowrap; }
+.as-sub { margin-top: 6px; font-size: 14px; font-weight: 700; letter-spacing: .14em; color: var(--color-text-2); }
+.as-since {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 16px 9px;
+  background: var(--color-text);
+  color: var(--color-text-inverse);
+  border-radius: 4px;
+  box-shadow: 0 3px 0 var(--color-edge-dark);
+}
+.as-since span { font-size: 12px; font-weight: 800; letter-spacing: .18em; }
+.as-since b { font-size: 38px; font-weight: 800; line-height: 1; letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+.as-asp { flex: none; display: flex; gap: 10px; padding: 6px 8px; }
+.as-asp-item { display: flex; align-items: center; gap: 10px; padding-right: 6px; }
+.as-asp-k { font-size: 12px; font-weight: 800; letter-spacing: .16em; color: var(--color-text-2); }
+.as-asp-v { font-size: 26px; font-weight: 800; line-height: 1; letter-spacing: .04em; }
+.as-pend {
+  margin-left: auto;
+  flex: none;
+  width: 400px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  border-color: var(--color-status-ok-deep);
+}
+.as-pend b { display: block; font-size: 18px; font-weight: 800; letter-spacing: .08em; }
+.as-pend small { display: block; margin-top: 4px; font-size: 12px; font-weight: 700; letter-spacing: .12em; line-height: 1.35; color: var(--color-text-2); }
+
+/* ---------- Body ---------- */
+.body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1416px 432px;
+  gap: 24px;
+}
+.side { display: flex; flex-direction: column; gap: 18px; min-height: 0; }
+.tbl-panel { display: flex; flex-direction: column; }
+
+/* ---------- Command table ---------- */
+.log {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0 4px;
+}
+.log thead th {
+  height: 26px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .16em;
+  color: var(--color-text-3);
+  text-align: left;
+  vertical-align: bottom;
+}
+.log tbody td {
+  height: 50px;
+  padding: 0 14px;
+  background: var(--color-surface-recess);
+  vertical-align: middle;
+}
+.log tbody tr.row td:first-child { border-radius: 5px 0 0 5px; box-shadow: inset 4px 0 0 var(--color-surface-plate); }
+.log tbody tr.row td:last-child  { border-radius: 0 5px 5px 0; }
+.log tbody tr.is-pending td:first-child { box-shadow: inset 5px 0 0 var(--color-status-ok); }
+.log tbody tr.is-effect td:first-child  { box-shadow: inset 5px 0 0 var(--color-text); }
+.log tbody tr.is-effect td { background: var(--color-surface-title-hi); }
+
+.log tbody tr.day td {
+  height: 26px;
+  padding: 0 4px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .18em;
+  color: var(--color-text-2);
+  background: none;
+}
+.day td span { display: flex; align-items: center; gap: 12px; }
+.day td span::after { content: ""; flex: 1; height: 1px; background: var(--color-edge-light); }
+
+.t-time { font-size: 26px; font-weight: 800; line-height: 1; letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+.t-cap { display: block; margin-top: 3px; font-size: 11px; font-weight: 700; letter-spacing: .14em; color: var(--color-text-3); }
+.t-dim { color: var(--color-text-3); font-size: 22px; font-weight: 800; font-family: var(--font-stencil); }
+
+.mode { display: flex; align-items: center; gap: 12px; font-size: 20px; white-space: nowrap; font-weight: 800; letter-spacing: .06em; line-height: 1.05; }
+.mode svg { flex: none; width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.mode--release { color: var(--color-text-2); }
+
+.reason-code { display: block; font-family: var(--font-stencil); font-stretch: condensed; font-size: 12px; font-weight: 800; letter-spacing: .14em; color: var(--color-text-3); }
+.reason-text { display: block; margin-top: 2px; font-size: 18px; font-weight: 600; line-height: 1.2; color: var(--color-text); }
+
+/* ---------- Status plates (never R/Y/G, never round) ---------- */
+.stat-cell { display: flex; align-items: center; gap: 10px; }
+.stat {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 11px 0 9px;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  line-height: 1;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.stat svg { flex: none; width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.stat--applied {
+  color: var(--color-text);
+  background: linear-gradient(180deg, var(--color-surface-plate-hi), var(--color-surface-plate));
+  border: 1px solid var(--color-edge-dark);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 2px 0 var(--color-edge-dark);
+}
+.stat--rejected {
+  padding: 0;
+  background: var(--hazard-stripes-fine);
+  box-shadow: 0 2px 0 var(--color-edge-dark);
+}
+.stat--rejected > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 22px;
+  margin: 4px;
+  padding: 0 9px 0 7px;
+  background: var(--color-hazard-ink);
+  color: var(--color-text);
+  border-radius: 2px;
+}
+.stat--timeout {
+  color: var(--color-text-2);
+  background: transparent;
+  border: 2px dashed var(--color-text-2);
+}
+.stat--requested {
+  color: var(--color-text);
+  background: var(--color-surface-recess);
+  border: 2px solid var(--color-status-ok);
+}
+.stat--requested .sq,
+.pend-pilot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 1px;
+  background: var(--color-status-ok);
+  border: 1px solid var(--color-status-ok-deep);
+}
+.pend-pilot { width: 16px; height: 16px; border-width: 2px; border-radius: 2px; }
+.sweep { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; overflow: hidden; background: var(--color-status-ok-deep); }
+.sweep i { position: absolute; top: 0; bottom: 0; left: 30%; width: 34%; background: var(--color-status-ok); }
+.is-superseded { opacity: .62; }
+.stat-stack { display: flex; flex-direction: column; align-items: flex-start; }
+.stat-stack .t-cap { margin-top: 3px; }
+.arrow { flex: none; width: 22px; height: 14px; fill: none; stroke: var(--color-text-2); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.flag {
+  flex: none;
+  padding: 5px 8px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .16em;
+  line-height: 1;
+  border-radius: 3px;
+  background: var(--color-text);
+  color: var(--color-text-inverse);
+}
+
+/* ---------- Table foot ---------- */
+.tbl-foot {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.note {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  line-height: 1.3;
+  color: var(--color-text-2);
+}
+.note svg { flex: none; width: 22px; height: 22px; fill: none; stroke: var(--color-text-2); stroke-width: 2; stroke-linecap: round; }
+.note b { color: var(--color-text); }
+.load-btn {
+  flex: none;
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 22px 0 18px;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  color: var(--color-text);
+  background: linear-gradient(180deg, var(--color-surface-plate-hi), var(--color-surface-plate));
+  border: 1px solid var(--color-edge-dark);
+  border-radius: 6px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 4px 0 var(--color-edge-dark);
+  cursor: pointer;
+}
+.load-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.load-btn small { font-size: 12px; letter-spacing: .14em; color: var(--color-text-3); }
+
+/* ---------- Side: status key ---------- */
+.key { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.key li { display: grid; grid-template-columns: 148px 1fr; align-items: center; gap: 14px; padding: 6px 12px; min-height: 50px; }
+.key p { margin: 0; font-size: 14px; font-weight: 800; letter-spacing: .07em; line-height: 1.3; color: var(--color-text-2); }
+.key p b { color: var(--color-text); }
+
+/* ---------- Side: rejection reasons ---------- */
+.reasons { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.reasons > div { padding: 8px 14px; }
+.reasons dt { font-size: 14px; font-weight: 800; letter-spacing: .14em; color: var(--color-text-3); }
+.reasons dd { margin: 3px 0 0; font-size: 19px; font-weight: 600; line-height: 1.2; }
+.reasons small { display: block; margin-top: 5px; font-size: 12px; font-weight: 700; letter-spacing: .12em; line-height: 1.3; color: var(--color-text-3); }
+
+/* ---------- Side: active vs requested ---------- */
+.rule { flex: 1; display: flex; flex-direction: column; }
+.rule p { margin: 0; font-size: 15px; font-weight: 800; letter-spacing: .07em; line-height: 1.35; color: var(--color-text-2); }
+.rule p b { color: var(--color-text); }
+
+/* ---------- Motion (only when the viewer allows it) ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .lamp.is-lit::after { animation: lamp-breathe 3.2s ease-in-out infinite; }
+  .is-pending .sq, .pend-pilot { animation: pend-blink 1s steps(1, end) infinite; }
+  .sweep i { animation: pend-sweep 1.4s ease-in-out infinite; }
+}
+@keyframes lamp-breathe {
+  0%, 100% { filter: brightness(1); }
+  50%      { filter: brightness(1.14); }
+}
+@keyframes pend-blink {
+  0%   { opacity: 1; }
+  50%  { opacity: .25; }
+}
+@keyframes pend-sweep {
+  0%   { left: -34%; }
+  100% { left: 100%; }
+}
+</style>
+</head>
+<body>
+
+<!-- ================= SCREEN STRIP ================= -->
+<header class="strip">
+  <div class="strip-name">
+    <div class="head head--brand" aria-hidden="true" style="--s:14px">
+      <span class="lamp lamp--red"></span><span class="lamp lamp--yellow"></span><span class="lamp lamp--green"></span>
+    </div>
+    <div>Override log<small>Key screen · /log/overrides/ · CAP-5 · Signal Hardware</small></div>
+  </div>
+  <p>Every MDRRMO override command, newest first, and how it resolved. <b>The hazard strip shows only what the controller reports as active</b>; the list below is commands, which can be pending, refused or timed out. Status plates use frames, stripes and cyan pilots, never a lit red, yellow or green.</p>
+</header>
+
+<!-- ================= ARTBOARD 1920x1080 ================= -->
+<section class="artboard" aria-label="Override log, 1920 by 1080">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <div class="head head--brand"><span class="lamp lamp--red"></span><span class="lamp lamp--yellow"></span><span class="lamp lamp--green"></span></div>
+      </div>
+      <div>
+        <div class="brand-title">Catarman SMART Traffic Light</div>
+        <div class="brand-sub">Edge-only adaptive signal · Catarman, Northern Samar</div>
+      </div>
+      <div class="int-plate"><span>Intersection</span><b>INT-01</b></div>
+    </div>
+    <nav class="nav" aria-label="Main">
+      <a class="tab" href="#live">Live</a>
+      <a class="tab" href="#peaks">Traffic peaks</a>
+      <a class="tab" href="#breaches">Breaches</a>
+      <a class="tab" href="#override-log" aria-current="page">Override log</a>
+      <a class="tab" href="#state-history">State history</a>
+    </nav>
+  </div>
+
+  <div class="linkbar" role="status" aria-label="Link health">
+    <span class="lb-label">Link health</span>
+    <span class="pilot-item"><i class="pilot" aria-hidden="true"></i><b>Broker</b> Connected</span>
+    <span class="pilot-item"><i class="pilot" aria-hidden="true"></i><b>Controller</b> Online <em class="sim">Sim</em></span>
+    <span class="pilot-item"><i class="pilot" aria-hidden="true"></i><b>Vision</b> Online <em class="sim">Sim</em></span>
+    <span class="lb-right">Data source · simulated (midterm)</span>
+  </div>
+
+  <main class="main">
+
+    <!-- ===== Active override, as the controller reports it ===== -->
+    <section class="active-strip" aria-label="Active override, as the controller reports it">
+      <div class="as-inner">
+        <div class="as-label">Active override<small>As the controller<br>reports it</small></div>
+        <span class="as-sep" aria-hidden="true"></span>
+        <svg class="as-ico" viewBox="0 0 34 34" aria-hidden="true"><path d="M9 3v28M25 3v28" opacity=".4"/><path d="M17 4v26M11.5 9.5L17 4l5.5 5.5M11.5 24.5L17 30l5.5-5.5"/></svg>
+        <div>
+          <div class="as-mode">Evacuation corridor NS</div>
+          <div class="as-sub">Continuous green north–south · command sent 15:02:10</div>
+        </div>
+        <div class="as-since"><span>Active since</span><b>15:02:11</b></div>
+        <div class="as-asp well">
+          <div class="as-asp-item">
+            <div class="head head--mini" role="img" aria-label="Phase NS: green"><span class="lamp lamp--red"></span><span class="lamp lamp--yellow"></span><span class="lamp lamp--green is-lit"></span></div>
+            <div><div class="as-asp-k">Phase NS</div><div class="as-asp-v is-green">Green</div></div>
+          </div>
+          <div class="as-asp-item">
+            <div class="head head--mini" role="img" aria-label="Phase EW: red"><span class="lamp lamp--red is-lit"></span><span class="lamp lamp--yellow"></span><span class="lamp lamp--green"></span></div>
+            <div><div class="as-asp-k">Phase EW</div><div class="as-asp-v is-red">Red</div></div>
+          </div>
+        </div>
+        <div class="as-pend well" role="status">
+          <i class="pend-pilot" aria-hidden="true"></i>
+          <div><b>Pending · Release to automatic</b><small>Sent 15:04:37. The corridor stays active here until the controller reports the release.</small></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="body">
+
+      <!-- ===== Command list ===== -->
+      <section class="panel tbl-panel" aria-label="MDRRMO override commands, newest first">
+        <h2 class="panel-title"><span>MDRRMO commands · newest first</span><span class="pt-tag">Times Asia/Manila (UTC+8)</span></h2>
+        <table class="log">
+          <colgroup>
+            <col style="width:160px"><col style="width:330px"><col style="width:300px"><col><col style="width:190px">
+          </colgroup>
+          <thead>
+            <tr><th>Requested</th><th>Mode</th><th>Status</th><th>Reason</th><th>Resolved</th></tr>
+          </thead>
+          <tbody>
+            <tr class="day"><td colspan="5"><span>Today · Friday 23 October 2026</span></td></tr>
+
+            <!-- 1. pending release -->
+            <tr class="row is-pending">
+              <td><span class="t-time">15:04:37</span></td>
+              <td><span class="mode mode--release"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M27.5 12.5A11.5 11.5 0 1 0 28.5 21"/><path d="M28.5 4.5v8h-8"/></svg>Release to automatic</span></td>
+              <td><div class="stat-cell"><span class="stat stat--requested"><i class="sq" aria-hidden="true"></i>Requested<span class="sweep" aria-hidden="true"><i></i></span></span></div></td>
+              <td><span class="t-dim">—</span></td>
+              <td><span class="t-time" style="font-size:20px;color:var(--color-text-2)">Waiting</span><span class="t-cap">Times out 15:04:42</span></td>
+            </tr>
+
+            <!-- 2. corridor NS, in effect -->
+            <tr class="row is-effect">
+              <td><span class="t-time">15:02:10</span></td>
+              <td><span class="mode"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M9 3v28M25 3v28" opacity=".4"/><path d="M17 4v26M11.5 9.5L17 4l5.5 5.5M11.5 24.5L17 30l5.5-5.5"/></svg>Evacuation corridor NS</span></td>
+              <td><div class="stat-cell"><span class="stat stat--applied"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10.5l4 4 8-9"/></svg>Applied</span><span class="flag">In effect</span></div></td>
+              <td><span class="t-dim">—</span></td>
+              <td><span class="t-time">15:02:11</span><span class="t-cap">Controller ack</span></td>
+            </tr>
+
+            <!-- 3. rejected, controller offline -->
+            <tr class="row">
+              <td><span class="t-time">14:55:03</span></td>
+              <td><span class="mode"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M9 3v28M25 3v28" opacity=".4"/><path d="M17 4v26M11.5 9.5L17 4l5.5 5.5M11.5 24.5L17 30l5.5-5.5"/></svg>Evacuation corridor NS</span></td>
+              <td><div class="stat-cell"><span class="stat stat--rejected"><span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg>Rejected</span></span></div></td>
+              <td><span class="reason-code">CONTROLLER_OFFLINE</span><span class="reason-text">Controller offline: nothing was sent</span></td>
+              <td><span class="t-time">14:55:03</span><span class="t-cap">Backend · not sent</span></td>
+            </tr>
+
+            <!-- 4. timeout, later applied -->
+            <tr class="row">
+              <td><span class="t-time">14:47:52</span></td>
+              <td><span class="mode"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M9 3v28M25 3v28" opacity=".4"/><path d="M17 4v26M11.5 9.5L17 4l5.5 5.5M11.5 24.5L17 30l5.5-5.5"/></svg>Evacuation corridor NS</span></td>
+              <td>
+                <div class="stat-cell">
+                  <div class="stat-stack is-superseded">
+                    <span class="stat stat--timeout"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 2.5h9M5.5 17.5h9M6.5 2.5v2.8L10 10l3.5-4.7V2.5M6.5 17.5v-2.8L10 10l3.5 4.7v2.8"/></svg>Timeout</span>
+                  </div>
+                  <svg class="arrow" viewBox="0 0 22 14" aria-hidden="true"><path d="M2 7h17M13.5 2L19 7l-5.5 5"/></svg>
+                  <span class="stat stat--applied"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10.5l4 4 8-9"/></svg>Applied</span>
+                </div>
+                <span class="t-cap">Timed out 14:47:57 · resolved late</span>
+              </td>
+              <td><span class="t-dim">—</span></td>
+              <td><span class="t-time">14:48:03</span><span class="t-cap">Controller state</span></td>
+            </tr>
+
+            <!-- 5. rejected, conflict fault -->
+            <tr class="row">
+              <td><span class="t-time">14:22:40</span></td>
+              <td><span class="mode"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M3 9h28M3 25h28" opacity=".4"/><path d="M4 17h26M9.5 11.5L4 17l5.5 5.5M24.5 11.5L30 17l-5.5 5.5"/></svg>Evacuation corridor EW</span></td>
+              <td><div class="stat-cell"><span class="stat stat--rejected"><span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg>Rejected</span></span></div></td>
+              <td><span class="reason-code">CONFLICT_FAULT</span><span class="reason-text">Corridor refused during a conflict fault</span></td>
+              <td><span class="t-time">14:22:40</span><span class="t-cap">Controller ack</span></td>
+            </tr>
+
+            <tr class="day"><td colspan="5"><span>Thursday 22 October 2026</span></td></tr>
+
+            <!-- 6. release -->
+            <tr class="row">
+              <td><span class="t-time">16:31:05</span></td>
+              <td><span class="mode mode--release"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M27.5 12.5A11.5 11.5 0 1 0 28.5 21"/><path d="M28.5 4.5v8h-8"/></svg>Release to automatic</span></td>
+              <td><div class="stat-cell"><span class="stat stat--applied"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10.5l4 4 8-9"/></svg>Applied</span></div></td>
+              <td><span class="t-dim">—</span></td>
+              <td><span class="t-time">16:31:06</span><span class="t-cap">Controller ack</span></td>
+            </tr>
+
+            <!-- 7. flashing amber retry -->
+            <tr class="row">
+              <td><span class="t-time">16:25:47</span></td>
+              <td><span class="mode"><svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="7"/><path d="M17 2.5v4.5M17 27v4.5M2.5 17H7M27 17h4.5M6.8 6.8l3.2 3.2M24 24l3.2 3.2M27.2 6.8L24 10M10 24l-3.2 3.2"/></svg>Flashing Amber</span></td>
+              <td><div class="stat-cell"><span class="stat stat--applied"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10.5l4 4 8-9"/></svg>Applied</span></div></td>
+              <td><span class="t-dim">—</span></td>
+              <td><span class="t-time">16:25:48</span><span class="t-cap">Controller ack</span></td>
+            </tr>
+
+            <!-- 8. flashing amber, timed out, never resolved -->
+            <tr class="row">
+              <td><span class="t-time">16:25:19</span></td>
+              <td><span class="mode"><svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="7"/><path d="M17 2.5v4.5M17 27v4.5M2.5 17H7M27 17h4.5M6.8 6.8l3.2 3.2M24 24l3.2 3.2M27.2 6.8L24 10M10 24l-3.2 3.2"/></svg>Flashing Amber</span></td>
+              <td>
+                <div class="stat-cell">
+                  <span class="stat stat--timeout"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 2.5h9M5.5 17.5h9M6.5 2.5v2.8L10 10l3.5-4.7V2.5M6.5 17.5v-2.8L10 10l3.5 4.7v2.8"/></svg>Timeout</span>
+                </div>
+                <span class="t-cap">Not final · no reply yet</span>
+              </td>
+              <td><span class="t-dim">—</span></td>
+              <td><span class="t-dim">—</span><span class="t-cap">Timed out 16:25:24</span></td>
+            </tr>
+
+            <!-- 9. corridor EW -->
+            <tr class="row">
+              <td><span class="t-time">16:22:10</span></td>
+              <td><span class="mode"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M3 9h28M3 25h28" opacity=".4"/><path d="M4 17h26M9.5 11.5L4 17l5.5 5.5M24.5 11.5L30 17l-5.5 5.5"/></svg>Evacuation corridor EW</span></td>
+              <td><div class="stat-cell"><span class="stat stat--applied"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10.5l4 4 8-9"/></svg>Applied</span></div></td>
+              <td><span class="t-dim">—</span></td>
+              <td><span class="t-time">16:22:11</span><span class="t-cap">Controller ack</span></td>
+            </tr>
+
+            <!-- 10. corridor NS -->
+            <tr class="row">
+              <td><span class="t-time">16:18:32</span></td>
+              <td><span class="mode"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M9 3v28M25 3v28" opacity=".4"/><path d="M17 4v26M11.5 9.5L17 4l5.5 5.5M11.5 24.5L17 30l5.5-5.5"/></svg>Evacuation corridor NS</span></td>
+              <td><div class="stat-cell"><span class="stat stat--applied"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10.5l4 4 8-9"/></svg>Applied</span></div></td>
+              <td><span class="t-dim">—</span></td>
+              <td><span class="t-time">16:18:33</span><span class="t-cap">Controller ack</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="tbl-foot">
+          <p class="note well"><svg viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="9"/><path d="M11 10v6M11 6.5v.5"/></svg><span>A corridor that ended on its own (link lost for 60 s, or a conflict fault) appears in <b>State history</b>, not here.</span></p>
+          <button class="load-btn" type="button"><svg viewBox="0 0 22 22" aria-hidden="true"><path d="M5 8l6 6 6-6"/></svg>Load older</button>
+        </div>
+      </section>
+
+      <!-- ===== Side column ===== -->
+      <div class="side">
+        <section class="panel" aria-label="Status key">
+          <h2 class="panel-title"><span>Status key</span><span class="pt-tag">Reply due in 5 s</span></h2>
+          <ul class="key">
+            <li class="well"><span class="stat stat--requested" style="justify-self:start"><i class="sq" aria-hidden="true"></i>Requested</span><p>Sent. Waiting for the controller.</p></li>
+            <li class="well"><span class="stat stat--applied" style="justify-self:start"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10.5l4 4 8-9"/></svg>Applied</span><p>Controller accepted it. <b>Final.</b></p></li>
+            <li class="well"><span class="stat stat--rejected" style="justify-self:start"><span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg>Rejected</span></span><p>Refused, with a reason. <b>Final.</b></p></li>
+            <li class="well"><span class="stat stat--timeout" style="justify-self:start"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 2.5h9M5.5 17.5h9M6.5 2.5v2.8L10 10l3.5-4.7V2.5M6.5 17.5v-2.8L10 10l3.5 4.7v2.8"/></svg>Timeout</span><p>No reply in 5 s. <b>Not final:</b> a late reply still resolves it.</p></li>
+          </ul>
+        </section>
+
+        <section class="panel" aria-label="Rejection reasons">
+          <h2 class="panel-title"><span>Rejection reasons</span></h2>
+          <dl class="reasons">
+            <div class="well"><dt>CONTROLLER_OFFLINE</dt><dd>Controller offline: nothing was sent</dd><small>Decided by the backend before sending</small></div>
+            <div class="well"><dt>CONFLICT_FAULT</dt><dd>Corridor refused during a conflict fault</dd><small>Flashing Amber and release are still accepted</small></div>
+          </dl>
+        </section>
+
+        <section class="panel rule" aria-label="Active versus requested">
+          <h2 class="panel-title"><span>Active vs requested</span></h2>
+          <p>An override is <b>active</b> only once the controller reports it. Until then the hazard strip keeps showing the last mode it reported. One override at a time: a new command replaces the current one.</p>
+        </section>
+      </div>
+    </div>
+  </main>
+</section>
+</body>
+</html>

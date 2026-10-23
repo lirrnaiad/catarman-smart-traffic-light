@@ -1,18 +1,23 @@
 # Glossary
 
+- **All-red clearance:** the interval between phases when every approach shows red; 2 s in the demo timings.
 - **Approach:** one road entering the intersection (N, S, E, W). Opposing approaches share a phase: NS is Phase 1, EW is Phase 2.
+- **Conflict monitor:** the firmware check for conflicting greens. Its fault forces Flashing Amber, latches until the controller-box reset button is pressed, is not a degradation level, and outranks manual overrides (`degradation-levels.md`).
+- **D_stopline:** the HC-SR04 echo distance below which a vehicle counts as present at the North stop line: 8 cm on the diorama.
 - **DPO / PIA:** Data Protection Officer / Privacy Impact Assessment, the Tier 2 prerequisites under NPC Circular 16-01.
 - **DPWH:** Department of Public Works and Highways, the source of commercial turnkey signals.
 - **Diode-OR:** two diodes feeding one bus so the higher-voltage source powers it, giving seamless failover (`hardware.md`).
 - **Flashing Amber:** caution mode on all approaches; L4 or a manual override.
 - **FEWS:** the Catarman River Flood Early Warning System.
-- **Gap-out:** ending green early once the stop bar has been vacant for more than 3 s.
+- **Gap-out:** ending green early, once min green has run, when the stop bar has been vacant for more than 3 s.
 - **Ghost red:** a red held against a driver while the cross-street is empty, which invites red-light running and spreads non-compliance.
 - **Habal-habal:** a motorcycle taxi.
-- **Heartbeat:** the vision node's periodic liveness signal to the ESP32. Missing 3 triggers L2.
+- **Heartbeat:** the vision node's 1 Hz liveness signal to the ESP32 (spine AD-17). Missing 3 triggers L2.
 - **L1–L4:** degradation levels (`degradation-levels.md`).
 - **LGU:** Local Government Unit, here the Municipality of Catarman.
 - **MDRRMO:** Municipal Disaster Risk Reduction and Management Office.
+- **Min / max green:** the shortest and longest green in L1 and L2: 5 s and 20 s on the diorama.
+- **MQTT contract v1:** the topic and payload schema in the spine's Structural Seed, locked Oct 22, 2026; Squads A and B implement it.
 - **NEMA TS2 / HCM:** U.S. traffic-controller standard / Highway Capacity Manual. Both split detection into advance (50–100 m upstream) and stop-bar.
 - **NORSAMELCO / NGCP:** the Northern Samar electric cooperative (distribution faults) / the National Grid Corporation (transmission trips).
 - **NPC:** National Privacy Commission.
@@ -20,5 +25,6 @@
 - **POSO:** Public Order and Safety Office, which employs the traffic enforcers.
 - **ROI:** Region of Interest, the virtual stop-line zone in the camera frame.
 - **Sangguniang Bayan:** the municipal legislative council.
+- **Spine:** the architecture document adopted as a companion (`../architecture-smart-traffic-light/architecture-smart-traffic-light.md`). Tickets cite its AD-1 to AD-19.
 - **Stop-bar detection:** presence sensing at the stop line for right-of-way demand, as opposed to upstream advance detection.
 - **TODA:** Tricycle Operators and Drivers' Association.

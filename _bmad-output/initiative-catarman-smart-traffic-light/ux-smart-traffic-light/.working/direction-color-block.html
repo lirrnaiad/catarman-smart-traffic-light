@@ -1,0 +1,946 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920">
+<title>Color Block Direction</title>
+<style>
+/* =====================================================================
+   DIRECTION 4 · COLOR BLOCK · design tokens (every concrete value used)
+   ---------------------------------------------------------------------
+   SURFACES & TEXT
+     --page            #E9E2D6   page behind the artboards
+     --canvas          #F7F2EA   warm off-white app canvas
+     --surface         #FFFFFF   cards
+     --surface-sunken  #F4EEE5   inset tiles inside cards
+     --border          #ECE4D7   hairlines
+     --border-strong   #D8CDBC   button outlines, dashed placeholders
+     --text            #211E2B   primary ink
+     --text-muted      #6E6878   secondary ink
+     --text-faint      #A59FAB   map arrows, tertiary ink
+     --ink             #211E2B   ink-filled actions (active nav, Confirm)
+     --on-ink          #FFFFFF   text on ink / on strong semantic fills
+     --scrim           rgba(33,30,43,.50)  dialog backdrop
+     --shadow-tint     rgba(70,52,26,.*)   warm card shadows
+
+   DECORATIVE TRIAD  (only ever used as all three, in signal order R→Y→G:
+                      top band, card top edges, logo mark, loader)
+     --deco-red          #FF6F61
+     --deco-yellow       #FFC94A
+     --deco-green        #45CC8A
+     --deco-red-soft     #FFDAD5   loader "off" pill
+     --deco-yellow-soft  #FFEFC6
+     --deco-green-soft   #D3F3E2
+
+   SEMANTIC SIGNAL  (one colour alone = a real aspect or state, always + a word)
+     --signal-red          #D93030   RED chip fill (white text 4.9:1), FAULT, link lost
+     --signal-red-text     #A61E1E
+     --signal-red-tint     #FDEAE7   tint behind an EW-is-RED tile
+     --signal-yellow       #F5B000   FLASHING AMBER / caution chip fill (ink text)
+     --signal-yellow-deep  #D99A00   L4 hazard stripe
+     --signal-yellow-text  #7A5600
+     --signal-yellow-tint  #FFF4D6
+     --signal-green        #12844C   GREEN chip fill (white text 5.0:1), L1, healthy
+     --signal-green-text   #0E6B3D
+     --signal-green-tint   #E2F6EA   tint behind an NS-is-GREEN tile / countdown
+
+   LAMPS (signal heads)
+     --housing         #24212D   --housing-top     #34303F
+     --lamp-red        #FF4D43   --lamp-red-hi     #FFB4AC   --lamp-red-lo     #C92A22
+     --lamp-yellow     #FFC21A   --lamp-yellow-hi  #FFE7A0   --lamp-yellow-lo  #D99A00
+     --lamp-green      #2DD47E   --lamp-green-hi   #B4F5D2   --lamp-green-lo   #149A55
+     --lens-red-off    #4D3034   --lens-yellow-off #4A4231   --lens-green-off  #2D4437
+     --glow-red        rgba(255,77,67,.55)
+     --glow-yellow     rgba(255,194,26,.55)
+     --glow-green      rgba(45,212,126,.50)
+
+   VEHICLE CLASSES (categorical; no red/yellow/green; validated CVD-safe, fixed order)
+     --class-car         #3B4CC0
+     --class-tricycle    #2B86C4
+     --class-motorcycle  #6E3FBF
+     --class-jeepney     #BF4E98
+     --class-van         #9A5420
+
+   MAP
+     --map-ground       #EDE6DA   --map-road        #FFFFFF
+     --map-line         #D9CEBD   --map-zone        #E3E7FB   --map-zone-stroke #8E9AE0
+
+   STALE
+     --stale-chip   #2E2B36   ink chip "STALE — last seen …"
+     --stale-edge   #CFC8BD   card edge / band once data is stale
+     --stale-hatch  rgba(46,43,54,.04)
+
+   BREACH THUMBNAIL (anonymized blur)
+     --thumb-bg #CBC5BC   --thumb-blob-a #9F998F   --thumb-blob-b #E4DFD7
+
+   TYPE  --font-ui  system-ui stack · --font-num  ui-rounded stack (big rounded numerals)
+   RADII --radius-card 28px · --radius-tile 24px · --radius-pill 999px
+   ===================================================================== */
+
+:root{
+  --page:#E9E2D6; --canvas:#F7F2EA; --surface:#FFFFFF; --surface-sunken:#F4EEE5;
+  --border:#ECE4D7; --border-strong:#D8CDBC;
+  --text:#211E2B; --text-muted:#6E6878; --text-faint:#A59FAB;
+  --ink:#211E2B; --on-ink:#FFFFFF; --scrim:rgba(33,30,43,.50);
+
+  --deco-red:#FF6F61; --deco-yellow:#FFC94A; --deco-green:#45CC8A;
+  --deco-red-soft:#FFDAD5; --deco-yellow-soft:#FFEFC6; --deco-green-soft:#D3F3E2;
+
+  --signal-red:#D93030; --signal-red-text:#A61E1E; --signal-red-tint:#FDEAE7;
+  --signal-yellow:#F5B000; --signal-yellow-deep:#D99A00; --signal-yellow-text:#7A5600; --signal-yellow-tint:#FFF4D6;
+  --signal-green:#12844C; --signal-green-text:#0E6B3D; --signal-green-tint:#E2F6EA;
+
+  --housing:#24212D; --housing-top:#34303F;
+  --lamp-red:#FF4D43; --lamp-red-hi:#FFB4AC; --lamp-red-lo:#C92A22;
+  --lamp-yellow:#FFC21A; --lamp-yellow-hi:#FFE7A0; --lamp-yellow-lo:#D99A00;
+  --lamp-green:#2DD47E; --lamp-green-hi:#B4F5D2; --lamp-green-lo:#149A55;
+  --lens-red-off:#4D3034; --lens-yellow-off:#4A4231; --lens-green-off:#2D4437;
+  --glow-red:rgba(255,77,67,.55); --glow-yellow:rgba(255,194,26,.55); --glow-green:rgba(45,212,126,.50);
+
+  --class-car:#3B4CC0; --class-tricycle:#2B86C4; --class-motorcycle:#6E3FBF; --class-jeepney:#BF4E98; --class-van:#9A5420;
+
+  --map-ground:#EDE6DA; --map-road:#FFFFFF; --map-line:#D9CEBD; --map-zone:#E3E7FB; --map-zone-stroke:#8E9AE0;
+
+  --stale-chip:#2E2B36; --stale-edge:#CFC8BD; --stale-hatch:rgba(46,43,54,.04);
+  --thumb-bg:#CBC5BC; --thumb-blob-a:#9F998F; --thumb-blob-b:#E4DFD7;
+
+  --shadow-card:0 1px 2px rgba(70,52,26,.06), 0 18px 40px -18px rgba(70,52,26,.24);
+  --shadow-soft:0 1px 2px rgba(70,52,26,.06), 0 6px 16px -8px rgba(70,52,26,.20);
+
+  --font-ui:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --font-num:ui-rounded,"SF Pro Rounded","Arial Rounded MT Bold",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --radius-card:28px; --radius-tile:24px; --radius-pill:999px;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);color:var(--text);font-family:var(--font-ui);-webkit-font-smoothing:antialiased}
+.page{width:1920px}
+svg{display:block}
+button{font:inherit}
+
+/* ---------- rationale strip ---------- */
+.strip{display:flex;align-items:center;gap:28px;padding:20px 40px;background:var(--surface);border-bottom:1px solid var(--border)}
+.strip-id{display:flex;align-items:center;gap:14px;flex:none}
+.strip-name small{display:block;font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)}
+.strip-name b{font-size:24px;font-weight:800;letter-spacing:-.01em}
+.strip p{margin:0;font-size:15px;line-height:1.55;color:var(--text-muted);max-width:1500px}
+.strip p strong{color:var(--text)}
+
+.board-label{padding:22px 40px 12px;font-size:13px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--text-muted)}
+
+/* ---------- brand mark (decorative triad, R→Y→G top to bottom) ---------- */
+.mark{width:52px;height:52px;border-radius:16px;background:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;flex:none}
+.mark i{width:11px;height:11px;border-radius:50%}
+.mark i:nth-child(1){background:var(--deco-red)} .mark i:nth-child(2){background:var(--deco-yellow)} .mark i:nth-child(3){background:var(--deco-green)}
+
+/* ---------- artboard ---------- */
+.artboard{position:relative;width:1920px;height:1080px;overflow:hidden;background:var(--canvas);font-family:var(--font-ui);color:var(--text)}
+.band{position:absolute;top:0;left:0;right:0;height:14px;display:flex}
+.band span{flex:1}
+.band span:nth-child(1){background:var(--deco-red)} .band span:nth-child(2){background:var(--deco-yellow)} .band span:nth-child(3){background:var(--deco-green)}
+
+.topbar{position:absolute;top:14px;left:0;right:0;height:96px;padding:0 40px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.brand{display:flex;align-items:center;gap:16px}
+.brand-title{font-size:26px;font-weight:800;letter-spacing:-.015em;line-height:1.1;white-space:nowrap}
+.brand-sub{font-size:15px;color:var(--text-muted);margin-top:5px;font-weight:600;white-space:nowrap}
+.brand-sub b{color:var(--text);background:var(--surface);border-radius:8px;padding:1px 8px;font-weight:800;box-shadow:inset 0 0 0 1.5px var(--border-strong)}
+.nav{display:flex;gap:2px;padding:6px;background:var(--surface);border-radius:var(--radius-pill);box-shadow:var(--shadow-soft)}
+.nav a{padding:12px 18px;border-radius:var(--radius-pill);font-size:17px;font-weight:700;color:var(--text-muted);text-decoration:none;white-space:nowrap}
+.nav a.active{background:var(--ink);color:var(--on-ink)}
+.health{display:flex;gap:10px}
+.hchip{display:inline-flex;align-items:center;gap:8px;padding:11px 15px 11px 13px;background:var(--surface);border-radius:var(--radius-pill);box-shadow:var(--shadow-soft);font-size:14px;white-space:nowrap}
+.hchip .hk{color:var(--text-muted);font-weight:600}
+.hchip b{font-weight:800;letter-spacing:.02em}
+.hchip .sim{color:var(--text-muted);font-weight:600}
+.dot{width:12px;height:12px;border-radius:50%;flex:none}
+.dot.ok{background:var(--signal-green);box-shadow:0 0 0 3px var(--signal-green-tint)}
+.dot.bad{background:var(--signal-red);box-shadow:0 0 0 3px var(--signal-red-tint)}
+.hchip.bad{background:var(--signal-red-tint)}
+.hchip.bad b{color:var(--signal-red-text)}
+
+/* ---------- grid + cards ---------- */
+.grid{position:absolute;top:118px;left:40px;right:40px;bottom:36px;display:grid;grid-template-columns:800px 1fr 1fr;grid-template-rows:508px 1fr;gap:24px}
+.c-signal{grid-column:1;grid-row:1/3}
+.c-map{grid-column:2;grid-row:1}
+.c-counts{grid-column:3;grid-row:1}
+.c-breach{grid-column:2;grid-row:2}
+.c-override{grid-column:3;grid-row:2}
+
+.card{position:relative;background:var(--surface);border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:28px 28px 24px;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.card::before{content:"";position:absolute;left:0;right:0;top:0;height:6px;background:linear-gradient(90deg,var(--deco-red) 0 33.333%,var(--deco-yellow) 33.333% 66.666%,var(--deco-green) 66.666% 100%)}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex:none}
+.eyebrow-row{display:flex;align-items:center;gap:10px;height:30px}
+.eyebrow{font-size:14px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--text-muted)}
+.card-title{font-size:26px;font-weight:800;letter-spacing:-.015em;margin-top:2px;line-height:1.15}
+.kpi{text-align:right}
+.kpi .n{font-family:var(--font-num);font-size:46px;font-weight:800;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.kpi .n small{font-size:20px;font-weight:800;letter-spacing:0;margin-left:4px}
+.kpi .l{font-size:13px;color:var(--text-muted);font-weight:800;text-transform:uppercase;letter-spacing:.07em;margin-top:6px}
+.wash{display:contents}
+
+/* ---------- chips ---------- */
+.pill{display:inline-flex;align-items:center;gap:8px;border-radius:var(--radius-pill);font-weight:800;white-space:nowrap}
+.pill-neutral{background:var(--surface-sunken);color:var(--text);padding:7px 14px 7px 10px;font-size:15px}
+.pill-neutral svg{color:var(--text-muted)}
+
+/* aspect chip = a real signal aspect. mini head icon keeps lamp position as a cue */
+.aspect{display:inline-flex;align-items:center;gap:11px;padding:8px 20px 8px 10px;border-radius:var(--radius-pill);font-size:24px;font-weight:800;letter-spacing:.05em;white-space:nowrap}
+.aspect.sm{font-size:15px;padding:5px 12px 5px 6px;gap:8px;letter-spacing:.04em}
+.aspect-green{background:var(--signal-green);color:var(--on-ink)}
+.aspect-red{background:var(--signal-red);color:var(--on-ink)}
+.aspect-amber{background:var(--signal-yellow);color:var(--ink)}
+.minihead{display:flex;flex-direction:column;gap:3px;padding:4px;border-radius:9px;background:var(--housing);flex:none}
+.minihead i{width:9px;height:9px;border-radius:50%;background:var(--lens-red-off)}
+.minihead i:nth-child(2){background:var(--lens-yellow-off)}
+.minihead i:nth-child(3){background:var(--lens-green-off)}
+.minihead.r i:nth-child(1){background:var(--lamp-red)}
+.minihead.y i:nth-child(2){background:var(--lamp-yellow)}
+.minihead.g i:nth-child(3){background:var(--lamp-green)}
+.aspect.sm .minihead{gap:2px;padding:3px;border-radius:7px}
+.aspect.sm .minihead i{width:6px;height:6px}
+
+/* level chips: L1–L4 each a distinct fill + icon; FAULT is its own state */
+.lvl{display:inline-flex;align-items:center;gap:10px;border-radius:var(--radius-pill);padding:8px 18px 8px 8px;font-size:19px;font-weight:800;white-space:nowrap}
+.lvl .ln{display:inline-flex;align-items:center;justify-content:center;height:34px;min-width:34px;padding:0 8px;border-radius:var(--radius-pill);font-family:var(--font-num);font-size:17px;font-weight:800}
+.lvl-1{background:var(--signal-green);color:var(--on-ink)}
+.lvl-1 .ln{background:var(--on-ink);color:var(--signal-green-text)}
+.lvl-2{background:var(--signal-yellow-tint);color:var(--signal-yellow-text);box-shadow:inset 0 0 0 2.5px var(--signal-yellow)}
+.lvl-2 .ln{background:var(--signal-yellow);color:var(--ink)}
+.lvl-3{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 2.5px var(--ink)}
+.lvl-3 .ln{background:var(--ink);color:var(--on-ink)}
+.lvl-4{background:repeating-linear-gradient(135deg,var(--signal-yellow) 0 12px,var(--signal-yellow-deep) 12px 24px);color:var(--ink)}
+.lvl-4 .ln{background:var(--ink);color:var(--signal-yellow)}
+.lvl-fault{background:var(--signal-red);color:var(--on-ink);box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--signal-red)}
+.lvl-fault .ln{background:var(--on-ink);color:var(--signal-red-text)}
+
+/* flood chips */
+.flood-chip{display:inline-flex;align-items:center;gap:9px;padding:8px 16px 8px 10px;border-radius:var(--radius-pill);font-size:22px;font-weight:800;letter-spacing:.05em}
+.fl-dry{background:var(--surface);color:var(--text);box-shadow:inset 0 0 0 2px var(--border-strong)}
+.fl-wet{background:var(--signal-yellow-tint);color:var(--signal-yellow-text);box-shadow:inset 0 0 0 2.5px var(--signal-yellow)}
+.fl-flooded{background:var(--signal-red);color:var(--on-ink)}
+
+/* stale chip */
+.stale-chip{display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 14px 0 10px;border-radius:var(--radius-pill);background:var(--stale-chip);color:var(--on-ink);font-size:14px;font-weight:800;letter-spacing:.03em;white-space:nowrap}
+
+/* ---------- signal heads ---------- */
+.housing{--lamp:104px;width:calc(var(--lamp) + 32px);padding:16px;border-radius:calc(var(--lamp) / 2 + 16px);background:linear-gradient(180deg,var(--housing-top),var(--housing));display:flex;flex-direction:column;gap:14px;box-shadow:0 14px 26px -12px rgba(36,33,45,.55);flex:none}
+.lamp{width:var(--lamp);height:var(--lamp);border-radius:50%;position:relative}
+.lamp.red{background:var(--lens-red-off)} .lamp.yellow{background:var(--lens-yellow-off)} .lamp.green{background:var(--lens-green-off)}
+.lamp::after{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 -8px 14px rgba(0,0,0,.35)}
+.lamp.on.red{background:radial-gradient(circle at 36% 32%,var(--lamp-red-hi) 0 9%,var(--lamp-red) 45%,var(--lamp-red-lo) 100%);--glow:var(--glow-red)}
+.lamp.on.yellow{background:radial-gradient(circle at 36% 32%,var(--lamp-yellow-hi) 0 9%,var(--lamp-yellow) 45%,var(--lamp-yellow-lo) 100%);--glow:var(--glow-yellow)}
+.lamp.on.green{background:radial-gradient(circle at 36% 32%,var(--lamp-green-hi) 0 9%,var(--lamp-green) 45%,var(--lamp-green-lo) 100%);--glow:var(--glow-green)}
+.lamp.on{box-shadow:0 0 30px 6px var(--glow)}
+.lamp.on::after{box-shadow:inset 0 -6px 12px rgba(0,0,0,.18)}
+
+/* ---------- signal card ---------- */
+.c-signal{gap:18px;padding:28px 28px 26px}
+.phases{display:grid;grid-template-columns:1fr 1fr;gap:18px;flex:1;min-height:0}
+.phase{border-radius:var(--radius-tile);padding:22px;display:flex;gap:22px;align-items:center}
+.tint-green{background:var(--signal-green-tint)}
+.tint-red{background:var(--signal-red-tint)}
+.phase-info{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
+.phase-name{font-family:var(--font-num);font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1}
+.phase-sub{font-size:16px;color:var(--text-muted);font-weight:700;margin:8px 0 22px;line-height:1.35}
+.phase-note{font-size:14px;color:var(--text-muted);font-weight:600;margin-top:14px;line-height:1.4}
+
+.count{display:flex;align-items:center;gap:28px;height:132px;padding:0 30px;border-radius:var(--radius-tile);background:var(--signal-green-tint);flex:none}
+.count-l{display:flex;flex-direction:column;gap:10px;width:220px}
+.count-what{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:800}
+.count-num{display:flex;align-items:baseline;gap:10px;font-family:var(--font-num)}
+.count-num .upto{font-size:26px;font-weight:800;color:var(--signal-green-text)}
+.count-num .num{font-size:112px;font-weight:800;line-height:1;letter-spacing:-.045em;font-variant-numeric:tabular-nums}
+.count-num .unit{font-size:40px;font-weight:800}
+.count-r{margin-left:auto;display:flex;flex-direction:column;gap:4px;text-align:right;font-size:16px;color:var(--text-muted);font-weight:600}
+.count-r b{font-size:18px;color:var(--text);font-weight:800}
+
+.below{display:grid;grid-template-columns:1fr 200px;gap:18px;height:150px;flex:none}
+.ladder,.flood{background:var(--surface-sunken);border-radius:var(--radius-tile);padding:14px 16px 16px}
+.rungs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:8px}
+.rung{border-radius:18px;padding:10px 12px;height:88px;background:var(--surface);box-shadow:inset 0 0 0 2px var(--border);display:flex;flex-direction:column;justify-content:space-between}
+.rung .rl{display:flex;align-items:center;justify-content:space-between;font-family:var(--font-num);font-size:24px;font-weight:800;line-height:1}
+.rung .rn{font-size:13px;font-weight:700;line-height:1.2;color:var(--text-muted)}
+.rung .sw{width:22px;height:22px;border-radius:50%;flex:none}
+.sw-1{background:var(--signal-green)}
+.sw-2{background:var(--signal-yellow-tint);box-shadow:inset 0 0 0 2.5px var(--signal-yellow)}
+.sw-3{background:var(--surface);box-shadow:inset 0 0 0 2.5px var(--ink)}
+.sw-4{background:repeating-linear-gradient(135deg,var(--signal-yellow) 0 4px,var(--signal-yellow-deep) 4px 8px)}
+.rung.now{background:var(--signal-green);box-shadow:0 8px 18px -10px rgba(18,132,76,.8);color:var(--on-ink)}
+.rung.now .rn{color:var(--on-ink)}
+.now-tag{font-family:var(--font-ui);font-size:11px;font-weight:800;letter-spacing:.08em;background:var(--on-ink);color:var(--signal-green-text);border-radius:var(--radius-pill);padding:4px 8px}
+.flood{display:flex;flex-direction:column;justify-content:space-between}
+.flood-hint{font-size:13px;color:var(--text-muted);font-weight:700}
+
+/* ---------- map card ---------- */
+.mapwrap{margin-top:14px;flex:none}
+.m-ground{fill:var(--map-ground)}
+.m-road{fill:var(--map-road)}
+.m-line{stroke:var(--map-line);stroke-width:2.5;stroke-dasharray:10 9;stroke-linecap:round}
+.m-zone{fill:var(--map-zone);stroke:var(--map-zone-stroke);stroke-width:1.5;stroke-dasharray:5 4}
+.m-zone.d0{fill-opacity:0}
+.m-zone.d1{fill-opacity:.45}
+.m-zone.d2{fill-opacity:.8}
+.m-zone.d3{fill-opacity:1}
+.m-arrow{fill:none;stroke:var(--text-faint);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.m-stop-g{fill:var(--signal-green)}
+.m-stop-r{fill:var(--signal-red)}
+.m-tag{fill:var(--surface);stroke:var(--border-strong);stroke-width:1.5}
+.m-badge{fill:var(--ink)}
+.m-badge-t{fill:var(--on-ink);font:800 15px var(--font-ui)}
+.m-num{fill:var(--text);font:800 34px var(--font-num);letter-spacing:-1px}
+.m-num.zero{fill:var(--text-faint)}
+.m-unit{fill:var(--text-muted);font:800 12px var(--font-ui);letter-spacing:.5px}
+.m-center{fill:var(--text-faint);font:800 12px var(--font-ui);letter-spacing:1px}
+.map-legend{display:flex;align-items:center;gap:18px;margin-top:14px;font-size:14px;color:var(--text-muted);font-weight:700;flex:none}
+.map-legend span{display:inline-flex;align-items:center;gap:7px}
+.lg-bar{width:22px;height:7px;border-radius:4px}
+.lg-zone{width:20px;height:14px;border-radius:4px;background:var(--map-zone);box-shadow:inset 0 0 0 1.5px var(--map-zone-stroke)}
+
+/* ---------- counts card ---------- */
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:16px;font-size:14px;font-weight:700;color:var(--text-muted);flex:none}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i,.sw-class{width:14px;height:14px;border-radius:4px;flex:none;display:inline-block}
+.k-car{background:var(--class-car)} .k-tri{background:var(--class-tricycle)} .k-moto{background:var(--class-motorcycle)} .k-jeep{background:var(--class-jeepney)} .k-van{background:var(--class-van)}
+.crows{display:flex;flex-direction:column;gap:16px;margin-top:22px}
+.crow{display:grid;grid-template-columns:44px 1fr 46px;align-items:center;gap:12px}
+.appr{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;background:var(--surface-sunken);font-size:18px;font-weight:800;flex:none}
+.appr.sm{width:30px;height:30px;font-size:14px}
+.track{height:42px}
+.stack{display:flex;gap:2px;height:100%;border-radius:12px;overflow:hidden}
+.stack i{display:flex;align-items:center;justify-content:center;color:var(--on-ink);font-size:15px;font-weight:800;font-style:normal;min-width:0;overflow:hidden}
+.ctot{font-family:var(--font-num);font-size:24px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
+.counts-foot{margin-top:auto;font-size:13px;color:var(--text-muted);font-weight:600}
+
+/* ---------- breach card ---------- */
+.breach{display:grid;grid-template-columns:190px 1fr;gap:22px;margin-top:18px;flex:none}
+.thumb{position:relative;width:190px;height:150px;border-radius:20px;background:var(--thumb-bg);overflow:hidden}
+.thumb i{position:absolute;border-radius:50%;filter:blur(14px)}
+.thumb i:nth-child(1){width:110px;height:70px;left:40px;top:50px;background:var(--thumb-blob-a)}
+.thumb i:nth-child(2){width:70px;height:60px;left:10px;top:8px;background:var(--thumb-blob-b)}
+.thumb i:nth-child(3){width:60px;height:80px;left:120px;top:4px;background:var(--thumb-blob-b)}
+.thumb-tag{position:absolute;left:10px;bottom:10px;display:inline-flex;align-items:center;gap:6px;background:var(--surface);color:var(--text);font-size:12px;font-weight:800;padding:5px 10px 5px 7px;border-radius:var(--radius-pill)}
+.b-time{font-family:var(--font-num);font-size:46px;font-weight:800;letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums}
+.kv{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:15px;margin-top:11px}
+.kv>span{color:var(--text-muted);font-weight:700}
+.kv>b{display:inline-flex;align-items:center;gap:8px;font-weight:800;font-size:17px}
+.card-foot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;font-size:14px;color:var(--text-muted);font-weight:600;padding-top:14px;border-top:1.5px solid var(--border)}
+.card-foot a{color:var(--text);font-weight:800;text-decoration:none}
+
+/* ---------- override card ---------- */
+.ovr{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px;flex:none}
+.obtn{display:flex;align-items:center;gap:12px;height:78px;padding:0 14px;border:0;border-radius:20px;background:var(--surface);box-shadow:inset 0 0 0 2px var(--border-strong);color:var(--text);text-align:left;font-size:16px;font-weight:800;line-height:1.2;cursor:pointer}
+.obtn .oi{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--surface-sunken);flex:none;color:var(--ink)}
+.obtn .oi.amber{background:var(--signal-yellow-tint);color:var(--signal-yellow-text)}
+.obtn.ghost{background:var(--surface-sunken);box-shadow:none;color:var(--text-muted)}
+.obtn.ghost .oi{background:var(--surface)}
+.ovr-cur{text-align:right}
+.ovr-cur .l{font-size:12px;color:var(--text-muted);font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+
+/* ---------- STALE state ---------- */
+.is-stale .band{filter:grayscale(1);opacity:.5}
+.is-stale .card::before{background:var(--stale-edge)}
+.is-stale .card::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(135deg,transparent 0 16px,var(--stale-hatch) 16px 32px)}
+.is-stale .wash{display:block;filter:grayscale(1);opacity:.42}
+.is-stale .wash.flex{display:flex}
+.is-stale .card-title{color:var(--text-muted)}
+.count-hidden{background:var(--surface);box-shadow:inset 0 0 0 2.5px var(--border-strong);background-image:repeating-linear-gradient(135deg,transparent 0 14px,var(--stale-hatch) 14px 28px)}
+.count-hidden .hidden-title{font-size:22px;font-weight:800}
+.count-hidden .num{color:var(--border-strong)}
+.count-hidden .unit{color:var(--border-strong)}
+
+/* ---------- extras ---------- */
+.extras{padding:12px 40px 56px;display:grid;grid-template-columns:520px 1fr 520px;gap:28px;align-items:stretch}
+.panel{position:relative;background:var(--surface);border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:28px;overflow:hidden}
+.panel::before{content:"";position:absolute;left:0;right:0;top:0;height:6px;background:linear-gradient(90deg,var(--deco-red) 0 33.333%,var(--deco-yellow) 33.333% 66.666%,var(--deco-green) 66.666% 100%)}
+.panel h2{margin:4px 0 6px;font-size:24px;font-weight:800;letter-spacing:-.01em}
+.panel .desc{margin:0;font-size:14px;color:var(--text-muted);line-height:1.5;font-weight:600}
+
+/* loader */
+.loader-stage{margin-top:24px;height:300px;border-radius:var(--radius-tile);background:var(--canvas);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px}
+.loader{display:flex;gap:18px;align-items:flex-end;height:120px;padding-top:24px}
+.lp{display:flex;flex-direction:column;align-items:center;gap:10px}
+.pillbar{width:46px;height:88px;border-radius:var(--radius-pill);background:var(--on)}
+.lp:nth-child(1){--on:var(--deco-red);--off:var(--deco-red-soft)}
+.lp:nth-child(2){--on:var(--deco-yellow);--off:var(--deco-yellow-soft)}
+.lp:nth-child(3){--on:var(--deco-green);--off:var(--deco-green-soft)}
+.lp .shadow{width:40px;height:8px;border-radius:50%;background:rgba(70,52,26,.14)}
+.loader-text{text-align:center}
+.loader-text b{display:block;font-size:20px;font-weight:800}
+.loader-text span{font-size:14px;color:var(--text-muted);font-weight:600}
+
+/* dialog */
+.dialog-stage{margin-top:24px;height:520px;border-radius:var(--radius-tile);position:relative;overflow:hidden;background:var(--canvas)}
+.ghost-ui{position:absolute;inset:0;padding:20px;display:grid;grid-template-columns:1.3fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:14px}
+.ghost-ui div{background:var(--surface);border-radius:20px}
+.ghost-ui div:first-child{grid-row:1/3}
+.scrim{position:absolute;inset:0;background:var(--scrim)}
+.dialog{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:600px;background:var(--surface);border-radius:var(--radius-card);box-shadow:0 30px 60px -20px rgba(33,30,43,.55);padding:30px 32px 28px}
+.dialog-top{display:flex;align-items:center;justify-content:space-between}
+.dialog-icon{width:56px;height:56px;border-radius:18px;background:var(--surface-sunken);display:flex;align-items:center;justify-content:center;color:var(--ink)}
+.dialog h3{margin:18px 0 8px;font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1.15}
+.dialog p{margin:0;font-size:18px;color:var(--text-muted);font-weight:600;line-height:1.45}
+.dialog p b{color:var(--text)}
+.preview{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+.preview > div{border-radius:18px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:16px;font-weight:800}
+.actions{display:flex;justify-content:flex-end;gap:12px;margin-top:24px}
+.btn{height:56px;padding:0 28px;border:0;border-radius:var(--radius-pill);font-size:18px;font-weight:800;cursor:pointer}
+.btn-ghost{background:var(--surface);color:var(--text);box-shadow:inset 0 0 0 2px var(--border-strong)}
+.btn-ink{background:var(--ink);color:var(--on-ink);padding:0 34px}
+
+/* colour rules */
+.rules{display:flex;flex-direction:column;gap:18px;margin-top:22px}
+.rule{border-radius:var(--radius-tile);background:var(--surface-sunken);padding:18px}
+.rule h4{margin:0 0 4px;font-size:16px;font-weight:800}
+.rule p{margin:0 0 14px;font-size:14px;color:var(--text-muted);line-height:1.45;font-weight:600}
+.rule-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.mini-band{width:150px;height:12px;border-radius:6px;background:linear-gradient(90deg,var(--deco-red) 0 33.333%,var(--deco-yellow) 33.333% 66.666%,var(--deco-green) 66.666% 100%)}
+.mini-card{width:96px;height:58px;border-radius:14px;background:var(--surface);box-shadow:var(--shadow-soft);position:relative;overflow:hidden}
+.mini-card::before{content:"";position:absolute;left:0;right:0;top:0;height:5px;background:linear-gradient(90deg,var(--deco-red) 0 33.333%,var(--deco-yellow) 33.333% 66.666%,var(--deco-green) 66.666% 100%)}
+.rule-row .lvl{font-size:15px;padding:5px 14px 5px 5px;gap:8px}
+.rule-row .lvl .ln{height:26px;min-width:26px;font-size:14px}
+.rule-row .flood-chip{font-size:15px;padding:5px 12px 5px 8px}
+
+/* stale section */
+.stale-section{padding:0 40px 64px;display:flex;gap:32px;align-items:flex-start}
+.zoom-frame{width:1280px;height:720px;flex:none;border-radius:6px;overflow:hidden;box-shadow:var(--shadow-card)}
+.zoom-frame > .artboard{zoom:.6667}
+.stale-notes{flex:1}
+.stale-notes ul{margin:14px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px}
+.stale-notes li{font-size:15px;color:var(--text-muted);line-height:1.5;font-weight:600;padding-left:18px;position:relative}
+.stale-notes li::before{content:"";position:absolute;left:0;top:8px;width:8px;height:8px;border-radius:50%;background:var(--stale-chip)}
+.stale-notes li b{color:var(--text)}
+
+/* ---------- motion (only when the viewer allows it) ---------- */
+@media (prefers-reduced-motion: no-preference){
+  .lamp.on{animation:glow 2.6s ease-in-out infinite}
+  @keyframes glow{
+    0%,100%{box-shadow:0 0 26px 4px var(--glow)}
+    50%{box-shadow:0 0 46px 12px var(--glow)}
+  }
+  .is-stale .lamp.on{animation:none}
+
+  .pillbar{background:var(--off);animation:hop 1.5s cubic-bezier(.3,.7,.4,1) infinite}
+  .lp .shadow{animation:shade 1.5s cubic-bezier(.3,.7,.4,1) infinite}
+  .lp:nth-child(2) .pillbar,.lp:nth-child(2) .shadow{animation-delay:.5s}
+  .lp:nth-child(3) .pillbar,.lp:nth-child(3) .shadow{animation-delay:1s}
+  @keyframes hop{
+    0%{transform:translateY(0) scaleY(1);background:var(--off)}
+    5%{transform:translateY(0) scaleY(.9);background:var(--on)}
+    15%{transform:translateY(-26px) scaleY(1.04);background:var(--on)}
+    26%{transform:translateY(0) scaleY(.95);background:var(--on)}
+    31%{transform:translateY(0) scaleY(1);background:var(--on)}
+    36%,100%{transform:translateY(0) scaleY(1);background:var(--off)}
+  }
+  @keyframes shade{
+    0%,36%,100%{transform:scaleX(1);opacity:1}
+    15%{transform:scaleX(.55);opacity:.45}
+  }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ================= rationale strip ================= -->
+<header class="strip">
+  <div class="strip-id">
+    <div class="mark" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="strip-name"><small>Design direction 4</small><b>Color Block</b></div>
+  </div>
+  <p>A friendly product dashboard: warm off-white canvas, big rounded cards, chunky rounded numerals and pill chips, tied together by a bold red/yellow/green band. <strong>Decorative colour is always the full triad in signal order</strong> (top band, card edges, logo, loader) and never carries state. <strong>A single red, yellow or green on its own is always semantic</strong>: a lamp, a filled chip or a tinted tile that also says its state in words. Lamps keep red-top order for colour-blind safety.</p>
+</header>
+
+<div class="board-label">Hero · Live status ( / ) · 1920 × 1080 · native size</div>
+
+<!-- ================= HERO ARTBOARD ================= -->
+<div class="artboard" id="hero">
+  <div class="band" aria-hidden="true"><span></span><span></span><span></span></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="mark" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div>
+        <div class="brand-title">Catarman SMART Traffic Light</div>
+        <div class="brand-sub"><b>INT-01</b> &nbsp;Catarman, Northern Samar</div>
+      </div>
+    </div>
+    <nav class="nav" aria-label="Main">
+      <a class="active" href="#hero">Live</a><a href="#hero">Traffic peaks</a><a href="#hero">Breaches</a><a href="#hero">Override log</a><a href="#hero">State history</a>
+    </nav>
+    <div class="health" aria-label="Link health">
+      <span class="hchip"><i class="dot ok"></i><span class="hk">Broker</span><b>CONNECTED</b></span>
+      <span class="hchip"><i class="dot ok"></i><span class="hk">Controller</span><b>ONLINE</b><span class="sim">(sim)</span></span>
+      <span class="hchip"><i class="dot ok"></i><span class="hk">Vision</span><b>ONLINE</b><span class="sim">(sim)</span></span>
+    </div>
+  </header>
+
+  <main class="grid">
+
+    <!-- SIGNAL -->
+    <section class="card c-signal" aria-label="Signal state">
+      <div class="card-head">
+        <div>
+          <div class="eyebrow-row"><span class="eyebrow">Signal</span></div>
+          <div class="card-title">Phases at INT-01</div>
+        </div>
+        <span class="lvl lvl-1"><span class="ln">L1</span>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+          Vision adaptive</span>
+      </div>
+
+      <div class="phases">
+        <div class="phase tint-green">
+          <div class="housing" aria-hidden="true"><span class="lamp red"></span><span class="lamp yellow"></span><span class="lamp green on"></span></div>
+          <div class="phase-info">
+            <div class="phase-name">Phase NS</div>
+            <div class="phase-sub">North + South heads</div>
+            <span class="aspect aspect-green"><span class="minihead g"><i></i><i></i><i></i></span>GREEN</span>
+            <div class="phase-note">Running now</div>
+          </div>
+        </div>
+        <div class="phase tint-red">
+          <div class="housing" aria-hidden="true"><span class="lamp red on"></span><span class="lamp yellow"></span><span class="lamp green"></span></div>
+          <div class="phase-info">
+            <div class="phase-name">Phase EW</div>
+            <div class="phase-sub">East + West heads</div>
+            <span class="aspect aspect-red"><span class="minihead r"><i></i><i></i><i></i></span>RED</span>
+            <div class="phase-note">Waiting</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="count">
+        <div class="count-l">
+          <span class="eyebrow">Running interval</span>
+          <div class="count-what"><span class="aspect aspect-green sm"><span class="minihead g"><i></i><i></i><i></i></span>GREEN</span>Phase NS</div>
+        </div>
+        <div class="count-num"><span class="upto">up to</span><span class="num">14</span><span class="unit">s</span></div>
+        <div class="count-r"><b>Adaptive green</b><span>can end early</span></div>
+      </div>
+
+      <div class="below">
+        <div class="ladder">
+          <span class="eyebrow">Degradation level</span>
+          <div class="rungs">
+            <div class="rung now"><div class="rl">L1<span class="now-tag">NOW</span></div><div class="rn">Vision adaptive</div></div>
+            <div class="rung"><div class="rl">L2<i class="sw sw-2"></i></div><div class="rn">Stop-bar presence</div></div>
+            <div class="rung"><div class="rl">L3<i class="sw sw-3"></i></div><div class="rn">Fixed timing</div></div>
+            <div class="rung"><div class="rl">L4<i class="sw sw-4"></i></div><div class="rn">Flashing Amber (flood)</div></div>
+          </div>
+        </div>
+        <div class="flood">
+          <span class="eyebrow">Flood sensor</span>
+          <span class="flood-chip fl-dry">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" aria-hidden="true"><path d="M12 3s6 6.6 6 11a6 6 0 0 1-12 0c0-4.4 6-11 6-11z"/></svg>
+            DRY</span>
+          <span class="flood-hint">FLOODED triggers L4</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- MAP -->
+    <section class="card c-map" aria-label="Intersection PCU demand">
+      <div class="card-head">
+        <div>
+          <div class="eyebrow-row"><span class="eyebrow">Intersection</span></div>
+          <div class="card-title">PCU waiting</div>
+        </div>
+        <div class="kpi"><div class="n">4.0</div><div class="l">PCU total</div></div>
+      </div>
+      <div class="mapwrap">
+        <svg viewBox="0 0 440 330" width="440" height="330" role="img" aria-label="INT-01 map. PCU waiting: North 2.5, South 0, East 1.0, West 0.5. North and South stop bars green, East and West stop bars red.">
+          <rect class="m-ground" x="0" y="0" width="440" height="330" rx="22"/>
+          <rect class="m-road" x="164" y="0" width="112" height="330"/>
+          <rect class="m-road" x="0" y="109" width="440" height="112"/>
+          <line class="m-line" x1="220" y1="6" x2="220" y2="96"/>
+          <line class="m-line" x1="220" y1="236" x2="220" y2="324"/>
+          <line class="m-line" x1="6" y1="165" x2="146" y2="165"/>
+          <line class="m-line" x1="294" y1="165" x2="434" y2="165"/>
+          <rect class="m-zone d3" x="169" y="18" width="46" height="74" rx="8"/>
+          <rect class="m-zone d0" x="225" y="238" width="46" height="74" rx="8"/>
+          <rect class="m-zone d2" x="292" y="114" width="128" height="46" rx="8"/>
+          <rect class="m-zone d1" x="20" y="170" width="128" height="46" rx="8"/>
+          <path class="m-arrow" d="M184 48 l8 9 l8 -9"/>
+          <path class="m-arrow" d="M240 282 l8 -9 l8 9"/>
+          <path class="m-arrow" d="M362 129 l-9 8 l9 8"/>
+          <path class="m-arrow" d="M78 185 l9 8 l-9 8"/>
+          <rect class="m-stop-g" x="167" y="98" width="50" height="7" rx="3.5"/>
+          <rect class="m-stop-g" x="223" y="225" width="50" height="7" rx="3.5"/>
+          <rect class="m-stop-r" x="280" y="112" width="7" height="50" rx="3.5"/>
+          <rect class="m-stop-r" x="153" y="168" width="7" height="50" rx="3.5"/>
+          <text class="m-center" x="220" y="170" text-anchor="middle">INT-01</text>
+          <g><rect class="m-tag" x="12" y="16" width="140" height="64" rx="18"/><circle class="m-badge" cx="40" cy="48" r="15"/><text class="m-badge-t" x="40" y="53" text-anchor="middle">N</text><text class="m-num" x="112" y="60" text-anchor="end">2.5</text><text class="m-unit" x="117" y="60">PCU</text></g>
+          <g><rect class="m-tag" x="288" y="16" width="140" height="64" rx="18"/><circle class="m-badge" cx="316" cy="48" r="15"/><text class="m-badge-t" x="316" y="53" text-anchor="middle">E</text><text class="m-num" x="388" y="60" text-anchor="end">1.0</text><text class="m-unit" x="393" y="60">PCU</text></g>
+          <g><rect class="m-tag" x="288" y="250" width="140" height="64" rx="18"/><circle class="m-badge" cx="316" cy="282" r="15"/><text class="m-badge-t" x="316" y="287" text-anchor="middle">S</text><text class="m-num zero" x="388" y="294" text-anchor="end">0</text><text class="m-unit" x="393" y="294">PCU</text></g>
+          <g><rect class="m-tag" x="12" y="250" width="140" height="64" rx="18"/><circle class="m-badge" cx="40" cy="282" r="15"/><text class="m-badge-t" x="40" y="287" text-anchor="middle">W</text><text class="m-num" x="112" y="294" text-anchor="end">0.5</text><text class="m-unit" x="117" y="294">PCU</text></g>
+        </svg>
+      </div>
+      <div class="map-legend">
+        <span><i class="lg-bar" style="background:var(--signal-green)"></i>NS stop bars GREEN</span>
+        <span><i class="lg-bar" style="background:var(--signal-red)"></i>EW RED</span>
+        <span><i class="lg-zone"></i>Detection zone</span>
+      </div>
+    </section>
+
+    <!-- COUNTS -->
+    <section class="card c-counts" aria-label="Vehicle counts this hour">
+      <div class="card-head">
+        <div>
+          <div class="eyebrow-row"><span class="eyebrow">Vehicle counts</span></div>
+          <div class="card-title">This hour</div>
+        </div>
+        <div class="kpi"><div class="n">210</div><div class="l">Vehicles</div></div>
+      </div>
+      <div class="legend">
+        <span><i class="k-car"></i>Car</span>
+        <span><i class="k-tri"></i>Tricycle</span>
+        <span><i class="k-moto"></i>Motorcycle (incl. habal-habal)</span>
+        <span><i class="k-jeep"></i>Jeepney</span>
+        <span><i class="k-van"></i>Utility van</span>
+      </div>
+      <div class="crows">
+        <div class="crow"><span class="appr">N</span><div class="track"><div class="stack" style="width:100%">
+          <i class="k-car" style="flex:14" title="Car 14">14</i><i class="k-tri" style="flex:31" title="Tricycle 31">31</i><i class="k-moto" style="flex:22" title="Motorcycle 22">22</i><i class="k-jeep" style="flex:3" title="Jeepney 3"></i><i class="k-van" style="flex:4" title="Utility van 4"></i>
+        </div></div><b class="ctot">74</b></div>
+        <div class="crow"><span class="appr">S</span><div class="track"><div class="stack" style="width:63.5%">
+          <i class="k-car" style="flex:9" title="Car 9">9</i><i class="k-tri" style="flex:18" title="Tricycle 18">18</i><i class="k-moto" style="flex:17" title="Motorcycle 17">17</i><i class="k-jeep" style="flex:2" title="Jeepney 2"></i><i class="k-van" style="flex:1" title="Utility van 1"></i>
+        </div></div><b class="ctot">47</b></div>
+        <div class="crow"><span class="appr">E</span><div class="track"><div class="stack" style="width:79.7%">
+          <i class="k-car" style="flex:11" title="Car 11">11</i><i class="k-tri" style="flex:26" title="Tricycle 26">26</i><i class="k-moto" style="flex:19" title="Motorcycle 19">19</i><i class="k-van" style="flex:3" title="Utility van 3 (Jeepney 0)"></i>
+        </div></div><b class="ctot">59</b></div>
+        <div class="crow"><span class="appr">W</span><div class="track"><div class="stack" style="width:40.5%">
+          <i class="k-car" style="flex:6" title="Car 6">6</i><i class="k-tri" style="flex:12" title="Tricycle 12">12</i><i class="k-moto" style="flex:9" title="Motorcycle 9">9</i><i class="k-jeep" style="flex:1" title="Jeepney 1"></i><i class="k-van" style="flex:2" title="Utility van 2"></i>
+        </div></div><b class="ctot">30</b></div>
+      </div>
+      <div class="counts-foot">Bar length = vehicles counted per approach</div>
+    </section>
+
+    <!-- BREACH -->
+    <section class="card c-breach" aria-label="Latest breach">
+      <div class="card-head">
+        <div>
+          <div class="eyebrow-row"><span class="eyebrow">Latest breach</span></div>
+          <div class="card-title">Red-light running</div>
+        </div>
+        <span class="pill pill-neutral">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a9.6 9.6 0 0 0 5.4-1.6"/></svg>
+          Anonymized</span>
+      </div>
+      <div class="breach">
+        <div class="thumb" role="img" aria-label="Blurred crop of the motorcycle"><i></i><i></i><i></i><span class="thumb-tag">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg>Blurred crop</span></div>
+        <div>
+          <div class="b-time">14:32:08</div>
+          <div class="kv"><span>Approach</span><b><span class="appr sm">E</span>East</b></div>
+          <div class="kv"><span>Class</span><b><i class="sw-class k-moto"></i>Motorcycle</b></div>
+          <div class="kv"><span>Crossed on</span><span class="aspect aspect-red sm"><span class="minihead r"><i></i><i></i><i></i></span>RED</span></div>
+        </div>
+      </div>
+      <div class="card-foot"><span>Faces and plates never stored</span><a href="#hero">Open Breaches →</a></div>
+    </section>
+
+    <!-- OVERRIDE -->
+    <section class="card c-override" aria-label="MDRRMO override">
+      <div class="card-head">
+        <div>
+          <div class="eyebrow-row"><span class="eyebrow">MDRRMO override</span></div>
+          <div class="card-title">Manual control</div>
+        </div>
+        <div class="ovr-cur"><div class="l">Current override</div><span class="pill pill-neutral">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>None</span></div>
+      </div>
+      <div class="ovr">
+        <button class="obtn" type="button"><span class="oi amber">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5" fill="currentColor"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg></span>Flashing Amber</button>
+        <button class="obtn" type="button"><span class="oi">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M7 7.5L12 3l5 4.5M7 16.5L12 21l5-4.5"/></svg></span>Evacuation corridor — NS</button>
+        <button class="obtn" type="button"><span class="oi">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18M7.5 7L3 12l4.5 5M16.5 7L21 12l-4.5 5"/></svg></span>Evacuation corridor — EW</button>
+        <button class="obtn ghost" type="button"><span class="oi">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8M4 4v4h4M4 13a8 8 0 0 0 14.3 4.9L20 16M20 20v-4h-4"/></svg></span>Release to automatic</button>
+      </div>
+      <div class="card-foot"><span style="display:inline-flex;align-items:center;gap:8px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+        MDRRMO only · every override asks for confirmation first</span></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ================= EXTRAS ================= -->
+<div class="board-label">Extras · loader · override confirmation · colour rules</div>
+<section class="extras">
+
+  <!-- Loader -->
+  <div class="panel">
+    <span class="eyebrow">Loader</span>
+    <h2>Three bouncing pills</h2>
+    <p class="desc">Red, then yellow, then green light up and hop in turn, in the same order as a signal head. CSS keyframes only; with reduced motion it rests as a still triad.</p>
+    <div class="loader-stage">
+      <div class="loader" role="progressbar" aria-label="Loading">
+        <div class="lp"><span class="pillbar"></span><span class="shadow"></span></div>
+        <div class="lp"><span class="pillbar"></span><span class="shadow"></span></div>
+        <div class="lp"><span class="pillbar"></span><span class="shadow"></span></div>
+      </div>
+      <div class="loader-text"><b>Connecting to INT-01…</b><span>Broker · Controller · Vision</span></div>
+    </div>
+  </div>
+
+  <!-- Confirm dialog -->
+  <div class="panel">
+    <span class="eyebrow">Override confirmation</span>
+    <h2>Every override asks first</h2>
+    <p class="desc">Shown after an MDRRMO dispatcher taps "Evacuation corridor — NS". Confirm is ink, not red, so a button never looks like a signal state.</p>
+    <div class="dialog-stage">
+      <div class="ghost-ui" aria-hidden="true"><div></div><div></div><div></div><div></div><div></div></div>
+      <div class="scrim"></div>
+      <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlg-t">
+        <div class="dialog-top">
+          <div class="dialog-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M7 7.5L12 3l5 4.5M7 16.5L12 21l5-4.5"/></svg></div>
+          <span class="pill pill-neutral"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>MDRRMO only</span>
+        </div>
+        <h3 id="dlg-t">Activate evacuation corridor NS?</h3>
+        <p><b>All other approaches go red.</b> MDRRMO only.</p>
+        <div class="preview">
+          <div class="tint-green">North + South<span class="aspect aspect-green sm"><span class="minihead g"><i></i><i></i><i></i></span>GREEN</span></div>
+          <div class="tint-red">East + West<span class="aspect aspect-red sm"><span class="minihead r"><i></i><i></i><i></i></span>RED</span></div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-ghost" type="button">Cancel</button>
+          <button class="btn btn-ink" type="button">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Colour rules -->
+  <div class="panel">
+    <span class="eyebrow">Colour rules</span>
+    <h2>Decorative vs semantic</h2>
+    <div class="rules">
+      <div class="rule">
+        <h4>Decorative: always all three, always R → Y → G</h4>
+        <p>The band, card edges, logo and loader. Never one colour alone, never tied to data, turns gray when data goes stale.</p>
+        <div class="rule-row"><span class="mini-band"></span><span class="mini-card"></span><div class="mark" style="width:40px;height:40px;border-radius:12px;gap:3px" aria-hidden="true"><i style="width:8px;height:8px"></i><i style="width:8px;height:8px"></i><i style="width:8px;height:8px"></i></div></div>
+      </div>
+      <div class="rule">
+        <h4>Semantic: one colour, always with a word</h4>
+        <p>Aspects, levels, flood and link states. FAULT is a separate state, never L4.</p>
+        <div class="rule-row">
+          <span class="aspect aspect-red sm"><span class="minihead r"><i></i><i></i><i></i></span>RED</span>
+          <span class="aspect aspect-amber sm"><span class="minihead y"><i></i><i></i><i></i></span>FLASHING AMBER</span>
+          <span class="aspect aspect-green sm"><span class="minihead g"><i></i><i></i><i></i></span>GREEN</span>
+        </div>
+        <div class="rule-row" style="margin-top:10px">
+          <span class="lvl lvl-1"><span class="ln">L1</span>Vision adaptive</span>
+          <span class="lvl lvl-2"><span class="ln">L2</span>Stop-bar presence</span>
+          <span class="lvl lvl-3"><span class="ln">L3</span>Fixed timing</span>
+          <span class="lvl lvl-4"><span class="ln">L4</span>Flashing Amber</span>
+          <span class="lvl lvl-fault"><span class="ln">!</span>FAULT · conflict</span>
+        </div>
+        <div class="rule-row" style="margin-top:10px">
+          <span class="flood-chip fl-dry">DRY</span>
+          <span class="flood-chip fl-wet">WET</span>
+          <span class="flood-chip fl-flooded">FLOODED</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= STATE VARIANT: STALE ================= -->
+<div class="board-label">State variant · STALE · controller link lost · 1920 × 1080 shown at 2/3</div>
+<section class="stale-section">
+  <div class="zoom-frame">
+  <div class="artboard is-stale">
+    <div class="band" aria-hidden="true"><span></span><span></span><span></span></div>
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div>
+          <div class="brand-title">Catarman SMART Traffic Light</div>
+          <div class="brand-sub"><b>INT-01</b> &nbsp;Catarman, Northern Samar</div>
+        </div>
+      </div>
+      <nav class="nav" aria-label="Main">
+        <a class="active" href="#hero">Live</a><a href="#hero">Traffic peaks</a><a href="#hero">Breaches</a><a href="#hero">Override log</a><a href="#hero">State history</a>
+      </nav>
+      <div class="health" aria-label="Link health">
+        <span class="hchip"><i class="dot ok"></i><span class="hk">Broker</span><b>CONNECTED</b></span>
+        <span class="hchip bad"><i class="dot bad"></i><span class="hk">Controller</span><b>LINK LOST</b></span>
+        <span class="hchip"><i class="dot ok"></i><span class="hk">Vision</span><b>ONLINE</b><span class="sim">(sim)</span></span>
+      </div>
+    </header>
+
+    <main class="grid">
+      <section class="card c-signal">
+        <div class="card-head">
+          <div>
+            <div class="eyebrow-row"><span class="eyebrow">Signal</span><span class="stale-chip"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>STALE — last seen 14:32:40</span></div>
+            <div class="card-title">Phases at INT-01</div>
+          </div>
+          <div class="wash"><span class="lvl lvl-1"><span class="ln">L1</span>Vision adaptive</span></div>
+        </div>
+        <div class="phases wash flex" style="display:grid">
+          <div class="phase tint-green">
+            <div class="housing" aria-hidden="true"><span class="lamp red"></span><span class="lamp yellow"></span><span class="lamp green on"></span></div>
+            <div class="phase-info">
+              <div class="phase-name">Phase NS</div>
+              <div class="phase-sub">North + South heads</div>
+              <span class="aspect aspect-green"><span class="minihead g"><i></i><i></i><i></i></span>GREEN</span>
+              <div class="phase-note">Last known</div>
+            </div>
+          </div>
+          <div class="phase tint-red">
+            <div class="housing" aria-hidden="true"><span class="lamp red on"></span><span class="lamp yellow"></span><span class="lamp green"></span></div>
+            <div class="phase-info">
+              <div class="phase-name">Phase EW</div>
+              <div class="phase-sub">East + West heads</div>
+              <span class="aspect aspect-red"><span class="minihead r"><i></i><i></i><i></i></span>RED</span>
+              <div class="phase-note">Last known</div>
+            </div>
+          </div>
+        </div>
+        <div class="count count-hidden">
+          <div class="count-l">
+            <span class="eyebrow">Running interval</span>
+            <div class="hidden-title">Countdown hidden</div>
+          </div>
+          <div class="count-num"><span class="num">– –</span><span class="unit">s</span></div>
+          <div class="count-r"><b>Controller link lost</b><span>no timing until it reconnects</span></div>
+        </div>
+        <div class="below wash" style="display:grid">
+          <div class="ladder">
+            <span class="eyebrow">Degradation level</span>
+            <div class="rungs">
+              <div class="rung now"><div class="rl">L1<span class="now-tag">LAST</span></div><div class="rn">Vision adaptive</div></div>
+              <div class="rung"><div class="rl">L2<i class="sw sw-2"></i></div><div class="rn">Stop-bar presence</div></div>
+              <div class="rung"><div class="rl">L3<i class="sw sw-3"></i></div><div class="rn">Fixed timing</div></div>
+              <div class="rung"><div class="rl">L4<i class="sw sw-4"></i></div><div class="rn">Flashing Amber (flood)</div></div>
+            </div>
+          </div>
+          <div class="flood">
+            <span class="eyebrow">Flood sensor</span>
+            <span class="flood-chip fl-dry">DRY</span>
+            <span class="flood-hint">FLOODED triggers L4</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card c-map">
+        <div class="card-head">
+          <div>
+            <div class="eyebrow-row"><span class="eyebrow">Intersection</span><span class="stale-chip"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>STALE — last seen 14:32:40</span></div>
+            <div class="card-title">PCU waiting</div>
+          </div>
+          <div class="wash"><div class="kpi"><div class="n">4.0</div><div class="l">PCU total</div></div></div>
+        </div>
+        <div class="mapwrap wash">
+          <svg viewBox="0 0 440 330" width="440" height="330" role="img" aria-label="Last known PCU: North 2.5, South 0, East 1.0, West 0.5">
+            <rect class="m-ground" x="0" y="0" width="440" height="330" rx="22"/>
+            <rect class="m-road" x="164" y="0" width="112" height="330"/>
+            <rect class="m-road" x="0" y="109" width="440" height="112"/>
+            <line class="m-line" x1="220" y1="6" x2="220" y2="96"/>
+            <line class="m-line" x1="220" y1="236" x2="220" y2="324"/>
+            <line class="m-line" x1="6" y1="165" x2="146" y2="165"/>
+            <line class="m-line" x1="294" y1="165" x2="434" y2="165"/>
+            <rect class="m-zone d3" x="169" y="18" width="46" height="74" rx="8"/>
+            <rect class="m-zone d0" x="225" y="238" width="46" height="74" rx="8"/>
+            <rect class="m-zone d2" x="292" y="114" width="128" height="46" rx="8"/>
+            <rect class="m-zone d1" x="20" y="170" width="128" height="46" rx="8"/>
+            <rect class="m-stop-g" x="167" y="98" width="50" height="7" rx="3.5"/>
+            <rect class="m-stop-g" x="223" y="225" width="50" height="7" rx="3.5"/>
+            <rect class="m-stop-r" x="280" y="112" width="7" height="50" rx="3.5"/>
+            <rect class="m-stop-r" x="153" y="168" width="7" height="50" rx="3.5"/>
+            <text class="m-center" x="220" y="170" text-anchor="middle">INT-01</text>
+            <g><rect class="m-tag" x="12" y="16" width="140" height="64" rx="18"/><circle class="m-badge" cx="40" cy="48" r="15"/><text class="m-badge-t" x="40" y="53" text-anchor="middle">N</text><text class="m-num" x="112" y="60" text-anchor="end">2.5</text><text class="m-unit" x="117" y="60">PCU</text></g>
+            <g><rect class="m-tag" x="288" y="16" width="140" height="64" rx="18"/><circle class="m-badge" cx="316" cy="48" r="15"/><text class="m-badge-t" x="316" y="53" text-anchor="middle">E</text><text class="m-num" x="388" y="60" text-anchor="end">1.0</text><text class="m-unit" x="393" y="60">PCU</text></g>
+            <g><rect class="m-tag" x="288" y="250" width="140" height="64" rx="18"/><circle class="m-badge" cx="316" cy="282" r="15"/><text class="m-badge-t" x="316" y="287" text-anchor="middle">S</text><text class="m-num zero" x="388" y="294" text-anchor="end">0</text><text class="m-unit" x="393" y="294">PCU</text></g>
+            <g><rect class="m-tag" x="12" y="250" width="140" height="64" rx="18"/><circle class="m-badge" cx="40" cy="282" r="15"/><text class="m-badge-t" x="40" y="287" text-anchor="middle">W</text><text class="m-num" x="112" y="294" text-anchor="end">0.5</text><text class="m-unit" x="117" y="294">PCU</text></g>
+          </svg>
+        </div>
+        <div class="map-legend wash flex">
+          <span><i class="lg-bar" style="background:var(--signal-green)"></i>NS stop bars GREEN</span>
+          <span><i class="lg-bar" style="background:var(--signal-red)"></i>EW RED</span>
+          <span><i class="lg-zone"></i>Detection zone</span>
+        </div>
+      </section>
+
+      <section class="card c-counts">
+        <div class="card-head">
+          <div>
+            <div class="eyebrow-row"><span class="eyebrow">Vehicle counts</span><span class="stale-chip"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>STALE — last seen 14:32:40</span></div>
+            <div class="card-title">This hour</div>
+          </div>
+          <div class="wash"><div class="kpi"><div class="n">210</div><div class="l">Vehicles</div></div></div>
+        </div>
+        <div class="wash">
+          <div class="legend">
+            <span><i class="k-car"></i>Car</span><span><i class="k-tri"></i>Tricycle</span><span><i class="k-moto"></i>Motorcycle (incl. habal-habal)</span><span><i class="k-jeep"></i>Jeepney</span><span><i class="k-van"></i>Utility van</span>
+          </div>
+          <div class="crows">
+            <div class="crow"><span class="appr">N</span><div class="track"><div class="stack" style="width:100%"><i class="k-car" style="flex:14">14</i><i class="k-tri" style="flex:31">31</i><i class="k-moto" style="flex:22">22</i><i class="k-jeep" style="flex:3"></i><i class="k-van" style="flex:4"></i></div></div><b class="ctot">74</b></div>
+            <div class="crow"><span class="appr">S</span><div class="track"><div class="stack" style="width:63.5%"><i class="k-car" style="flex:9">9</i><i class="k-tri" style="flex:18">18</i><i class="k-moto" style="flex:17">17</i><i class="k-jeep" style="flex:2"></i><i class="k-van" style="flex:1"></i></div></div><b class="ctot">47</b></div>
+            <div class="crow"><span class="appr">E</span><div class="track"><div class="stack" style="width:79.7%"><i class="k-car" style="flex:11">11</i><i class="k-tri" style="flex:26">26</i><i class="k-moto" style="flex:19">19</i><i class="k-van" style="flex:3"></i></div></div><b class="ctot">59</b></div>
+            <div class="crow"><span class="appr">W</span><div class="track"><div class="stack" style="width:40.5%"><i class="k-car" style="flex:6">6</i><i class="k-tri" style="flex:12">12</i><i class="k-moto" style="flex:9">9</i><i class="k-jeep" style="flex:1"></i><i class="k-van" style="flex:2"></i></div></div><b class="ctot">30</b></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card c-breach">
+        <div class="card-head">
+          <div>
+            <div class="eyebrow-row"><span class="eyebrow">Latest breach</span></div>
+            <div class="card-title">Red-light running</div>
+          </div>
+          <span class="pill pill-neutral">Anonymized</span>
+        </div>
+        <div class="breach">
+          <div class="thumb" role="img" aria-label="Blurred crop of the motorcycle"><i></i><i></i><i></i><span class="thumb-tag">Blurred crop</span></div>
+          <div>
+            <div class="b-time">14:32:08</div>
+            <div class="kv"><span>Approach</span><b><span class="appr sm">E</span>East</b></div>
+            <div class="kv"><span>Class</span><b><i class="sw-class k-moto"></i>Motorcycle</b></div>
+            <div class="kv"><span>Crossed on</span><span class="aspect aspect-red sm"><span class="minihead r"><i></i><i></i><i></i></span>RED</span></div>
+          </div>
+        </div>
+        <div class="card-foot"><span>Logged before the link dropped</span><a href="#hero">Open Breaches →</a></div>
+      </section>
+
+      <section class="card c-override">
+        <div class="card-head">
+          <div>
+            <div class="eyebrow-row"><span class="eyebrow">MDRRMO override</span><span class="stale-chip"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>STALE — last seen 14:32:40</span></div>
+            <div class="card-title">Manual control</div>
+          </div>
+          <div class="wash"><div class="ovr-cur"><div class="l">Current override</div><span class="pill pill-neutral">None</span></div></div>
+        </div>
+        <div class="ovr wash" style="display:grid">
+          <button class="obtn" type="button" disabled><span class="oi amber"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5" fill="currentColor"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22"/></svg></span>Flashing Amber</button>
+          <button class="obtn" type="button" disabled><span class="oi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M7 7.5L12 3l5 4.5M7 16.5L12 21l5-4.5"/></svg></span>Evacuation corridor — NS</button>
+          <button class="obtn" type="button" disabled><span class="oi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18M7.5 7L3 12l4.5 5M16.5 7L21 12l-4.5 5"/></svg></span>Evacuation corridor — EW</button>
+          <button class="obtn ghost" type="button" disabled><span class="oi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8M4 4v4h4M4 13a8 8 0 0 0 14.3 4.9L20 16M20 20v-4h-4"/></svg></span>Release to automatic</button>
+        </div>
+        <div class="card-foot"><span>Overrides can't reach the controller while the link is lost</span></div>
+      </section>
+    </main>
+  </div>
+  </div>
+
+  <div class="stale-notes">
+    <span class="eyebrow">How STALE reads</span>
+    <h2 style="margin:6px 0 0;font-size:24px;font-weight:800">Last values kept, visibly frozen</h2>
+    <ul>
+      <li>Header link chip flips to <b>Controller LINK LOST</b>, the only red in the header.</li>
+      <li>Every controller-fed card carries an ink <b>STALE — last seen 14:32:40</b> chip that stays full contrast.</li>
+      <li>Card data drops to grayscale at low opacity under a faint hatch, and the tri-colour band and card edges go gray, so the screen stops looking "live".</li>
+      <li>The <b>countdown is hidden</b>, replaced by a dashed "Countdown hidden" tile. Lamps stop glowing and are labelled <b>Last known</b>.</li>
+      <li>The breach card stays live because breach records arrive from the vision node, which is still ONLINE.</li>
+    </ul>
+  </div>
+</section>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,901 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>State History Screen</title>
+<style>
+/* =====================================================================
+   SCREEN: STATE HISTORY (/log/states/, CAP-2) · direction SIGNAL HARDWARE
+   Design tokens. Every concrete hex value used on this page is listed
+   here. Names follow Tailwind v4 @theme conventions (--color-*, --font-*).
+   Token block identical to direction-signal-hardware.html.
+   ---------------------------------------------------------------------
+   SURFACES (matte charcoal / black signal housings)
+   --color-surface-page          #0B0C0D  page + artboard floor
+   --color-surface-page-hi       #15171A  artboard centre lift (vignette)
+   --color-surface-housing       #1A1C1F  panel housing body
+   --color-surface-housing-hi    #24272B  housing top-light (gradient start)
+   --color-surface-housing-lo    #151719  housing bottom (gradient end)
+   --color-surface-title-hi      #202327  panel title strip, top
+   --color-surface-title-lo      #191B1E  panel title strip, bottom
+   --color-surface-recess        #0F1012  recessed wells, table rows, link bar
+   --color-surface-plate         #2C3035  raised stencil plates, buttons
+   --color-surface-plate-hi      #383D43  button top-light
+   --color-surface-backplate     #08090A  signal-head backplate (matte black)
+   --color-surface-head-lo       #131517  signal-head housing, shadow side
+   --color-surface-head-hi       #262A2E  signal-head housing, lit side
+   --color-visor                 #0C0D0E  lamp visor hoods
+   --color-lens-socket           #070809  ring the lens sits in
+   --color-lens-bezel            #2E3237  bezel highlight around the socket
+   --color-edge-light            #3A3F45  bevel highlight, dividers
+   --color-edge-dark             #050607  outlines, bevel shadow
+   --color-rivet                 #555B62  rivet heads
+   --color-rivet-hi              #8A9097  rivet glint
+   --color-reflector             #6B7178  backplate border (neutral grey, never yellow)
+   TEXT
+   --color-text                  #F1F1EC  primary, warm white
+   --color-text-2                #AEB3B8  secondary
+   --color-text-3                #737A81  captions
+   --color-text-inverse          #0B0B0B  on white plates and hazard paint
+   SIGNAL ASPECTS (SEMANTIC ONLY). Lit + glowing only as a round lens,
+   or as the text label of a live aspect. Never decorative when lit.
+   On this screen they appear ONLY in the NS and EW aspect columns: the
+   lens of the aspect recorded in that row is lit, beside its text label.
+   --color-signal-red            #FF3B2F  lit lens / RED label
+   --color-signal-red-core       #FFC2B8  lens hot-spot
+   --color-signal-red-deep       #B0150C  lens rim fall-off
+   --color-signal-red-glass      #3A110E  UNLIT tinted glass
+   --color-signal-red-glass-hi   #5A1B16  unlit glass sheen
+   --color-signal-yellow         #FFB000  lit lens / YELLOW + FLASHING_AMBER label
+   --color-signal-yellow-core    #FFE3A3
+   --color-signal-yellow-deep    #B26A00
+   --color-signal-yellow-glass   #3A2A08
+   --color-signal-yellow-glass-hi #5C440F
+   --color-signal-green          #19E68C  lit lens / GREEN label
+   --color-signal-green-core     #BDFFE0
+   --color-signal-green-deep     #04935A
+   --color-signal-green-glass    #0B2C1F
+   --color-signal-green-glass-hi #154A35
+   (glows = the lit hex at 55% and 22% alpha)
+   HAZARD (alert + override zones). Matte paint, diagonal stripes,
+   rectangles only: never round, never glowing.
+   --color-hazard-paint          #EBC81A
+   --color-hazard-ink            #0D0D0D
+   SYSTEM STATUS (link health). Square pilots, deliberately not R/Y/G.
+   --color-status-ok             #6EC6F2
+   --color-status-ok-deep        #1D5E80
+   --color-status-off            #2A2D31  unlit square pilot
+   --color-focus                 #6EC6F2  keyboard focus ring
+   LEVEL + FAULT CODING (composed from the tokens above, no new hex)
+   L1     plain --color-surface-plate-hi badge
+   L2     plate badge with a --color-text-2 stop-bar underline
+   L3     plate badge with an --color-edge-light dot grid
+   L4     --hazard-stripes badge, hazard row edge
+   FAULT  --fault-checker (--color-text / --color-hazard-ink checkerboard),
+          checker row edge. Never hazard stripes, so it never reads as L4.
+   CHANGED  --color-text corner notch on a cell that differs from the row below
+   ===================================================================== */
+
+:root {
+  --color-surface-page: #0B0C0D;
+  --color-surface-page-hi: #15171A;
+  --color-surface-housing: #1A1C1F;
+  --color-surface-housing-hi: #24272B;
+  --color-surface-housing-lo: #151719;
+  --color-surface-title-hi: #202327;
+  --color-surface-title-lo: #191B1E;
+  --color-surface-recess: #0F1012;
+  --color-surface-plate: #2C3035;
+  --color-surface-plate-hi: #383D43;
+  --color-surface-backplate: #08090A;
+  --color-surface-head-lo: #131517;
+  --color-surface-head-hi: #262A2E;
+  --color-visor: #0C0D0E;
+  --color-lens-socket: #070809;
+  --color-lens-bezel: #2E3237;
+  --color-edge-light: #3A3F45;
+  --color-edge-dark: #050607;
+  --color-rivet: #555B62;
+  --color-rivet-hi: #8A9097;
+  --color-reflector: #6B7178;
+
+  --color-text: #F1F1EC;
+  --color-text-2: #AEB3B8;
+  --color-text-3: #737A81;
+  --color-text-inverse: #0B0B0B;
+
+  --color-signal-red: #FF3B2F;
+  --color-signal-red-core: #FFC2B8;
+  --color-signal-red-deep: #B0150C;
+  --color-signal-red-glass: #3A110E;
+  --color-signal-red-glass-hi: #5A1B16;
+  --color-signal-yellow: #FFB000;
+  --color-signal-yellow-core: #FFE3A3;
+  --color-signal-yellow-deep: #B26A00;
+  --color-signal-yellow-glass: #3A2A08;
+  --color-signal-yellow-glass-hi: #5C440F;
+  --color-signal-green: #19E68C;
+  --color-signal-green-core: #BDFFE0;
+  --color-signal-green-deep: #04935A;
+  --color-signal-green-glass: #0B2C1F;
+  --color-signal-green-glass-hi: #154A35;
+
+  --color-hazard-paint: #EBC81A;
+  --color-hazard-ink: #0D0D0D;
+
+  --color-status-ok: #6EC6F2;
+  --color-status-ok-deep: #1D5E80;
+  --color-status-off: #2A2D31;
+  --color-focus: #6EC6F2;
+
+  --hazard-stripes: repeating-linear-gradient(-45deg,
+      var(--color-hazard-paint) 0 12px, var(--color-hazard-ink) 12px 24px);
+  --hazard-stripes-fine: repeating-linear-gradient(-45deg,
+      var(--color-hazard-paint) 0 6px, var(--color-hazard-ink) 6px 12px);
+
+  --font-stencil: "Bahnschrift", "DIN Condensed", "Roboto Condensed", "Arial Narrow",
+      "Liberation Sans Narrow", "Nimbus Sans Narrow", "Helvetica Neue", "Noto Sans",
+      "DejaVu Sans Condensed", system-ui, sans-serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans",
+      "Helvetica Neue", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  background: var(--color-surface-page);
+  color: var(--color-text);
+  font-family: var(--font-body);
+}
+body { min-width: 1920px; }
+
+/* Stencil label: heavy, condensed, uppercase. */
+.panel-title, .tab, .int-plate, .brand-title, .brand-sub, .strip-name, .linkbar,
+.st, .flag, .t-time, .t-cap {
+  font-family: var(--font-stencil);
+  font-stretch: condensed;
+  text-transform: uppercase;
+}
+
+/* ---------- Screen strip (slim) ---------- */
+.strip {
+  width: 1920px;
+  display: flex;
+  gap: 36px;
+  align-items: center;
+  padding: 12px 24px;
+  background: var(--color-surface-recess);
+  border-bottom: 1px solid var(--color-edge-light);
+}
+.strip-name {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+.strip-name small {
+  display: block;
+  font-size: 12px;
+  letter-spacing: .18em;
+  color: var(--color-text-3);
+  font-weight: 700;
+}
+.strip p { margin: 0; max-width: 1340px; font-size: 15px; line-height: 1.45; color: var(--color-text-2); }
+.strip p b { color: var(--color-text); }
+
+/* ---------- Artboard ---------- */
+.artboard {
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 42%, var(--color-surface-page-hi) 0%, var(--color-surface-page) 72%);
+}
+
+/* ---------- Top bar ---------- */
+.topbar {
+  height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background: linear-gradient(180deg, var(--color-surface-housing-hi), var(--color-surface-housing-lo));
+  border-bottom: 2px solid var(--color-edge-dark);
+}
+.brand { display: flex; align-items: center; gap: 18px; }
+.brand-mark {
+  position: relative;
+  padding: 4px;
+  background: var(--color-surface-backplate);
+  border: 1px solid var(--color-reflector);
+  border-radius: 4px;
+}
+.brand-title { font-size: 32px; font-weight: 800; line-height: 1; letter-spacing: .05em; }
+.brand-sub { margin-top: 7px; font-size: 14px; font-weight: 700; letter-spacing: .16em; color: var(--color-text-3); }
+.int-plate {
+  margin-left: 8px;
+  display: flex;
+  flex-direction: column;
+  padding: 6px 16px 7px;
+  background: linear-gradient(180deg, var(--color-surface-plate-hi), var(--color-surface-plate));
+  border: 1px solid var(--color-edge-dark);
+  border-radius: 4px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 3px 0 var(--color-edge-dark);
+}
+.int-plate span { font-size: 11px; font-weight: 700; letter-spacing: .22em; color: var(--color-text-2); }
+.int-plate b { font-size: 30px; font-weight: 800; line-height: 1; letter-spacing: .06em; }
+
+.nav { display: flex; gap: 8px; height: 54px; }
+.tab {
+  display: flex;
+  align-items: center;
+  padding: 0 22px;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  color: var(--color-text-2);
+  text-decoration: none;
+  background: linear-gradient(180deg, var(--color-surface-housing-hi), var(--color-surface-housing));
+  border: 1px solid var(--color-edge-dark);
+  border-radius: 6px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 3px 0 var(--color-edge-dark);
+}
+.tab[aria-current="page"] {
+  background: var(--color-text);
+  color: var(--color-text-inverse);
+  box-shadow: inset 0 -4px 0 rgba(0,0,0,.22), 0 3px 0 var(--color-edge-dark);
+}
+.tab:focus-visible, .load-btn:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+/* ---------- Link health bar ---------- */
+.linkbar {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 34px;
+  padding: 0 24px;
+  background: var(--color-surface-recess);
+  border-bottom: 1px solid var(--color-edge-light);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+.lb-label { color: var(--color-text-3); font-size: 14px; letter-spacing: .18em; }
+.pilot-item { display: flex; align-items: center; gap: 10px; }
+.pilot-item b { color: var(--color-text-2); font-weight: 700; }
+.pilot {
+  width: 14px; height: 14px;
+  border-radius: 2px;              /* square pilot: system status, not a signal lens */
+  background: var(--color-status-ok);
+  border: 2px solid var(--color-status-ok-deep);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.45);
+}
+.sim {
+  font-style: normal;
+  font-size: 12px;
+  padding: 2px 6px;
+  border: 1px solid var(--color-text-3);
+  border-radius: 3px;
+  color: var(--color-text-2);
+  letter-spacing: .14em;
+}
+.lb-right { margin-left: auto; color: var(--color-text-3); font-size: 14px; letter-spacing: .16em; }
+
+/* ---------- Panel = signal housing ---------- */
+.panel {
+  position: relative;
+  padding: 0 20px 16px;
+  background: linear-gradient(180deg, var(--color-surface-housing-hi) 0%, var(--color-surface-housing) 35%, var(--color-surface-housing-lo) 100%);
+  border: 1px solid var(--color-edge-dark);
+  border-radius: 10px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.07),
+    0 4px 0 var(--color-edge-dark),
+    0 14px 30px rgba(0,0,0,.55);
+}
+.panel::after { /* four rivets */
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  --r: radial-gradient(circle, var(--color-rivet-hi) 0 1px, var(--color-rivet) 1.5px 2.8px, var(--color-edge-dark) 3.3px, transparent 4px);
+  background:
+    var(--r) 6px 6px / 10px 10px no-repeat,
+    var(--r) calc(100% - 6px) 6px / 10px 10px no-repeat,
+    var(--r) 6px calc(100% - 6px) / 10px 10px no-repeat,
+    var(--r) calc(100% - 6px) calc(100% - 6px) / 10px 10px no-repeat;
+}
+.panel-title {
+  margin: 0 -20px 10px;
+  height: 46px;
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: linear-gradient(180deg, var(--color-surface-title-hi), var(--color-surface-title-lo));
+  border-bottom: 2px solid var(--color-edge-dark);
+  border-radius: 10px 10px 0 0;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  color: var(--color-text-2);
+}
+.pt-tag { font-size: 12px; font-weight: 700; letter-spacing: .16em; color: var(--color-text-3); }
+.well {
+  background: var(--color-surface-recess);
+  border: 1px solid var(--color-edge-dark);
+  border-radius: 6px;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,.65);
+}
+
+/* ---------- Signal lamps (the only place lit R/Y/G glow) ---------- */
+.head {
+  --s: 64px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--s) * .16);
+  padding: calc(var(--s) * .26) calc(var(--s) * .22);
+  background: linear-gradient(90deg, var(--color-surface-head-lo) 0%, var(--color-surface-head-hi) 45%, var(--color-surface-housing) 100%);
+  border-radius: calc(var(--s) * .16);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.08),
+    inset 0 -2px 0 rgba(0,0,0,.6),
+    0 0 0 1px var(--color-edge-dark);
+}
+.head--brand { --s: 13px; }
+.lamp {
+  position: relative;
+  display: block;
+  flex: none;
+  width: var(--s);
+  height: var(--s);
+  border-radius: 50%;
+  background:
+    repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,.045) 0 1px, transparent 1px 4px),
+    radial-gradient(circle at 50% 30%, var(--glass-hi) 0%, var(--glass) 55%, var(--color-edge-dark) 100%);
+  box-shadow:
+    0 0 0 calc(var(--s) * .06) var(--color-lens-socket),
+    0 0 0 calc(var(--s) * .08) var(--color-lens-bezel),
+    inset 0 calc(var(--s) * .16) calc(var(--s) * .2) calc(var(--s) * -.08) rgba(0,0,0,.85);
+}
+.lamp::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 50%;
+  opacity: 0;
+  background:
+    repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,.13) 0 1px, transparent 1px 4px),
+    radial-gradient(circle at 50% 58%, var(--core) 0%, var(--lit) 36%, var(--deep) 100%);
+  box-shadow:
+    0 0 calc(var(--s) * .3) calc(var(--s) * .06) var(--glow),
+    0 0 calc(var(--s) * .95) calc(var(--s) * .24) var(--glow-soft),
+    inset 0 calc(var(--s) * .15) calc(var(--s) * .16) calc(var(--s) * -.06) rgba(0,0,0,.55);
+}
+.lamp::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  left: calc(var(--s) * -.14);
+  right: calc(var(--s) * -.14);
+  top: calc(var(--s) * -.16);
+  height: calc(var(--s) * .64);
+  border: calc(var(--s) * .12) solid var(--color-visor);
+  border-bottom: 0;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  box-shadow: 0 -1px 0 rgba(255,255,255,.07);
+}
+.lamp.is-lit::after { opacity: 1; }
+.lamp--red    { --lit: var(--color-signal-red);    --core: var(--color-signal-red-core);    --deep: var(--color-signal-red-deep);    --glass: var(--color-signal-red-glass);    --glass-hi: var(--color-signal-red-glass-hi);    --glow: rgba(255,59,47,.55); --glow-soft: rgba(255,59,47,.22); }
+.lamp--yellow { --lit: var(--color-signal-yellow); --core: var(--color-signal-yellow-core); --deep: var(--color-signal-yellow-deep); --glass: var(--color-signal-yellow-glass); --glass-hi: var(--color-signal-yellow-glass-hi); --glow: rgba(255,176,0,.55); --glow-soft: rgba(255,176,0,.22); }
+.lamp--green  { --lit: var(--color-signal-green);  --core: var(--color-signal-green-core);  --deep: var(--color-signal-green-deep);  --glass: var(--color-signal-green-glass);  --glass-hi: var(--color-signal-green-glass-hi);  --glow: rgba(25,230,140,.55); --glow-soft: rgba(25,230,140,.22); }
+.is-green { color: var(--color-signal-green); }
+.is-red   { color: var(--color-signal-red); }
+
+/* =====================================================================
+   STATE HISTORY LAYOUT
+   ===================================================================== */
+:root {
+  --fault-checker: conic-gradient(var(--color-text) 0 25%, var(--color-hazard-ink) 0 50%,
+      var(--color-text) 0 75%, var(--color-hazard-ink) 0) 0 0 / 10px 10px;
+  --l3-dots: radial-gradient(circle, var(--color-edge-light) 0 1.4px, transparent 1.8px) 0 0 / 7px 7px;
+  --l2-bar: linear-gradient(180deg, transparent 0 74%, var(--color-text-2) 74% 86%, transparent 86%);
+  --chg: linear-gradient(135deg, var(--color-text) 0 9px, transparent 9px);
+}
+.main {
+  height: 948px;
+  padding: 18px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ---------- Filter chips ---------- */
+.filters { flex: none; height: 64px; display: flex; align-items: center; gap: 14px; }
+.f-label { font-size: 14px; font-weight: 800; letter-spacing: .18em; color: var(--color-text-3); }
+.chips { display: flex; gap: 6px; padding: 5px; }
+.chip {
+  height: 50px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px 0 8px;
+  font-family: var(--font-stencil);
+  font-stretch: condensed;
+  text-transform: uppercase;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  color: var(--color-text-2);
+  background: var(--color-surface-housing);
+  border: 0;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.chip--all { padding: 0 18px; }
+.chip[aria-pressed="true"] {
+  background: var(--color-text);
+  color: var(--color-text-inverse);
+  box-shadow: 0 3px 0 var(--color-edge-dark);
+}
+.chip:focus-visible, .load-btn:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 3px; }
+.f-right { margin-left: auto; text-align: right; font-size: 14px; font-weight: 800; letter-spacing: .14em; line-height: 1.4; color: var(--color-text-3); }
+.f-right b { color: var(--color-text-2); }
+
+/* ---------- Level badges (shared by chips and rows) ---------- */
+.lv-badge {
+  flex: none;
+  width: 54px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-stencil);
+  font-stretch: condensed;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  color: var(--color-text);
+  border: 1px solid var(--color-edge-dark);
+  border-radius: 4px;
+}
+.lv-badge b { font-weight: 800; padding: 1px 4px; border-radius: 2px; }
+.lv-badge--sm { width: 42px; height: 30px; font-size: 17px; }
+.b-l1 { background: var(--color-surface-plate-hi); }
+.b-l2 { background: var(--l2-bar), var(--color-surface-plate); }
+.b-l3 { background: var(--l3-dots), var(--color-surface-plate); }
+.b-l4 { background: var(--hazard-stripes); }
+.b-l4 b { background: var(--color-hazard-ink); color: var(--color-hazard-paint); }
+.b-fault { width: 86px; background: var(--fault-checker); }
+.b-fault b { padding: 2px 6px; font-size: 17px; letter-spacing: .1em; background: var(--color-hazard-ink); color: var(--color-text); }
+.lv-badge--sm.b-fault { width: 70px; }
+.lv-badge--sm.b-fault b { font-size: 14px; }
+
+/* ---------- Table panel ---------- */
+.tbl-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.hist {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0 3px;
+}
+.hist thead th {
+  height: 22px;
+  padding: 0 14px;
+  font-family: var(--font-stencil);
+  font-stretch: condensed;
+  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .16em;
+  color: var(--color-text-3);
+  text-align: left;
+  vertical-align: bottom;
+}
+.hist tbody td {
+  height: 48px;
+  padding: 0 14px;
+  background: var(--color-surface-recess);
+  vertical-align: middle;
+  font-family: var(--font-stencil);
+  font-stretch: condensed;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+.hist tbody td:first-child { border-radius: 5px 0 0 5px; box-shadow: inset 4px 0 0 var(--color-surface-plate); }
+.hist tbody td:last-child  { border-radius: 0 5px 5px 0; }
+.hist tbody tr.r-l4 td:first-child    { box-shadow: none; background: var(--hazard-stripes-fine) 0 0 / 7px 100% no-repeat, var(--color-surface-recess); }
+.hist tbody tr.r-fault td             { background-color: var(--color-surface-title-hi); }
+.hist tbody tr.r-fault td:first-child { box-shadow: none; background: linear-gradient(90deg, transparent 0 10px, var(--color-surface-title-hi) 10px), var(--fault-checker); }
+.hist tbody td.chg { background-image: var(--chg); background-repeat: no-repeat; }
+.hist tbody tr.r-fault td.chg { background: var(--chg), var(--color-surface-title-hi); }
+
+/* time */
+.t-time { display: block; font-size: 25px; line-height: 1; letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+.t-cap { display: block; margin-top: 3px; font-size: 11px; font-weight: 700; letter-spacing: .14em; color: var(--color-text-3); }
+.flag {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 6px;
+  font-size: 11px;
+  letter-spacing: .16em;
+  line-height: 1.2;
+  border-radius: 2px;
+  background: var(--color-text);
+  color: var(--color-text-inverse);
+}
+
+/* level */
+.lv { display: flex; align-items: center; gap: 14px; }
+.lv-name { font-size: 19px; letter-spacing: .06em; line-height: 1.05; white-space: nowrap; }
+.lv-name small { display: block; margin-top: 3px; font-size: 11px; font-weight: 700; letter-spacing: .14em; color: var(--color-text-3); }
+.lv-name small b { color: var(--color-text-2); }
+
+/* aspects: tiny 3-lens head, red top, yellow middle, green bottom */
+.asp { display: flex; align-items: center; gap: 12px; }
+.head--row { --s: 11px; padding: 3px 3px; gap: 2px; border-radius: 3px; }
+.head--row .lamp::before { display: none; }       /* visors dropped at this size so lit lenses stay legible */
+.asp-v { font-size: 20px; letter-spacing: .05em; line-height: 1; white-space: nowrap; }
+.asp-v small { display: block; margin-top: 3px; font-size: 11px; font-weight: 700; letter-spacing: .14em; color: var(--color-text-3); }
+.is-amber { color: var(--color-signal-yellow); }
+
+/* neutral values */
+.dim { font-size: 19px; letter-spacing: .08em; color: var(--color-text-3); }
+
+/* plates: flood, fault, override */
+.plate {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 11px;
+  font-size: 17px;
+  letter-spacing: .1em;
+  line-height: 1;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.plate svg { flex: none; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.cell2 { display: flex; align-items: center; gap: 10px; }
+.cell2 .t-cap { margin: 0; line-height: 1.3; }
+
+.pl-wet {
+  color: var(--color-text);
+  background: var(--color-surface-housing);
+  border: 2px solid var(--color-edge-light);
+}
+.pl-flooded {
+  padding-left: 20px;
+  color: var(--color-text);
+  background: var(--hazard-stripes-fine) 0 0 / 10px 100% no-repeat, var(--color-surface-plate);
+  border: 1px solid var(--color-edge-dark);
+}
+.pl-fault {
+  padding-left: 22px;
+  color: var(--color-text-inverse);
+  background: linear-gradient(90deg, transparent 0 12px, var(--color-text) 12px), var(--fault-checker);
+  box-shadow: 0 2px 0 var(--color-edge-dark);
+}
+.pl-cleared {
+  color: var(--color-text-2);
+  border: 2px solid var(--color-text-3);
+}
+.pl-corridor {
+  padding-left: 20px;
+  color: var(--color-text);
+  background: var(--hazard-stripes-fine) 0 0 / 10px 100% no-repeat, linear-gradient(180deg, var(--color-surface-plate-hi), var(--color-surface-plate));
+  border: 1px solid var(--color-edge-dark);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12);
+}
+.pl-ended {
+  height: 28px;
+  font-size: 14px;
+  letter-spacing: .1em;
+  color: var(--color-text);
+  border: 2px dashed var(--color-text-2);
+}
+.pl-ended svg { width: 16px; height: 16px; }
+
+/* ---------- Panel foot ---------- */
+.tbl-foot { margin-top: auto; display: flex; align-items: center; gap: 18px; }
+.legend {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  margin: 0;
+  padding: 0 16px;
+  height: 52px;
+  font-family: var(--font-stencil);
+  font-stretch: condensed;
+  text-transform: uppercase;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  color: var(--color-text-2);
+}
+.lg { display: flex; align-items: center; gap: 9px; white-space: nowrap; }
+.lg-chg { width: 22px; height: 22px; border-radius: 3px; background: var(--chg), var(--color-surface-plate); }
+.lg-edge { width: 10px; height: 22px; border-radius: 2px; }
+.lg-edge--l4 { background: var(--hazard-stripes-fine); }
+.lg-edge--fault { background: var(--fault-checker); }
+.legend .lg-note { margin-left: auto; color: var(--color-text-3); white-space: normal; line-height: 1.3; text-align: right; }
+.load-btn {
+  flex: none;
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 22px 0 18px;
+  font-family: var(--font-stencil);
+  font-stretch: condensed;
+  text-transform: uppercase;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  color: var(--color-text);
+  background: linear-gradient(180deg, var(--color-surface-plate-hi), var(--color-surface-plate));
+  border: 1px solid var(--color-edge-dark);
+  border-radius: 6px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 4px 0 var(--color-edge-dark);
+  cursor: pointer;
+}
+.load-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- Motion (only when the viewer allows it) ---------- */
+/* History rows are a record, not live, so their lenses stay steady.
+   The only motion is a slow settle of the "Latest" flag. */
+@media (prefers-reduced-motion: no-preference) {
+  .flag--latest { animation: latest-pulse 2.4s ease-in-out infinite; }
+}
+@keyframes latest-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: .6; }
+}
+</style>
+</head>
+<body>
+
+<!-- ================= SCREEN STRIP ================= -->
+<header class="strip">
+  <div class="strip-name">
+    <div class="head head--brand" aria-hidden="true" style="--s:14px">
+      <span class="lamp lamp--red"></span><span class="lamp lamp--yellow"></span><span class="lamp lamp--green"></span>
+    </div>
+    <div>State history<small>Key screen · /log/states/ · CAP-2 · Signal Hardware</small></div>
+  </div>
+  <p>Every signal-state change INT-01 reported, newest first. <b>Read bottom to top:</b> a conflict fault and its reset at the box, normal L1 cycling, vision lost to L2 and back, the flood probe going wet then flooded into L4, an MDRRMO corridor, the corridor ending on its own after the link was lost for 60 s, and the corridor sent again. FAULT has its own checker plate and is never shown as L4.</p>
+</header>
+
+<!-- ================= ARTBOARD 1920x1080 ================= -->
+<section class="artboard" aria-label="State history, 1920 by 1080">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <div class="head head--brand"><span class="lamp lamp--red"></span><span class="lamp lamp--yellow"></span><span class="lamp lamp--green"></span></div>
+      </div>
+      <div>
+        <div class="brand-title">Catarman SMART Traffic Light</div>
+        <div class="brand-sub">Edge-only adaptive signal · Catarman, Northern Samar</div>
+      </div>
+      <div class="int-plate"><span>Intersection</span><b>INT-01</b></div>
+    </div>
+    <nav class="nav" aria-label="Main">
+      <a class="tab" href="#live">Live</a>
+      <a class="tab" href="#peaks">Traffic peaks</a>
+      <a class="tab" href="#breaches">Breaches</a>
+      <a class="tab" href="#override-log">Override log</a>
+      <a class="tab" href="#state-history" aria-current="page">State history</a>
+    </nav>
+  </div>
+
+  <div class="linkbar" role="status" aria-label="Link health">
+    <span class="lb-label">Link health</span>
+    <span class="pilot-item"><i class="pilot" aria-hidden="true"></i><b>Broker</b> Connected</span>
+    <span class="pilot-item"><i class="pilot" aria-hidden="true"></i><b>Controller</b> Online <em class="sim">Sim</em></span>
+    <span class="pilot-item"><i class="pilot" aria-hidden="true"></i><b>Vision</b> Online <em class="sim">Sim</em></span>
+    <span class="lb-right">Data source · simulated (midterm)</span>
+  </div>
+
+  <main class="main">
+
+    <!-- ===== Level filter ===== -->
+    <div class="filters" role="group" aria-label="Filter by level">
+      <span class="f-label st">Level</span>
+      <div class="chips well">
+        <button class="chip chip--all" type="button" aria-pressed="true">All levels</button>
+        <button class="chip" type="button" aria-pressed="false"><span class="lv-badge lv-badge--sm b-l1"><b>L1</b></span>Vision adaptive</button>
+        <button class="chip" type="button" aria-pressed="false"><span class="lv-badge lv-badge--sm b-l2"><b>L2</b></span>Stop-bar presence</button>
+        <button class="chip" type="button" aria-pressed="false"><span class="lv-badge lv-badge--sm b-l3"><b>L3</b></span>Fixed timing</button>
+        <button class="chip" type="button" aria-pressed="false"><span class="lv-badge lv-badge--sm b-l4"><b>L4</b></span>Flashing Amber</button>
+      </div>
+      <span class="f-label st" style="margin-left:10px">Not a level</span>
+      <div class="chips well">
+        <button class="chip" type="button" aria-pressed="false"><span class="lv-badge lv-badge--sm b-fault"><b>FAULT</b></span>Conflict fault</button>
+      </div>
+      <div class="f-right st">Friday 23 October 2026<br><b>Times Asia/Manila (UTC+8)</b></div>
+    </div>
+
+    <!-- ===== History table ===== -->
+    <section class="panel tbl-panel" aria-label="Signal-state changes, newest first">
+      <h2 class="panel-title"><span>Signal-state changes · newest first</span><span class="pt-tag">One row per change in level, aspect, flood, fault or override</span></h2>
+      <table class="hist">
+        <colgroup>
+          <col style="width:158px"><col style="width:384px"><col style="width:222px"><col style="width:222px"><col style="width:226px"><col style="width:228px"><col>
+        </colgroup>
+        <thead>
+          <tr><th>Time</th><th>Level</th><th>NS aspect</th><th>EW aspect</th><th>Flood</th><th>Fault</th><th>Override</th></tr>
+        </thead>
+        <tbody>
+
+          <!-- 1 · corridor NS green (latest) -->
+          <tr class="r-l4">
+            <td><span class="t-time">15:02:13</span><span class="flag flag--latest">Latest</span></td>
+            <td><div class="lv"><span class="lv-badge b-l4"><b>L4</b></span><span class="lv-name">Flashing Amber<small>Overridden by <b>corridor NS</b></small></span></div></td>
+            <td class="chg"><div class="asp"><div class="head head--row" role="img" aria-label="NS: green"><span class="lamp lamp--red"></span><span class="lamp lamp--yellow"></span><span class="lamp lamp--green is-lit"></span></div><span class="asp-v is-green">Green</span></div></td>
+            <td><div class="asp"><div class="head head--row" role="img" aria-label="EW: red"><span class="lamp lamp--red is-lit"></span><span class="lamp lamp--yellow"></span><span class="lamp lamp--green"></span></div><span class="asp-v is-red">Red</span></div></td>
+            <td><span class="plate pl-flooded"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 7c2.5-2.4 3.5-2.4 6 0s3.5 2.4 6 0 3.5-2.4 4 0"/><path d="M2 13c2.5-2.4 3.5-2.4 6 0s3.5 2.4 6 0 3.5-2.4 4 0"/></svg>Flooded</span></td>
+            <td><span class="dim">None</span></td>
+            <td><div class="cell2"><span class="plate pl-corridor"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M17 4v26M11.5 9.5L17 4l5.5 5.5M11.5 24.5L17 30l5.5-5.5"/></svg>Corridor NS</span><span class="t-cap">Cmd<br>15:02:10</span></div></td>
+          </tr>
+
+          <!-- 2 · corridor lead-in, all-red -->
+          <tr class="r-l4">
+            <td><span class="t-time">15:02:11</span></td>
+            <td><div class="lv"><span class="lv-badge b-l4"><b>L4</b></span><span class="lv-name">Flashing Amber<small>Overridden · <b>corridor lead-in</b></small></span></div></td>
+            <td class="chg"><div class="asp"><div class="head head--row" role="img" aria-label="NS: red"><span class="lamp lamp--red is-lit"></span><span class="lamp lamp--yellow"></span><span class="lamp lamp--green"></span></div><span class="asp-v is-red">Red</span></div></td>
+            <td class="chg"><div class="asp"><div class="head head--row" role="img" aria-label="EW: red"><span class="lamp lamp--red is-lit"></span><span class="lamp lamp--yellow"></span><span class="lamp lamp--green"></span></div><span class="asp-v is-red">Red</span></div></td>
+            <td><span class="plate pl-flooded"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 7c2.5-2.4 3.5-2.4 6 0s3.5 2.4 6 0 3.5-2.4 4 0"/><path d="M2 13c2.5-2.4 3.5-2.4 6 0s3.5 2.4 6 0 3.5-2.4 4 0"/></svg>Flooded</span></td>
+            <td><span class="dim">None</span></td>
+            <td class="chg"><div class="cell2"><span class="plate pl-corridor"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M17 4v26M11.5 9.5L17 4l5.5 5.5M11.5 24.5L17 30l5.5-5.5"/></svg>Corridor NS</span><span class="t-cap">Cmd<br>15:02:10</span></div></td>
+          </tr>
+
+          <!-- 3 · corridor ended on its own (link lost 60 s) -->
+          <tr class="r-l4">
+            <td><span class="t-time">14:58:12</span><span class="t-cap">On reconnect</span></td>
+            <td><div class="lv"><span class="lv-badge b-l4"><b>L4</b></span><span class="lv-name">Flashing Amber<small>Back in <b>flood mode</b></small></span></div></td>
+            <td class="chg"><div class="asp"><div class="head head--row" role="img" aria-label="NS: flashing amber"><span class="lamp lamp--red"></span><span class="lamp lamp--yellow is-lit"></span><span class="lamp lamp--green"></span></div><span class="asp-v is-amber">Flashing amber</span></div></td>
+            <td class="chg"><div class="asp"><div class="head head--row" role="img" aria-label="EW: flashing amber"><span class="lamp lamp--red"></span><span class="lamp lamp--yellow is-lit"></span><span class="lamp lamp--green"></span></div><span class="asp-v is-amber">Flashing amber</span></div></td>
+            <td><span class="plate pl-flooded"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 7c2.5-2.4 3.5-2.4 6 0s3.5 2.4 6 0 3.5-2.4 4 0"/><path d="M2 13c2.5-2.4 3.5-2.4 6 0s3.5 2.4 6 0 3.5-2.4 4 0"/></svg>Flooded</span></td>
+            <td><span class="dim">None</span></td>
+            <td class="chg"><div class="cell2"><span class="dim">None</span><span class="plate pl-ended"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8.5 11.5L6 14a2.8 2.8 0 0 1-4-4l2.5-2.5M11.5 8.5L14 6a2.8 2.8 0 0 1 4 4l-2.5 2.5M7 2.5v2.5M2.5 7H5M13 17.5V15M17.5 13H15"/></svg>Ended: link lost 60 s</span><span class="t-cap">Cmd<br>14:47:52</span></div></td>
+          </tr>
+
+          <!-- 4 · corridor NS applied (after a TIMEOUT) -->
+          <tr class="r-l4">
+            <td><span class="t-time">14:48:03</span></td>
+            <td><div class="lv"><span class="lv-badge b-l4"><b>L4</b></span><span class="lv-name">Flashing Amber<small>Overridden by <b>corridor NS</b></small></span></div></td>
+            <td class="chg"><div class="asp"><div class="head head--row" role="img" aria-label="NS: green"><span class="lamp lamp--red"></span><span class="lamp lamp--yellow"></span><span class="lamp lamp--green is-lit"></span></div><span class="asp-v is-green">Green</span></div></td>
+            <td class="chg"><div class="asp"><div class="head head--row" role="img" aria-label="EW: red"><span class="lamp lamp--red is-lit"></span><span class="lamp lamp--yellow"></span><span class="lamp lamp--green"></span></div><span class="asp-v is-red">Red</span></div></td>
+            <td><span class="plate pl-flooded"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 7c2.5-2.4 3.5-2.4 6 0s3.5 2.4 6 0 3.5-2.4 4 0"/><path d="M2 13c2.5-2.4 3.5-2.4 6 0s3.5 2.4 6 0 3.5-2.4 4 0"/></svg>Flooded</span></td>
+            <td><span class="dim">None</span></td>
+            <td class="chg"><div class="cell2"><span class="plate pl-corridor"><svg viewBox="0 0 34 34" aria-hidden="true"><path d="M17 4v26M11.5 9.5L17 4l5.5 5.5M11.5 24.5L17 30l5.5-5.5"/></svg>Corridor NS</span><span class="t-cap">Cmd<br>14:47:52</span></div></td>
+          </tr>
+
+          <!-- 5 · flooded, L4 -->
+          <tr class="r-l4">
+            <td><span class="t-time">14:34:21</span></td>
+            <td class="chg"><div class="lv"><span class="lv-badge b-l4"><b>L4</b></span><span class="lv-name">Flashing Amber<small>Probe wet <b>5 s</b> · flood mode</small></span></div></td>
+            <td class="chg"><div class="asp"><div class="head head--row" role="img" aria-label="NS: flashing amber"><span class="lamp lamp--red"></span><span class="lamp lamp--yellow is-lit"></span><span class="lamp lamp--green"></span></div><span class="asp-v is-amber">Flashing amber</span></div></td>
+            <td class="chg"><div class="asp"><div class="head head--row" role="img" aria-label="EW: flashing amber"><span class="lamp lamp--red"></span><span class="lamp lamp--yellow is-lit"></span><span class="lamp lamp--green"></span></div><span class="asp-v is-amber">Flashing amber</span></div></td>
+            <td class="chg"><span class="plate pl-flooded"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 7c2.5-2.4 3.5-2.4 6 0s3.5 2.4 6 0 3.5-2.4 4 0"/><path d="M2 13c2.5-2.4 3.5-2.4 6 0s3.5 2.4 6 0 3.5-2.4 4 0"/></svg>Flooded</span></td>
+            <td><span class="dim">None</span></td>
+            <td><span class="dim">None</span></td>
+          </tr>
+
+          <!-- 6 · flood wet -->
+          <tr>
+            <td><span class="t-time">14:34:16</span></td>
+            <td><div class="lv"><span class="lv-badge b-l1"><b>L1</b></span><span class="lv-name">Vision adaptive</span></div></td>
+            <td><div class="asp"><div class="head head--row" role="img" aria-label="NS: red"><span class="lamp lamp--red is-lit"></span><span class="lamp lamp--yellow"></span><span class="lamp lamp--green"></span></div><span class="asp-v is-red">Red</span></div></td>
+            <td><div class="asp"><div class="head head--row" role="img" aria-label="EW: green"><span class="lamp lamp--red"></span><span class="lamp lamp--yellow"></span><span class="lamp lamp--green is-lit"></span></div><span class="asp-v is-green">Green</span></div></td>
+            <td class="chg"><div class="cell2"><span class="plate pl-wet"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 13c2.5-2.4 3.5-2.4 6 0s3.5 2.4 6 0 3.5-2.4 4 0"/></svg>Wet</span><span class="t-cap">Debounce<br>running</span></div></td>
+            <td><span class="dim">None</span></td>
+            <td><span class="dim">None</span></td>
+          </tr>
+
+          <!-- 7 · L1 cycling: EW green -->
+          <tr>
+            <td><span class="t-time">14:34:11</span></td>
+            <td><div class="lv"><span class="lv-badge b-l1"><b>L1</b></span><span class="lv-name">Vision adaptive</span></div></td>
+            <td><div class="asp"><div class="head head--row" role="img" aria-label="NS: red"><span class="lamp lamp--red is-lit"></span><span class="lamp lamp--yellow"></span><span class="lamp lamp--green"></span></div><span class="asp-v is-red">Red</span></div></td>
+            <td class="chg"><div class="asp"><div class="head head--row" role="img" aria-label="EW: green"><span class="lamp lamp--red"></span><span class="lamp lamp--yellow"></span><span class="lamp lamp--green is-lit"></span></div><span class="asp-v is-green">Green</span></div></td>
+            <td><span class="dim">Dry</span></td>
+            <td><span class="dim">None</span></td>
+            <td><span class="dim">None</span></td>
+          </tr>
+
+          <!-- 8 · recovery to L1 at all-red -->
+          <tr>
+            <td><span class="t-time">14:34:09</span></td>
+            <td class="chg"><div class="lv"><span class="lv-badge b-l1"><b>L1</b></span><span class="lv-name">Vision adaptive<small>Vision back <b>5 s</b> · switched at all-red</small></span></div></td>
+            <td class="chg"><div class="asp"><div class="head head--row" role="img" aria-label="NS: red"><span class="lamp lamp--red is-lit"></span><span class="lamp lamp--yellow"></span><span class="lamp lamp--green"></span></div><span class="asp-v is-red">Red</span></div></td>
+            <td><div class="asp"><div class="head head--row" role="img" aria-label="EW: red"><span class="lamp lamp--red is-lit"></span><span class="lamp lamp--yellow"></span><span class="lamp lamp--green"></span></div><span class="asp-v is-red">Red</span></div></td>
+            <td><span class="dim">Dry</span></td>
+            <td><span class="dim">None</span></td>
+            <td><span class="dim">None</span></td>
+          </tr>
+
+          <!-- 9 · L2 gap-out to yellow -->
+          <tr>
+            <td><span class="t-time">14:34:06</span></td>
+            <td><div class="lv"><span class="lv-badge b-l2"><b>L2</b></span><span class="lv-name">Stop-bar presence<small>Gap-out · stop bar clear <b>3 s</b></small></span></div></td>
+            <td class="chg"><div class="asp"><div class="head head--row" role="img" aria-label="NS: yellow"><span class="lamp lamp--red"></span><span class="lamp lamp--yellow is-lit"></span><span class="lamp lamp--green"></span></div><span class="asp-v is-amber">Yellow</span></div></td>
+            <td><div class="asp"><div class="head head--row" role="img" aria-label="EW: red"><span class="lamp lamp--red is-lit"></span><span class="lamp lamp--yellow"></span><span class="lamp lamp--green"></span></div><span class="asp-v is-red">Red</span></div></td>
+            <td><span class="dim">Dry</span></td>
+            <td><span class="dim">None</span></td>
+            <td><span class="dim">None</span></td>
+          </tr>
+
+          <!-- 10 · vision lost, L2 -->
+          <tr>
+            <td><span class="t-time">14:33:58</span></td>
+            <td class="chg"><div class="lv"><span class="lv-badge b-l2"><b>L2</b></span><span class="lv-name">Stop-bar presence<small><b>Vision lost</b> · heartbeat stopped</small></span></div></td>
+            <td><div class="asp"><div class="head head--row" role="img" aria-label="NS: green"><span class="lamp lamp--red"></span><span class="lamp lamp--yellow"></span><span class="lamp lamp--green is-lit"></span></div><span class="asp-v is-green">Green</span></div></td>
+            <td><div class="asp"><div class="head head--row" role="img" aria-label="EW: red"><span class="lamp lamp--red is-lit"></span><span class="lamp lamp--yellow"></span><span class="lamp lamp--green"></span></div><span class="asp-v is-red">Red</span></div></td>
+            <td><span class="dim">Dry</span></td>
+            <td><span class="dim">None</span></td>
+            <td><span class="dim">None</span></td>
+          </tr>
+
+          <!-- 11 · L1 cycling: NS green -->
+          <tr>
+            <td><span class="t-time">14:33:52</span></td>
+            <td><div class="lv"><span class="lv-badge b-l1"><b>L1</b></span><span class="lv-name">Vision adaptive</span></div></td>
+            <td class="chg"><div class="asp"><div class="head head--row" role="img" aria-label="NS: green"><span class="lamp lamp--red"></span><span class="lamp lamp--yellow"></span><span class="lamp lamp--green is-lit"></span></div><span class="asp-v is-green">Green</span></div></td>
+            <td><div class="asp"><div class="head head--row" role="img" aria-label="EW: red"><span class="lamp lamp--red is-lit"></span><span class="lamp lamp--yellow"></span><span class="lamp lamp--green"></span></div><span class="asp-v is-red">Red</span></div></td>
+            <td><span class="dim">Dry</span></td>
+            <td><span class="dim">None</span></td>
+            <td><span class="dim">None</span></td>
+          </tr>
+
+          <!-- 12 · fault reset at the box, restart at all-red -->
+          <tr>
+            <td><span class="t-time">14:33:50</span></td>
+            <td><div class="lv"><span class="lv-badge b-l1"><b>L1</b></span><span class="lv-name">Vision adaptive<small>Restart at <b>all-red</b></small></span></div></td>
+            <td class="chg"><div class="asp"><div class="head head--row" role="img" aria-label="NS: red"><span class="lamp lamp--red is-lit"></span><span class="lamp lamp--yellow"></span><span class="lamp lamp--green"></span></div><span class="asp-v is-red">Red</span></div></td>
+            <td class="chg"><div class="asp"><div class="head head--row" role="img" aria-label="EW: red"><span class="lamp lamp--red is-lit"></span><span class="lamp lamp--yellow"></span><span class="lamp lamp--green"></span></div><span class="asp-v is-red">Red</span></div></td>
+            <td><span class="dim">Dry</span></td>
+            <td class="chg"><div class="cell2"><span class="plate pl-cleared">Cleared</span><span class="t-cap">Reset at<br>the box</span></div></td>
+            <td><span class="dim">None</span></td>
+          </tr>
+
+          <!-- 13 · conflict fault (FAULT, not L4) -->
+          <tr class="r-fault">
+            <td><span class="t-time">14:21:07</span></td>
+            <td><div class="lv"><span class="lv-badge b-fault"><b>FAULT</b></span><span class="lv-name">Conflict fault<small>Level still reports <b>L1</b> · not L4</small></span></div></td>
+            <td><div class="asp"><div class="head head--row" role="img" aria-label="NS: flashing amber"><span class="lamp lamp--red"></span><span class="lamp lamp--yellow is-lit"></span><span class="lamp lamp--green"></span></div><span class="asp-v is-amber">Flashing amber<small>Forced by fault</small></span></div></td>
+            <td><div class="asp"><div class="head head--row" role="img" aria-label="EW: flashing amber"><span class="lamp lamp--red"></span><span class="lamp lamp--yellow is-lit"></span><span class="lamp lamp--green"></span></div><span class="asp-v is-amber">Flashing amber<small>Forced by fault</small></span></div></td>
+            <td><span class="dim">Dry</span></td>
+            <td><div class="cell2"><span class="plate pl-fault">Conflict</span><span class="t-cap">Latched</span></div></td>
+            <td><span class="dim">None</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="tbl-foot">
+        <div class="legend well">
+          <span class="lg"><i class="lg-chg" aria-hidden="true"></i>Changed from the row below</span>
+          <span class="lg"><i class="lg-edge lg-edge--l4" aria-hidden="true"></i>L4 flood mode</span>
+          <span class="lg"><i class="lg-edge lg-edge--fault" aria-hidden="true"></i>Conflict fault</span>
+          <span class="lg-note">Lit lens = aspect at that moment. Level keeps reporting the automatic level while an override or a fault is in effect.</span>
+        </div>
+        <button class="load-btn" type="button"><svg viewBox="0 0 22 22" aria-hidden="true"><path d="M5 8l6 6 6-6"/></svg>Load older</button>
+      </div>
+    </section>
+  </main>
+</section>
+</body>
+</html>

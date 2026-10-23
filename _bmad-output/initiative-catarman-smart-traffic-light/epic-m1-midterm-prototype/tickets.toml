@@ -1,0 +1,292 @@
+# M1 Midterm prototype. The order of the tables is the build order.
+# File ownership, registration lines and the story rules are in epic-m1-midterm-prototype.md, Boundaries.
+
+[[entry]]
+id = 1
+type = "story"
+title = "S0: workspace, contracts, schema and local infra"
+description = "Lays the AD-14 foundation every CAP-1 to CAP-6 story builds on: the workspace with every Stack dependency pinned, the tooling configs and the backend's Vitest globalSetup, @stl/contracts with every Structural Seed shape, the initial migration with the five M1 tables, infra/, docs/setup.md and the root .gitignore, with no runtime code; each developer then installs MySQL and Mosquitto and runs create-user.sql by hand."
+verify = "On a fresh clone, following docs/setup.md, npm install, npm run broker, npm run db:migrate (the five M1 tables plus dbmate's schema_migrations) and npm run contracts:schema (no diff) succeed, and npm run typecheck, npm run lint and npm test pass on the still-empty workspaces."
+covers = []
+after = []
+hitl = true
+risk = "high"
+references = [
+  "spine — _bmad-output/initiative-catarman-smart-traffic-light/architecture-smart-traffic-light/architecture-smart-traffic-light.md, AD-4, AD-7 (rule 6: override as a union on mode), AD-8 (Wire format), AD-10, AD-11 (Optional crop), AD-12, AD-13, AD-14, AD-15, AD-16, Stack",
+  "spine — _bmad-output/initiative-catarman-smart-traffic-light/architecture-smart-traffic-light/architecture-smart-traffic-light.md, Structural Seed: MQTT contract v1, Shared API shapes, SSE stream, Data model (M1), Runtime and environments, Source tree",
+]
+
+[[entry]]
+id = 2
+type = "story"
+title = "Backend core: HTTP, database and SSE hub"
+description = "Builds the gateway's composition root and HTTP side that every CAP story extends, giving CAP-3 its push channel: config, pool, AppError, occurred-at, the error middleware, createApp with dev CORS and demo-mode serving of dashboard/out/, the AD-14 boot order, the route and job registries, the SSE hub and /api/stream, /api/health, /api/vehicle-classes, the db:seed runner and test/reset-db.ts."
+verify = "With MySQL up, the backend listens on 127.0.0.1:4000 only and serves /api/health with db true, /api/vehicle-classes with the five seeded classes, and /api/stream with retry 2000, the slices in AD-8 order with state, counts and demand as null, and a ping every 15 s; npm run db:seed runs; Supertest and stl_test tests pass."
+covers = ["CAP-3"]
+after = [1]
+hitl = false
+risk = "medium"
+references = [
+  "spine — _bmad-output/initiative-catarman-smart-traffic-light/architecture-smart-traffic-light/architecture-smart-traffic-light.md, AD-2, AD-4, AD-6, AD-8, AD-9, AD-10, AD-12 (Serving), AD-14 (backend core, boot order), AD-15, AD-16",
+  "spine — _bmad-output/initiative-catarman-smart-traffic-light/architecture-smart-traffic-light/architecture-smart-traffic-light.md, Consistency Conventions: REST shape, Errors, Logging",
+]
+
+[[entry]]
+id = 3
+type = "story"
+title = "Backend core: MQTT ingest and link health"
+description = "Adds the backend core's MQTT side so CAP-3's link health and staleness work: the stl-backend client (clean false, 5 s keepalive, optional MQTT_PASSWORD), the publisher, the fan-out handler registry that parses each topic with its contract schema and logs and drops invalid messages without crop data, the link service with its four handlers and watchdog job, the broker flag in /api/health, and the 250 ms SSE budget test."
+verify = "With the broker up, the link slice starts with both roles OFFLINE, then mosquitto_pub status, state and heartbeat messages move each role through ONLINE, STALE (controller 5 s, vision 3 s) and OFFLINE; a retained message never counts as liveness; an invalid payload is logged and dropped; the budget test passes."
+covers = ["CAP-3"]
+after = [2]
+hitl = false
+risk = "medium"
+references = [
+  "spine — _bmad-output/initiative-catarman-smart-traffic-light/architecture-smart-traffic-light/architecture-smart-traffic-light.md, AD-4, AD-5 (Client identity and liveness, Sessions), AD-8, AD-14, AD-15 (Credentials)",
+  "spine — _bmad-output/initiative-catarman-smart-traffic-light/architecture-smart-traffic-light/architecture-smart-traffic-light.md, Structural Seed: MQTT contract v1, SSE stream (link row), Backend file ownership (M1); Conventions: Topic names, Logging, Privacy",
+]
+
+[[entry]]
+id = 4
+type = "story"
+title = "Simulator: controller role, REPL and behavior hooks"
+description = "Builds the simulator's controller role for CAP-1 and its side of CAP-5: stl-sim-controller with retained status and LWT, the NS/EW cycle and L1–L4 rules of degradation-levels.md, the latched conflict fault, override acks and rejections per AD-7, AD-18's link-drop rule, the start check with --force and --roles, the REPL controls, config.ts with an optional MQTT_PASSWORD, and the behaviors/index.ts hooks with no M2 behavior."
+verify = "With only the broker up, npm run sim -- --roles controller republishes controller/state at least every 2 s; REPL commands reach L3, L4 after 5 s of flood and a latched FAULT that only the reset clears; a mosquitto_pub CORRIDOR command is acked APPLIED, or REJECTED CONFLICT_FAULT during a fault; cycling continues through a broker restart and the state is republished on reconnect."
+covers = ["CAP-1", "CAP-5"]
+after = [1]
+hitl = false
+risk = "medium"
+references = [
+  "spine — _bmad-output/initiative-catarman-smart-traffic-light/architecture-smart-traffic-light/architecture-smart-traffic-light.md, AD-3, AD-4, AD-5, AD-7, AD-14 (simulator core), AD-15 (Credentials, Config), AD-18",
+  "constraint — _bmad-output/initiative-catarman-smart-traffic-light/spec-smart-traffic-light/degradation-levels.md",
+]
+
+[[entry]]
+id = 5
+type = "story"
+title = "Simulator: vision role and demo scenario"
+description = "Adds the simulator's vision role for CAP-1: stl-sim-vision with status and LWT, a 1 Hz heartbeat, vision/demand PCU from vehicle-classes.json, vision/counts and vision/breach events with UUIDs and the bundled placeholder crop of at most 64 px, REPL emit-breach and vision stop and start, the vision start check, and --scenario demo walking L1 to L4 with breaches."
+verify = "npm run sim starts both roles and a stl/# subscriber sees heartbeats, demand, counts and breaches carrying a baseline JPEG crop; stopping vision in the REPL publishes a retained online false and the controller drops to L2 within 3 s; --scenario demo reaches L4 unattended."
+covers = ["CAP-1"]
+after = [4]
+hitl = false
+risk = "low"
+references = [
+  "spine — _bmad-output/initiative-catarman-smart-traffic-light/architecture-smart-traffic-light/architecture-smart-traffic-light.md, AD-3, AD-5, AD-11 (M1 placeholder crop), AD-12, AD-17 (Heartbeat, Demand)",
+  "constraint — _bmad-output/initiative-catarman-smart-traffic-light/spec-smart-traffic-light/kpis.md, Vehicle classes and PCU weights",
+]
+
+[[entry]]
+id = 6
+type = "story"
+title = "Dashboard shell: config, tokens and live data layer"
+description = "Builds the dashboard shell's non-visual half: the static-export Next.js config, globals.css with every DESIGN.md token as a Tailwind v4 @theme variable, the committed .env files, a minimal root layout that mounts LiveProvider once, the src/lib/ config, REST client, time, vehicle-classes and visuals modules, and LiveProvider with useLive, useLiveEvent, useStreamEpoch, useLiveness and LiveTestProvider, so CAP-3 views update without a reload."
+verify = "Vitest tests show LiveProvider parsing each frame with its schema, the epoch rising on reconnect, and useLiveness turning STALE on a closed stream, a disconnected broker or a role that is not ONLINE; visuals.ts labels every enum value; formatManila renders Asia/Manila; npm run build -w dashboard exports."
+covers = ["CAP-3"]
+after = [1]
+hitl = false
+risk = "medium"
+references = [
+  "spine — _bmad-output/initiative-catarman-smart-traffic-light/architecture-smart-traffic-light/architecture-smart-traffic-light.md, AD-8 (Client API), AD-9, AD-14 (dashboard shell)",
+  "spine — _bmad-output/initiative-catarman-smart-traffic-light/architecture-smart-traffic-light/architecture-smart-traffic-light.md, Consistency Conventions: Dashboard data, Dashboard time, Dashboard visuals, Staleness",
+  "design — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/DESIGN.md, frontmatter tokens and Colors",
+  "experience — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/EXPERIENCE.md, Live Data & Staleness",
+]
+
+[[entry]]
+id = 7
+type = "story"
+title = "Dashboard shell: layout, header and UI atoms"
+description = "Builds the shell's visible frame into entry 6's root layout: the top bar, nav tabs for the five M1 routes, the link health bar with Sim tags and, on / only, the L4, OVERRIDE and FAULT state banners, the loader, the polite live region that entry 10 and the StaleBadge announce through, and the LevelBadge, AspectLamp, StaleBadge, ClassLabel and ConfirmDialog atoms with M1's three animations, creating no page.tsx."
+verify = "Tests under LiveTestProvider show the loader before the first frame, the pilots and Sim tags for each link fixture, each state banner on / only, and ConfirmDialog opening on Cancel with focus trapped and Esc cancelling; npm run build -w dashboard exports; entry 8 re-checks the header against the simulator."
+covers = ["CAP-3", "CAP-5"]
+after = [6]
+hitl = false
+risk = "low"
+references = [
+  "mock — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/mockups/live-status.html, top bar and link health bar",
+  "experience — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/EXPERIENCE.md, Information Architecture, Component Patterns (Nav tab, Link health bar, State banners, StaleBadge, Loader, ConfirmDialog), Motion, Accessibility Floor",
+  "design — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/DESIGN.md, Typography, Layout & Spacing, Components",
+  "spine — _bmad-output/initiative-catarman-smart-traffic-light/architecture-smart-traffic-light/architecture-smart-traffic-light.md, AD-9, AD-14",
+]
+
+[[entry]]
+id = 8
+type = "story"
+title = "Live status: signal state on /"
+description = "The tracer bullet for CAP-3 through every layer: the state slice writer, and the / page with its three-column grid, whose left column shows the NS and EW phase cards, the degradation ladder, the flood selector and the fault row, leaving named slots in the center and right columns that entries 10, 13 and 16 mount into."
+verify = "With npm run dev and npm run sim -- --roles controller, / shows each NS and EW aspect change within 1 s without a reload; REPL-forced L1–L4, flood WET and FLOODED, and FAULT each read distinctly, and the shell's banners follow them; no countdown shows; stopping the simulator marks these panels STALE with their last values."
+covers = ["CAP-3"]
+after = [3, 4, 7]
+hitl = false
+risk = "medium"
+references = [
+  "mock — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/mockups/live-status.html, left column",
+  "experience — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/EXPERIENCE.md, Component Patterns (Phase card, Degradation ladder, Flood selector, Fault row), State Patterns, Signal Semantics",
+  "design — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/DESIGN.md, Layout & Spacing (432/960/432 grid), Components (Phase card, Degradation ladder, Flood selector, Fault row)",
+  "spine — _bmad-output/initiative-catarman-smart-traffic-light/architecture-smart-traffic-light/architecture-smart-traffic-light.md, AD-6, AD-8 (SSE stream state row), AD-9, AD-14 (pages and components), Conventions: Staleness, Display target",
+]
+
+[[entry]]
+id = 9
+type = "story"
+title = "Override lifecycle and override log"
+description = "Builds CAP-5's backend lifecycle per AD-7 (the overrides service, both resolve handlers, the timeout job, GET and POST /api/overrides), the dashboard's lib/api/overrides.ts that entry 10 calls, and the /log/overrides/ page, so every command and its outcome is stored and listed (CAP-2) in override_command rows that entry 11 also reads."
+verify = "Against the simulator, POST /api/overrides with CORRIDOR NS returns 202 and the override event turns APPLIED; with the simulator stopped it returns 409 CONTROLLER_OFFLINE; during a conflict fault it ends REJECTED CONFLICT_FAULT; with a mosquitto_pub fake controller that never acks, it turns TIMEOUT at 5 s and a later ack resolves it; REQUESTED rows older than 5 s become TIMEOUT at boot; /log/overrides/ updates rows in place."
+covers = ["CAP-5", "CAP-2"]
+after = [3, 4, 7]
+hitl = false
+risk = "high"
+references = [
+  "spine — _bmad-output/initiative-catarman-smart-traffic-light/architecture-smart-traffic-light/architecture-smart-traffic-light.md, AD-2, AD-4, AD-6, AD-7, AD-8, AD-10, AD-14, AD-15, AD-18, Structural Seed: Override lifecycle, Shared API shapes (overrides.ts); Conventions: REST shape, Errors, Public ids",
+  "mock — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/mockups/override-log.html",
+  "experience — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/EXPERIENCE.md, Component Patterns (Override log), State Patterns (Empty history, REST failure), Key Flows (Flow 1 failure paths), Voice and Tone",
+  "design — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/DESIGN.md, Components (Log table)",
+]
+
+[[entry]]
+id = 10
+type = "story"
+title = "MDRRMO override panel on /"
+description = "Mounts CAP-5's override panel in /'s right column, calling entry 9's lib/api/overrides.ts: four buttons, ConfirmDialog before every activation and release, Pending until the controller reports, the rejected, timeout and corridor-ended notices announced through the shell's live region, and a Current plate that reads only state.override."
+verify = "Against the simulator, EXPERIENCE Flow 1 runs on /: a corridor NS during L4 is confirmed, reads Pending, then Current shows Corridor NS beside the L4 ladder; release returns to automatic; the controller-offline and conflict-fault paths show their notices, and a mosquitto_pub fake controller that never acks shows the timeout notice at 5 s."
+covers = ["CAP-5"]
+after = [8, 9]
+hitl = false
+risk = "medium"
+references = [
+  "mock — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/mockups/live-status.html, MDRRMO override panel and confirm dialog",
+  "experience — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/EXPERIENCE.md, Key Flows (Flow 1), Component Patterns (MDRRMO override panel, ConfirmDialog), State Patterns (Controller stale, Override pending, active, rejected, timeout, ended on its own), Accessibility Floor (Announcements)",
+  "design — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/DESIGN.md, Components (MDRRMO override panel, ConfirmDialog)",
+  "spine — _bmad-output/initiative-catarman-smart-traffic-light/architecture-smart-traffic-light/architecture-smart-traffic-light.md, AD-7, AD-14 (pages and components)",
+]
+
+[[entry]]
+id = 11
+type = "story"
+title = "History: signal-state changes"
+description = "Builds CAP-2's state history: a persist handler and preload job that store only real changes, the StateChangeItem DTO, GET /api/state-changes with cursor paging, and the /log/states/ page, which labels a {NONE, X} row 'Override ended (link loss or fault)' by reading entry 9's override_command rows."
+verify = "Against the simulator, each level, aspect, flood, fault or override change adds one signal_state_change row and the 2 s republishes add none; /log/states/ lists rows newest first in Asia/Manila time and labels a corridor ended by a conflict fault; rows survive a backend and MySQL restart."
+covers = ["CAP-2"]
+after = [3, 4, 7, 9]
+hitl = false
+risk = "medium"
+references = [
+  "spine — _bmad-output/initiative-catarman-smart-traffic-light/architecture-smart-traffic-light/architecture-smart-traffic-light.md, AD-4, AD-5 (Persisting messages), AD-6, AD-7 (rule 6), AD-8 (Client API: useStreamEpoch), AD-10, AD-14, Conventions: REST shape, Public ids",
+  "mock — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/mockups/state-history.html",
+  "experience — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/EXPERIENCE.md, Component Patterns (State history), State Patterns (Empty history, REST failure)",
+  "design — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/DESIGN.md, Components (Log table)",
+]
+
+[[entry]]
+id = 12
+type = "story"
+title = "History: vehicle counts and the counts slice"
+description = "Builds CAP-2's count history: crossings stored once per message id, a counts service with the current-hour counts slice that entries 13 and 14 show and the hourly-buckets function that entry 14's route calls, a job pushing the slice at boot and each Asia/Manila hour, and a seed file with 24 h of demo counts."
+verify = "Against the simulator, each vision/counts message adds its rows once, counts published while the backend is stopped are stored once it restarts, the counts slice on /api/stream shows the current Asia/Manila hour with every configured class and resets at the hour, and npm run db:seed loads 24 h of history."
+covers = ["CAP-2", "CAP-4"]
+after = [3, 5]
+hitl = false
+risk = "medium"
+references = [
+  "spine — _bmad-output/initiative-catarman-smart-traffic-light/architecture-smart-traffic-light/architecture-smart-traffic-light.md, AD-5 (Sessions and offline retention, Persisting messages), AD-6, AD-8 (One writer per slice), AD-10 (Keys and seeds), AD-12 (Unknown ids), AD-14, Structural Seed: Shared API shapes (counts.ts), SSE stream (counts row)",
+  "constraint — _bmad-output/initiative-catarman-smart-traffic-light/spec-smart-traffic-light/kpis.md",
+]
+
+[[entry]]
+id = 13
+type = "story"
+title = "Live status: intersection map, PCU and hour counts"
+description = "Completes CAP-3 on /: the demand slice writer, the center map with four heads mirroring state.signals and a PCU tag per approach shown as received, and the right column's counts table and hour total from entry 12's counts slice, each mounted with one line."
+verify = "Against the simulator, the N and S heads follow NS and E and W follow EW, each PCU tag follows vision/demand within 1 s and dims at zero, L4 shows the flood hatch, the counts table follows the counts slice in vehicle-classes.json column order, and stopping the vision role marks PCU and counts STALE."
+covers = ["CAP-3"]
+after = [5, 8, 12]
+hitl = false
+risk = "low"
+references = [
+  "mock — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/mockups/live-status.html, center map and Vehicle counts panel",
+  "experience — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/EXPERIENCE.md, Component Patterns (Intersection map, PCU tag, Counts table, Hour total), State Patterns (No value yet, Vision stale, L4 Flashing Amber), Key Flows (Flow 2, steps 1 and 4)",
+  "design — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/DESIGN.md, Components (Intersection map, Approach label, PCU tag, Counts table, Hour total)",
+  "spine — _bmad-output/initiative-catarman-smart-traffic-light/architecture-smart-traffic-light/architecture-smart-traffic-light.md, AD-8 (SSE stream demand row), AD-9, AD-12 (Who computes PCU), AD-14 (pages and components), Conventions: Staleness",
+]
+
+[[entry]]
+id = 14
+type = "story"
+title = "Traffic peaks"
+description = "Builds CAP-4: GET /api/counts/hourly through entry 12's counts service, and the /traffic/ page with 24 Asia/Manila hour bars stacked by class in Recharts, the peak-hour plate, today's current bar following the live counts slice, and ?date= day navigation."
+verify = "With seeded history and the simulator running, /traffic/ shows 24 bars whose totals equal the vehicle_count sums for the same Asia/Manila hours, flags the peak hour, and today's current bar grows with the live counts slice; an empty day reads 'No vehicles counted.'"
+covers = ["CAP-4"]
+after = [7, 12]
+hitl = false
+risk = "low"
+references = [
+  "mock — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/mockups/traffic-peaks.html",
+  "experience — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/EXPERIENCE.md, Component Patterns (Hourly chart), State Patterns (Empty history, REST failure), Key Flows (Flow 2)",
+  "design — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/DESIGN.md, Components (Hourly chart), Colors (vehicle-class colors)",
+  "spine — _bmad-output/initiative-catarman-smart-traffic-light/architecture-smart-traffic-light/architecture-smart-traffic-light.md, AD-6, AD-8 (Client API), AD-9 (Suspense for ?date=), AD-12, Structural Seed: Shared API shapes (HourlyCounts), REST surface (M1); Conventions: Dashboard time",
+]
+
+[[entry]]
+id = 15
+type = "story"
+title = "Breach ingest and breach log"
+description = "Builds CAP-6's ingest and log and CAP-2's breach history: breaches stored once per UUID with AD-11's crop checks, the breach event, GET /api/breaches and its crop route, the dashboard's lib/api/breaches.ts and crop thumb that entry 16 reuses, and the /breaches/ page."
+verify = "Against the simulator, each breach is stored once and listed on /breaches/ newest first with Asia/Manila time, approach, class and the blurred placeholder crop; a new breach arrives at the top live; ?id= marks its row; a crop over 64 px, including one with a small EXIF thumbnail, is stored without a crop; rows survive a restart."
+covers = ["CAP-6", "CAP-2"]
+after = [3, 5, 7]
+hitl = false
+risk = "medium"
+references = [
+  "spine — _bmad-output/initiative-catarman-smart-traffic-light/architecture-smart-traffic-light/architecture-smart-traffic-light.md, AD-5, AD-6, AD-8, AD-9 (Suspense for ?id=, apiUrl), AD-10, AD-11, AD-14, Conventions: Privacy, REST shape",
+  "constraint — _bmad-output/initiative-catarman-smart-traffic-light/spec-smart-traffic-light/privacy-compliance.md",
+  "mock — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/mockups/breach-log.html",
+  "experience — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/EXPERIENCE.md, Component Patterns (Breach log), State Patterns (Crop absent, Empty history, REST failure), Key Flows (Flow 2)",
+  "design — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/DESIGN.md, Components (Log table, Breach thumb)",
+]
+
+[[entry]]
+id = 16
+type = "story"
+title = "Latest breach on /"
+description = "Mounts CAP-6's Latest breach card in /'s right column: it loads the newest breach through entry 15's lib/api/breaches.ts on mount and on each stream epoch, replaces itself on each breach event, reuses entry 15's crop thumb, and opens /breaches/?id= on click."
+verify = "Against the simulator, / shows the newest breach's time, approach, class and blurred crop; a REPL-emitted breach replaces it within 1 s; clicking it opens /breaches/ with that row marked; stopping the vision role marks the card STALE."
+covers = ["CAP-6"]
+after = [8, 15]
+hitl = false
+risk = "low"
+references = [
+  "mock — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/mockups/live-status.html, Latest breach panel",
+  "experience — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/EXPERIENCE.md, Component Patterns (Latest breach card), State Patterns (Vision stale, Crop absent)",
+  "design — _bmad-output/initiative-catarman-smart-traffic-light/ux-smart-traffic-light/DESIGN.md, Components (Latest breach card)",
+  "spine — _bmad-output/initiative-catarman-smart-traffic-light/architecture-smart-traffic-light/architecture-smart-traffic-light.md, AD-8 (Client API), AD-9, AD-14 (pages and components), Conventions: Staleness",
+]
+
+[[entry]]
+id = 17
+type = "story"
+title = "Refactor sweep"
+description = "Cleans up M1 code across the CAP stories, scoped when it starts from their plans and the findings they deferred to deferred-work.md; cleanup only, and scope pushed out of another story becomes a new story."
+verify = "npm run typecheck, npm run lint, npm test and npm run build -w dashboard pass, and each story's recorded simulator demo still runs."
+covers = []
+after = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+hitl = false
+risk = "low"
+references = [
+  "spine — _bmad-output/initiative-catarman-smart-traffic-light/architecture-smart-traffic-light/architecture-smart-traffic-light.md, AD-14, AD-16",
+]
+
+[[entry]]
+id = 18
+type = "story"
+title = "M1 demo run and submission"
+description = "A person runs the M1 success signal end to end on the demo laptop: installs from a fresh clone per docs/setup.md, then with the internet off runs npm run build, npm start and npm run sim -- --scenario demo in full-screen Chromium, walks every check in the epic's Done when, records the run in docs/m1-demo.md, and pushes the repository for submission by Oct 26."
+verify = "docs/m1-demo.md records every Done when check passing on the demo laptop, including the backend stop while the simulator runs and the backend and MySQL restart, and the submitted repository installs and builds from a fresh clone."
+covers = ["CAP-1", "CAP-2", "CAP-3", "CAP-4", "CAP-5", "CAP-6"]
+after = [17]
+hitl = true
+risk = "medium"
+references = [
+  "spec — _bmad-output/initiative-catarman-smart-traffic-light/spec-smart-traffic-light/spec-smart-traffic-light.md, Success signal (M1)",
+  "spine — _bmad-output/initiative-catarman-smart-traffic-light/architecture-smart-traffic-light/architecture-smart-traffic-light.md, AD-18, Structural Seed: Runtime and environments",
+]

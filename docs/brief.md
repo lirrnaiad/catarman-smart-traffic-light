@@ -2,10 +2,12 @@
 title: "Project Brief: Catarman LGU Climate-Resilient SMART Traffic Light"
 status: "draft"
 created: "2026-10-08"
-updated: "2026-10-08"
+updated: "2026-10-22"
 ---
 
 # Project Brief: Catarman LGU Climate-Resilient SMART Traffic Light
+
+> **Amended 2026-10-22** to match SPEC-smart-traffic-light: the Diode-OR circuit, the cash scope and the squad split. Where this brief and the spec differ, the spec governs.
 
 ## Executive Summary
 The Catarman LGU Climate-Resilient SMART Traffic Light is an edge-native, grid-independent traffic management system engineered to automate intersection signaling across weather-vulnerable, power-unstable provincial capitals. Combining edge computer vision with localized embedded microcontrollers, the system dynamically calculates signal phase timing based on real-time vehicle density—specifically weighted for Philippine provincial traffic profiles like tricycles and motorcycles—without external cloud or continuous utility grid dependencies.
@@ -113,7 +115,7 @@ Level 1 (Vision-Driven Adaptive) -> Level 2 (Stop-Bar Ultrasonic Presence Fallba
 * **Deterministic Embedded State Machine (Squad A):** Dedicated ESP32 firmware running autonomous timed signal phases, curb water sensor debouncing, and ultrasonic gap-out actuation with 0.96" OLED local status telemetry (utilizing an isolated Arduino UNO R3 strictly as an offline benchtop sensor test harness).
 * **Optical Occlusion Handover (Squad A & B):** Automated fail-safe arbitration transferring control to HC-SR04 stop-bar vehicle presence and 3-second gap-out actuation if camera frames become occluded.
 * **Catarman Gutter Flood Emergency Trigger (Squad A):** Curb-mounted water level sensor module with a 5-second software debounce overriding regular phasing into Flashing Amber caution mode upon submersion (continuous green disaster corridors reserved for manual dashboard override).
-* **Brownout Dual-Rail Battery Failover Circuit (Squad A):** Hardware Diode-OR power multiplexing using two 1N4007 diodes and an MB102 Breadboard Power Supply Module with buffered filter capacitors, switching seamlessly between primary 5V DC and auxiliary 9V battery to validate zero-reboot execution during utility cuts.
+* **Brownout Dual-Rail Battery Failover Circuit (Squad A):** Hardware Diode-OR power multiplexing through the ESP32's onboard USB diode and one 1N4007 diode (D2) on the battery leg, with an MB102 Breadboard Power Supply Module with buffered filter capacitors, switching seamlessly between primary 5V DC and auxiliary 9V battery to validate zero-reboot execution during utility cuts.
 * **Automated Red-Light Crossing Snapshot Log (Squad B & C):** Virtual stop-bar breach detection capturing timestamped frame snapshots of red-light violators with anonymized vehicle bounding-box crops in compliance with RA 10173.
 * **Local Command Dashboard (Squad C):** Browser UI served locally, rendering live video inference frames, real-time intersection status, manual MDRRMO emergency override toggles, and hourly traffic peak bar charts.
 * **Physical 4-Way Scale Diorama (Squad A & C):** Demonstration model constructed from local foam board, featuring mounted LED signal heads, vehicle approaches, curb water sensor, and stop-line ultrasonic transducers.
@@ -168,11 +170,11 @@ Level 1 (Vision-Driven Adaptive) -> Level 2 (Stop-Bar Ultrasonic Presence Fallba
 ## Constraints & Assumptions
 
 ### 1. Constraints
-* **Total Expenditure Ceiling:** Strict financial cap of <= ₱1,000 pooled across all 10 members, reserving funds exclusively for diorama craft supplies and incidental wiring.
+* **Total Expenditure Ceiling:** Strict financial cap of <= ₱1,000 pooled across all 10 members, reserving funds for diorama supplies, wiring, consumables such as batteries, small passive power parts and mounts. No microcontrollers or sensors are bought.
 * **Zero Procurement for Core Electronics:** Built exclusively from existing starter kit hardware (ESP32 Dev Board, Arduino UNO R3 kits, sensors, LEDs) and personal student laptops/smartphones.
 * **Samar Courier Transit Latency:** 7-to-12-day courier transit time across the Matnog–Allen ferry crossing, mandating an absolute **Hardware Freeze Date** of October 20, 2026.
 * **Timeline:** Mid-December 2026 event deadline (8-week engineering sprint).
-* **Team Structure:** 10 fourth-year IT undergraduates divided into 3 functional squads (Squad A: 3, Squad B: 4, Squad C: 3).
+* **Team Structure:** 10 fourth-year IT undergraduates divided into 3 functional squads (Squad A: 4, Squad B: 3, Squad C: 3).
 
 ### 2. Key Assumptions
 * **Edge Laptop Processing Capability:** Student laptop capable of running YOLOv8 nano inference at >= 15 FPS alongside local Mosquitto MQTT and web dashboard servers without thermal throttling during the 20-minute presentation.
@@ -187,7 +189,7 @@ Level 1 (Vision-Driven Adaptive) -> Level 2 (Stop-Bar Ultrasonic Presence Fallba
 * **Edge Compute Thermal & Latency Degradation:** Sustained YOLOv8 nano inference on a student laptop may induce thermal throttling, dropping framerates below 10 FPS.
 * **Venue RF Congestion:** Event venues create 2.4 GHz interference, risking dropped MQTT packets between the laptop and ESP32. *(Mitigation: Camera feed isolated to wired USB tethering; hardwired USB Serial fallback ready for MQTT within 30 seconds).*
 * **Breadboard Jumper Wire Fatigue:** Diorama transportation risks loose jumper connections. *(Mitigation: Hot-glue stabilization on critical terminal rails).*
-* **Battery Voltage Droop & Brownout Reset:** ESP32 Wi-Fi bursts draw peak currents that droop unbuffered 9V batteries. *(Mitigation: Dual-rail Diode-OR circuit utilizing MB102 Breadboard Power Supply Module with onboard 100 µF filter capacitors and 1N4007 diodes to buffer transient current spikes, verified live with multimeter).*
+* **Battery Voltage Droop & Brownout Reset:** ESP32 Wi-Fi bursts draw peak currents that droop unbuffered 9V batteries. *(Mitigation: Dual-rail Diode-OR circuit utilizing MB102 Breadboard Power Supply Module with onboard 100 µF filter capacitors and a 1N4007 diode (D2) to buffer transient current spikes, verified live with multimeter).*
 
 ### 2. Open Questions & Research
 * **Venue Display Cable:** Verification of direct HDMI cable access from laptop to the Smart TV display.

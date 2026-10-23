@@ -1,0 +1,1187 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Catarman Signal Diorama (Copy)</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: full-height split — 3D stage on the left, spec rail on the right; stacks (stage over rail) on phones */
+:root{
+  --bg:#E8ECF0; --panel:#F6F8FA; --fg:#1A222B; --muted:#56636F; --line:#CDD5DD; --chip:#E1E7ED;
+  --accent:#B86E00; --accent-soft:#F6E3C2; --accent-fg:#FFFFFF;
+  --scene:#D9E0E6; --table:#C3CCD4; --dim3d:#6E7C89;
+  --housing:#1C2125; --ok:#1E8A47; --warn:#B87900; --crit:#C23A30; --flood:#2C6FB5;
+  --f-display:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11161B; --panel:#171E25; --fg:#E3E9EF; --muted:#94A2AF; --line:#2A3540; --chip:#202A33;
+    --accent:#F0A93A; --accent-soft:#3A2C14; --accent-fg:#1A1205;
+    --scene:#0E1317; --table:#1B232A; --dim3d:#8796A3;
+    --ok:#4CC27A; --warn:#F0B43A; --crit:#F06A5E; --flood:#6AA9EC; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11161B; --panel:#171E25; --fg:#E3E9EF; --muted:#94A2AF; --line:#2A3540; --chip:#202A33;
+  --accent:#F0A93A; --accent-soft:#3A2C14; --accent-fg:#1A1205;
+  --scene:#0E1317; --table:#1B232A; --dim3d:#8796A3;
+  --ok:#4CC27A; --warn:#F0B43A; --crit:#F06A5E; --flood:#6AA9EC; color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.45}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 390px;height:100%}
+.stage{position:relative;min-width:0;min-height:0;overflow:hidden;background:var(--scene)}
+.stage canvas{display:block;width:100%;height:100%;touch-action:none}
+.labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.tag{position:absolute;left:0;top:0;pointer-events:auto;cursor:pointer;white-space:nowrap;
+  font:600 12px/1.2 var(--f-display);letter-spacing:.02em;color:var(--fg);
+  background:color-mix(in srgb,var(--panel) 88%,transparent);border:1px solid var(--line);border-radius:4px;padding:2px 6px;will-change:transform}
+.tag.sel{border-color:var(--accent);background:var(--accent);color:var(--accent-fg)}
+.tag.area{background:transparent;border:0;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-size:11px;cursor:default;pointer-events:none}
+.tag.dim{background:transparent;border:0;color:var(--muted);font:500 11px var(--f-mono);cursor:default;pointer-events:none}
+.tag.pin{font:500 10px/1.15 var(--f-mono);padding:1px 4px;cursor:default;pointer-events:none}
+.hint{position:absolute;left:calc(12px + env(safe-area-inset-left,0px));bottom:12px;font:500 12px var(--f-display);letter-spacing:.03em;color:var(--muted);
+  background:color-mix(in srgb,var(--panel) 80%,transparent);border:1px solid var(--line);border-radius:4px;padding:4px 8px;max-width:calc(100% - 24px)}
+.loading{position:absolute;inset:0;display:grid;place-items:center;font:600 15px var(--f-display);color:var(--muted)}
+.rail{overflow-y:auto;min-width:0;background:var(--panel);border-left:1px solid var(--line);
+  padding-block:18px 28px;padding-left:20px;padding-right:max(20px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px}
+.eyebrow{margin:0;font:500 11px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+h1{margin:4px 0 6px;font:700 28px/1.05 var(--f-display);letter-spacing:.005em;text-wrap:balance}
+.lede{margin:0;color:var(--muted);font-size:14px}
+section{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:14px}
+h2{margin:0;font:600 12px var(--f-display);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+button{font:600 14px var(--f-display);letter-spacing:.02em;color:var(--fg);background:var(--chip);border:1px solid var(--line);border-radius:6px;padding:7px 10px;cursor:pointer;text-align:center}
+button:hover{border-color:var(--accent)}
+button:focus-visible,input:focus-visible+span,.tag:focus-visible,summary:focus-visible,tr[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+button.ghost{background:transparent;padding:4px 8px;font-size:13px}
+.seg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.seg button{padding:7px 3px;font-size:13px}
+.empty{margin:0;color:var(--muted);font-size:14px}
+.ihead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.ihead h3{margin:0;font:700 20px/1.15 var(--f-display);text-wrap:balance;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip,.src{font:500 11px var(--f-mono);letter-spacing:.04em;padding:2px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.src.spec{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 45%,transparent)}
+.src.sugg{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,transparent)}
+.src.open{color:var(--crit);border-color:color-mix(in srgb,var(--crit) 45%,transparent)}
+.src.mix{color:var(--fg)}
+.kv{display:grid;grid-template-columns:76px minmax(0,1fr);gap:5px 10px;margin:0;font-size:14px}
+.kv dt{color:var(--muted);font:600 12px var(--f-display);letter-spacing:.06em;text-transform:uppercase;padding-top:2px}
+.kv dd{margin:0;min-width:0}
+.bands{display:inline-flex;gap:3px;vertical-align:middle;margin-right:6px}
+.bands i{width:9px;height:14px;border-radius:2px;border:1px solid var(--line);display:block}
+.tbl{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;font:600 11px var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line);padding:4px 6px 4px 0}
+td{border-bottom:1px solid var(--line);padding:5px 6px 5px 0;vertical-align:top}
+td.pin{font:500 13px var(--f-mono);white-space:nowrap;font-variant-numeric:tabular-nums}
+td.note{color:var(--muted);font-size:12.5px}
+.notes{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;gap:4px}
+.simstate{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.pill{font:600 13px var(--f-display);letter-spacing:.04em;padding:3px 10px;border-radius:999px;color:#fff;background:var(--ok)}
+.pill.flood{background:var(--flood)} .pill.fault{background:var(--crit)} .pill.paused{background:var(--muted)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.small{font-size:12.5px;color:var(--muted);margin:0}
+.lamps{display:grid;gap:6px}
+.lamp-row{display:grid;grid-template-columns:44px auto minmax(0,1fr);align-items:center;gap:10px;font:600 14px var(--f-display)}
+.dots{display:inline-flex;gap:5px;background:var(--housing);padding:4px 6px;border-radius:5px}
+.dots i{width:12px;height:12px;border-radius:50%;display:block;opacity:.22}
+.dots i.r{background:#ff3b2b}.dots i.y{background:#ffb300}.dots i.g{background:#22d863}
+.dots i.on{opacity:1;box-shadow:0 0 8px currentColor}
+.dots i.r.on{color:#ff3b2b}.dots i.y.on{color:#ffb300}.dots i.g.on{color:#22d863}
+.lamp-row .txt{font:500 13px var(--f-mono);color:var(--muted)}
+.btns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.toggles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.toggles label{position:relative;cursor:pointer}
+.toggles input{position:absolute;opacity:0;pointer-events:none}
+.toggles span{display:flex;align-items:center;gap:8px;font:600 14px var(--f-display);padding:6px 9px;border:1px solid var(--line);border-radius:6px;background:var(--chip)}
+.toggles span::before{content:"";width:12px;height:12px;border-radius:3px;border:1.5px solid var(--muted);flex:none}
+.toggles input:checked+span::before{background:var(--accent);border-color:var(--accent)}
+.legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 12px;font-size:13px}
+.legend div{display:flex;align-items:center;gap:8px}
+.legend b{width:22px;height:5px;border-radius:3px;flex:none}
+.index{display:flex;flex-direction:column;gap:10px}
+.index h4{margin:0 0 4px;font:600 12px var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.index .list{display:flex;flex-wrap:wrap;gap:5px}
+.index button{font-size:13px;padding:4px 8px;text-align:left}
+details{border:1px solid var(--line);border-radius:6px;background:var(--bg)}
+summary{cursor:pointer;padding:8px 10px;font:600 14px var(--f-display)}
+.build{padding:0 10px 10px}
+.build table{font-size:12.5px}
+.build th.grp{padding-top:12px;color:var(--accent)}
+.build td.n{font:500 11.5px var(--f-mono);color:var(--muted);width:22px}
+.build td.h{font:500 12px var(--f-mono);white-space:nowrap}
+.build tr[tabindex]{cursor:pointer}
+.build tr[tabindex]:hover td{background:var(--chip)}
+.build tr.on td{background:var(--accent-soft)}
+.foot{font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+@media (max-width:820px){
+  html,body{height:auto}
+  .app{grid-template-columns:1fr;grid-template-rows:62vh auto;height:auto}
+  .rail{border-left:0;border-top:1px solid var(--line);overflow:visible;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .hint{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="app">
+  <div class="stage" id="stage">
+    <div class="loading" id="loading">Loading the 3D model…</div>
+    <div class="labels" id="labels"></div>
+    <div class="hint">Drag to orbit · right-drag to pan · scroll to zoom · click a part</div>
+  </div>
+
+  <aside class="rail">
+    <header>
+      <p class="eyebrow">Squad A · INT-01 build guide</p>
+      <h1>Catarman Signal Diorama</h1>
+      <p class="lede">The 60 × 60 cm prototype in 3D, down to every resistor and jumper on the breadboard. Click any part to see what it is, where it plugs in and who builds it.</p>
+    </header>
+
+    <section>
+      <h2>Views</h2>
+      <div class="seg" id="views"></div>
+    </section>
+
+    <section>
+      <h2>Selected part</h2>
+      <div id="inspector"></div>
+    </section>
+
+    <section>
+      <h2>Breadboard build list</h2>
+      <p class="small">Holes are named by row letter and column number, like <span class="mono">j37</span>. Rails are <span class="mono">T+ T−</span> on the top edge (row a side) and <span class="mono">B+ B−</span> on the bottom edge (row j side). Follow the steps in order; click a row to find that part.</p>
+      <details id="buildWrap">
+        <summary id="buildSum">Show all steps</summary>
+        <div class="build tbl" id="build"></div>
+      </details>
+    </section>
+
+    <section>
+      <h2>Signal logic</h2>
+      <div class="simstate">
+        <span class="pill" id="modePill">L3 · Fixed timer</span>
+        <span class="mono small" id="nextChange">—</span>
+      </div>
+      <div class="lamps">
+        <div class="lamp-row"><span>N–S</span><span class="dots" id="nsDots"><i class="r"></i><i class="y"></i><i class="g"></i></span><span class="txt" id="nsTxt">—</span></div>
+        <div class="lamp-row"><span>E–W</span><span class="dots" id="ewDots"><i class="r"></i><i class="y"></i><i class="g"></i></span><span class="txt" id="ewTxt">—</span></div>
+      </div>
+      <div class="btns">
+        <button id="btnRun" type="button">Pause</button>
+        <button id="btnSpeed" type="button">Speed 1×</button>
+        <button id="btnWater" type="button">Pour water</button>
+        <button id="btnFault" type="button">Trigger fault</button>
+      </div>
+      <p class="mono small" id="floodTxt">Water sensor: dry</p>
+      <p class="small">Timer values here are demo settings (10 s green, 3 s yellow, 2 s all-red). The flood rule matches the agreed one: 5 s wet to enter Flashing Amber, 30 s dry to exit. A fault from the conflict monitor also forces Flashing Amber.</p>
+    </section>
+
+    <section>
+      <h2>Layers</h2>
+      <div class="toggles" id="toggles"></div>
+      <div class="legend">
+        <div><b style="background:#E5741B"></b>N–S harness sleeve</div>
+        <div><b style="background:#1593B8"></b>E–W harness sleeve</div>
+        <div><b style="background:#8A5CF0"></b>Sensor harness sleeve</div>
+        <div><b style="background:#D33A3A"></b>5 V and power</div>
+        <div><b style="background:#F7D046"></b>3.3 V</div>
+        <div><b style="background:#222428"></b>Ground</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>All parts</h2>
+      <div class="index" id="index"></div>
+    </section>
+
+    <footer class="foot">
+      <span class="src spec">From handoff</span> comes from the agreed spec.
+      <span class="src sugg">Suggested</span> is a starting value; measure the real build and update it.
+      <span class="src open">Open question</span> needs a team decision before wiring.
+    </footer>
+  </aside>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function(){
+const loadingEl = document.getElementById('loading');
+if (!window.THREE || !THREE.OrbitControls) { loadingEl.textContent = 'The 3D library did not load. Check your connection and reload.'; return; }
+
+const OWN = {
+  lead:'Mark Ace A. Labitag · firmware lead',
+  pwr:'Mark Joseph G. De Guia · power & wiring',
+  sens:'Edelbert M. Gobrin · sensors & mounting',
+  data:'Jim Ivan S. Benzon · data & QA'
+};
+
+/* ---------- renderer / scene ---------- */
+const stage = document.getElementById('stage');
+let renderer;
+try { renderer = new THREE.WebGLRenderer({ antialias:true }); }
+catch(e){ loadingEl.textContent = 'This browser cannot show 3D (WebGL is off).'; return; }
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+stage.insertBefore(renderer.domElement, stage.firstChild);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 1200);
+camera.position.set(64, 56, 74);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.target.set(2, 0, 0);
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.minDistance = 2.5; controls.maxDistance = 300;
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x55606a, 0.75));
+const sun = new THREE.DirectionalLight(0xffffff, 0.75);
+sun.position.set(45, 90, 35); sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left:-80, right:80, top:80, bottom:-80, near:10, far:250 });
+sun.shadow.bias = -0.0005;
+scene.add(sun);
+
+const V3 = (x,y,z) => new THREE.Vector3(x,y,z);
+const M = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color:c, roughness:0.75, metalness:0 }, o || {}));
+const GLASS = (c, op) => M(c, { transparent:true, opacity:op, depthWrite:false, side:THREE.DoubleSide, roughness:0.2 });
+const bx = (w,h,d,m) => new THREE.Mesh(new THREE.BoxGeometry(w,h,d), m);
+const cy = (rt,rb,h,m,s) => new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,s||20), m);
+const at = (o,x,y,z) => { o.position.set(x,y,z); return o; };
+const Y0 = 0.5; // board top surface (cm)
+
+const LAYERS = [
+  ['diorama','Diorama'], ['signals','Signal heads'], ['sensors','Sensors'], ['controller','Controller box'],
+  ['wiring','Wiring'], ['camera','Camera & laptop'], ['dims','Dimensions'], ['labels','Name labels'], ['pins','Pin & hole labels']
+];
+const LAYER_NAME = Object.fromEntries(LAYERS);
+const layer = {};
+LAYERS.forEach(([k]) => { if (k !== 'labels' && k !== 'pins') { layer[k] = new THREE.Group(); scene.add(layer[k]); } });
+
+const parts = {};
+function part(id, lay, obj, info){
+  obj.traverse(m => { if (m.isMesh) m.userData.pid = id; });
+  layer[lay].add(obj);
+  parts[id] = Object.assign({ id, layer:lay, obj }, info);
+  return obj;
+}
+
+/* ---------- labels (projected HTML tags) ---------- */
+const labelsEl = document.getElementById('labels');
+const labels = [];
+function tag(text, pos, lay, opts){
+  opts = opts || {};
+  const el = document.createElement('div');
+  el.className = 'tag' + (opts.cls ? ' ' + opts.cls : '');
+  el.textContent = text;
+  if (opts.pid) {
+    el.dataset.pid = opts.pid; el.tabIndex = 0; el.setAttribute('role','button');
+    el.addEventListener('click', () => select(opts.pid, true));
+    el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(opts.pid, true); } });
+  }
+  labelsEl.appendChild(el);
+  labels.push({ el, pos, lay, kind: opts.kind || 'name' });
+}
+
+/* ---------- tube helpers ---------- */
+function tube(pts, mat, r){
+  const path = new THREE.CurvePath();
+  for (let i = 0; i < pts.length-1; i++) path.add(new THREE.LineCurve3(pts[i], pts[i+1]));
+  const segs = Math.max(8, Math.ceil(path.getLength()*1.6));
+  return new THREE.Mesh(new THREE.TubeGeometry(path, segs, r || 0.15, 7, false), mat);
+}
+const P = (a) => a.map(p => V3(p[0],p[1],p[2]));
+const wire = (pts, color, r) => tube(P(pts), M(color, { roughness:0.55 }), r);
+function arc(a, b, lift, color, r){
+  const c = a.clone().add(b).multiplyScalar(0.5); c.y += lift;
+  return new THREE.Mesh(new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(a, c, b), 28, r || 0.06, 6, false), M(color, { roughness:0.5 }));
+}
+
+/* ---------- table, spacers, board ---------- */
+const tableMat = M(0xc3ccd4, { roughness:0.95 });
+const table = new THREE.Mesh(new THREE.PlaneGeometry(260, 260), tableMat);
+table.rotation.x = -Math.PI/2; table.position.y = -9; table.receiveShadow = true;
+scene.add(table);
+
+const CUP = { x:-17, z:11.5 };
+const boardMat = M(0xF1F1EC, { roughness:0.9 });
+{
+  const s = new THREE.Shape();
+  s.moveTo(-30,-30); s.lineTo(30,-30); s.lineTo(30,30); s.lineTo(-30,30); s.lineTo(-30,-30);
+  const h = new THREE.Path(); h.absarc(CUP.x, -CUP.z, 3.6, 0, Math.PI*2, true); s.holes.push(h);
+  const g = new THREE.ExtrudeGeometry(s, { depth:0.5, bevelEnabled:false, curveSegments:40 });
+  g.rotateX(-Math.PI/2);
+  part('board','diorama', new THREE.Mesh(g, boardMat), {
+    name:'Base board', src:'mix', role:'Holds the whole intersection. It sits on spacers so wires and the flood cup fit underneath.',
+    item:'Foam board', size:'60 × 60 × 0.5 cm', owner:OWN.sens,
+    notes:['Cut one ≈7 cm hole for the flood cup and small holes beside each pole and sensor for wires.','Raising it on spacers is a suggestion; it gives room for the sunk cup and the under-board harness.']
+  });
+}
+{
+  const g = new THREE.Group(); const m = M(0xBFC6CC);
+  [[-27,-27],[27,-27],[-27,27],[27,27]].forEach(([x,z]) => g.add(at(bx(4,9,4,m), x, -4.5, z)));
+  part('spacers','diorama', g, { name:'Corner spacers', src:'sugg', role:'Lift the board for the under-board harness and the sunk flood cup.',
+    item:'Foam blocks, stacked cardboard or upturned cups', size:'≈4 × 4 × 9 cm each', owner:OWN.sens });
+}
+
+/* ---------- roads & markings ---------- */
+const roadMat = M(0x1C1E21, { roughness:0.97 });
+{
+  const g = new THREE.Group();
+  g.add(at(bx(60,0.04,15,roadMat), 0, Y0+0.02, 0));
+  g.add(at(bx(15,0.04,60,roadMat), 0, Y0+0.025, 0));
+  const w = M(0xF4F4F0, { roughness:0.6 });
+  for (const s of [-1,1]) for (let d = 10; d < 29; d += 3.5) {
+    g.add(at(bx(0.3,0.02,2,w), 0, Y0+0.055, s*(d+1)));
+    g.add(at(bx(2,0.02,0.3,w), s*(d+1), Y0+0.055, 0));
+  }
+  g.add(at(bx(7.5,0.02,0.5,w), -3.75, Y0+0.056, -9));
+  g.add(at(bx(7.5,0.02,0.5,w),  3.75, Y0+0.056,  9));
+  g.add(at(bx(0.5,0.02,7.5,w),  9, Y0+0.056, -3.75));
+  g.add(at(bx(0.5,0.02,7.5,w), -9, Y0+0.056,  3.75));
+  part('roads','diorama', g, { name:'Roads and markings', src:'mix',
+    role:'Two crossing two-lane roads. Traffic keeps right, so each approach uses the right half of its road.',
+    item:'Black cartolina; white paint pen or tape for markings', size:'15 cm wide, full 60 cm length', owner:OWN.sens,
+    notes:['Stop lines 9 cm from the centre (suggested). Keep them visible to the overhead camera; Squad B can use them as reference marks.','Centre dashes 2 cm long with 1.5 cm gaps (suggested).']
+  });
+}
+tag('North approach', V3(-3.75, Y0+0.2, -24), 'diorama', { cls:'area', kind:'area' });
+tag('South approach', V3(3.75, Y0+0.2, 24), 'diorama', { cls:'area', kind:'area' });
+tag('East approach', V3(23, Y0+0.2, -3.75), 'diorama', { cls:'area', kind:'area' });
+tag('West approach', V3(-23, Y0+0.2, 3.75), 'diorama', { cls:'area', kind:'area' });
+tag('N ▲', V3(0, Y0+0.2, -34), 'diorama', { cls:'area', kind:'area' });
+
+/* ---------- toy cars ---------- */
+function car(color, x, z, rotY){
+  const g = new THREE.Group(); g.position.set(x, Y0, z); g.rotation.y = rotY;
+  g.add(at(bx(3,1.1,7, M(color,{roughness:0.4,metalness:0.2})), 0, 1.0, 0));
+  g.add(at(bx(2.6,0.95,3.3, M(0x2a3640,{roughness:0.3})), 0, 2.0, -0.3));
+  const wm = M(0x111111);
+  [[-1.5,-2.3],[1.5,-2.3],[-1.5,2.3],[1.5,2.3]].forEach(([wx,wz]) => { const w = cy(0.55,0.55,0.4,wm,14); w.rotation.z = Math.PI/2; g.add(at(w, wx, 0.55, wz)); });
+  return g;
+}
+{
+  const g = new THREE.Group();
+  g.add(car(0xC8442F, -3.75, -13.2, 0));
+  g.add(car(0x2F6FC8, 13.2, -3.75, Math.PI/2));
+  part('cars','diorama', g, { name:'Test vehicles', src:'sugg', role:'Trigger stop-line presence and give the camera something to detect during tests.',
+    item:'1:64 die-cast toy cars', size:'≈7 × 3 cm', owner:OWN.sens });
+}
+
+/* ---------- flood well ---------- */
+const water = { mesh:null, sensorBottom: -3.2 };
+{
+  const g = new THREE.Group(); g.position.set(CUP.x, 0, CUP.z);
+  g.add(at(new THREE.Mesh(new THREE.CylinderGeometry(3.5, 2.6, 8, 36, 1, true), GLASS(0xE6EEF4, 0.45)), 0, Y0-4, 0));
+  const bottom = new THREE.Mesh(new THREE.CircleGeometry(2.6, 36), GLASS(0xE6EEF4, 0.5)); bottom.rotation.x = -Math.PI/2; g.add(at(bottom, 0, Y0-8, 0));
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(3.5, 0.13, 8, 48), M(0xDCE4EA)); rim.rotation.x = Math.PI/2; g.add(at(rim, 0, Y0+0.08, 0));
+  const wg = new THREE.CylinderGeometry(3.35, 2.5, 7.8, 36); wg.translate(0, 3.9, 0);
+  water.mesh = at(new THREE.Mesh(wg, M(0x3F8FD8, { transparent:true, opacity:0.72, roughness:0.1 })), 0, Y0-7.95, 0);
+  water.mesh.scale.y = 0.001; g.add(water.mesh);
+  part('cup','diorama', g, { name:'Flood well', src:'mix', role:'Collects water at the curb. The water sensor inside it triggers Level 4 Flashing Amber.',
+    item:'Clear plastic cup at the West approach curb (sinking it through the board is suggested)', size:'≈7 cm rim, 8 cm deep', owner:OWN.sens,
+    notes:['For the flood test, pour water into the cup or onto the road so it drains in.','Rule: 5 s wet enters Flashing Amber; 30 s dry exits back to the normal cycle.']
+  });
+}
+
+/* ---------- signal heads ---------- */
+const lamp = { ns:{R:[],Y:[],G:[]}, ew:{R:[],Y:[],G:[]} };
+const LAMP_OFF = { R:0x3d1210, Y:0x3d3010, G:0x0f3520 };
+const LAMP_ON  = { R:0xff3b2b, Y:0xffb300, G:0x22d863 };
+function head(id, x, z, rotY, phase, info){
+  const g = new THREE.Group(); g.position.set(x, Y0, z); g.rotation.y = rotY;
+  g.add(at(cy(0.9,1.1,0.7, M(0xE9E4D8,{roughness:0.5})), 0, 0.35, 0));
+  g.add(at(cy(0.22,0.22,12, M(0xC9A46A,{roughness:0.85})), 0, 6, 0));
+  g.add(at(bx(1.7,4.6,1.3, M(0x22272B)), 0, 12.6, 0));
+  const hood = M(0x1A1E21);
+  [['R',1.45],['Y',0],['G',-1.45]].forEach(([c,dy]) => {
+    const mat = M(LAMP_OFF[c], { emissive:LAMP_ON[c], emissiveIntensity:0, roughness:0.3 });
+    const l = cy(0.25,0.25,0.3, mat, 20); l.rotation.x = Math.PI/2; g.add(at(l, 0, 12.6+dy, 0.72));
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.25, 16, 10, 0, Math.PI*2, 0, Math.PI/2), mat); dome.rotation.x = Math.PI/2; g.add(at(dome, 0, 12.6+dy, 0.87));
+    const flange = cy(0.29,0.29,0.06, mat, 20); flange.rotation.x = Math.PI/2; g.add(at(flange, 0, 12.6+dy, 0.6));
+    g.add(at(bx(0.95,0.1,0.55, hood), 0, 12.6+dy+0.45, 0.9));
+    lamp[phase][c].push(mat);
+  });
+  part(id, 'signals', g, info);
+  tag(info.short, V3(x, Y0+16.2, z), 'signals', { pid:id });
+}
+const NS_PINS = [['Green','GPIO 25'],['Yellow','GPIO 26'],['Red','GPIO 27'],['Common','GND']];
+const EW_PINS = [['Green','GPIO 14'],['Yellow','GPIO 12','must be low at boot'],['Red','GPIO 13'],['Common','GND']];
+const headBase = { src:'mix', item:'Three 5 mm LEDs (red, yellow, green) in a black card housing on a barbecue stick', size:'Pole ≈12 cm, housing ≈1.7 × 4.6 cm (suggested)', owner:OWN.pwr };
+head('head-nw', -9.5, -9.5, Math.PI, 'ns', Object.assign({}, headBase, { name:'Signal head NW', short:'Head NW · N–S',
+  role:'Shows the N–S phase to traffic on the North approach.', pins:NS_PINS,
+  notes:['Its three 220 Ω resistors sit in the box at columns 46, 49 and 52.','Set the stick in a snug hole with hot glue so it cannot lean.'] }));
+head('head-se', 9.5, 9.5, 0, 'ns', Object.assign({}, headBase, { name:'Signal head SE', short:'Head SE · N–S',
+  role:'Shows the N–S phase to traffic on the South approach.', pins:NS_PINS,
+  notes:['Shares GPIO 25 / 26 / 27 with the NW head; its resistors are at columns 47, 50 and 53.'] }));
+head('head-ne', 9.5, -9.5, Math.PI/2, 'ew', Object.assign({}, headBase, { name:'Signal head NE', short:'Head NE · E–W',
+  role:'Shows the E–W phase to traffic on the East approach.', pins:EW_PINS,
+  notes:['Its resistors sit at columns 55, 58 and 61.','GPIO 12 must stay low at boot. The LED and resistor to GND keep it low; never add a pull-up on GPIO 12.'] }));
+head('head-sw', -9.5, 9.5, -Math.PI/2, 'ew', Object.assign({}, headBase, { name:'Signal head SW', short:'Head SW · E–W',
+  role:'Shows the E–W phase to traffic on the West approach.', pins:EW_PINS,
+  notes:['Shares GPIO 14 / 12 / 13 with the NE head; its resistors are at columns 56, 59 and 62.'] }));
+
+/* ---------- sensors ---------- */
+const beamMat = GLASS(0x8A5CF0, 0.15);
+const pcbBlue = M(0x1F5FA8, { roughness:0.5 });
+const silver = M(0xC2C8CE, { metalness:0.6, roughness:0.35 });
+const gold = M(0xD4AF37, { metalness:0.7, roughness:0.3 });
+{ // HC-SR04
+  const g = new THREE.Group(); g.position.set(-8.6, Y0, -11.5);
+  g.add(at(bx(1.2,1.4,1.4, M(0xE2E2DE)), -0.75, 0.7, 0));
+  g.add(at(bx(0.16,2.0,4.5, pcbBlue), 0, 2.2, 0));
+  [-1.3, 1.3].forEach(dz => { const t = cy(0.8,0.8,1.2, silver, 24); t.rotation.z = Math.PI/2; g.add(at(t, 0.68, 2.2, dz)); });
+  for (let k = 0; k < 4; k++) g.add(at(bx(0.5,0.06,0.06, gold), -0.3, 1.35, -0.38 + k*0.254));
+  const beam = new THREE.Mesh(new THREE.ConeGeometry(2.4, 8, 24, 1, true), beamMat);
+  beam.rotation.z = Math.PI/2; beam.userData.nopick = true; g.add(at(beam, 5.3, 2.2, 0));
+  part('hcsr04','sensors', g, { name:'HC-SR04 ultrasonic sensor', src:'mix',
+    role:'Detects a car waiting at the North stop line (Level 2 presence with 3 s gap-out).',
+    item:'HC-SR04 from the UNO kit (the only one we have)', size:'4.5 × 2 cm board, ≈2 cm above the road (suggested)', owner:OWN.sens,
+    pins:[['VCC','B+26','5 V bus'],['TRIG','a37','GPIO 5'],['ECHO','j16','1 kΩ / 2 kΩ divider → GPIO 18'],['GND','B−27','']],
+    notes:['Mounted at the west curb just behind the stop line, aimed across the southbound lane.','Firmware read timeout ≈25 ms so a missing echo never blocks the loop.'] });
+  tag('HC-SR04', V3(-8.6, Y0+4.6, -11.5), 'sensors', { pid:'hcsr04' });
+}
+{ // IR module
+  const g = new THREE.Group(); g.position.set(11.5, Y0, -8.6);
+  g.add(at(bx(1.2,1.1,1.2, M(0xE2E2DE)), 0, 0.55, -0.6));
+  g.add(at(bx(1.4,0.12,3.2, pcbBlue), 0, 1.2, -0.3));
+  const led1 = cy(0.25,0.25,0.6, M(0xDCE6F0,{roughness:0.2}), 14); led1.rotation.x = Math.PI/2; g.add(at(led1, -0.35, 1.45, 1.35));
+  const led2 = cy(0.25,0.25,0.6, M(0x151515), 14); led2.rotation.x = Math.PI/2; g.add(at(led2, 0.35, 1.45, 1.35));
+  g.add(at(bx(0.6,0.45,0.6, M(0x2A5BD6)), 0, 1.45, -0.9));
+  for (let k = 0; k < 3; k++) g.add(at(bx(0.06,0.06,0.5, gold), -0.254 + k*0.254, 1.3, -2.0));
+  const beam = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 0.25, 7, 18, 1, true), beamMat);
+  beam.rotation.x = Math.PI/2; beam.userData.nopick = true; g.add(at(beam, 0, 1.45, 5.15));
+  part('ir','sensors', g, { name:'IR obstacle sensor', src:'mix',
+    role:'Detects a car waiting at the East stop line, standing in for a second HC-SR04.',
+    item:'IR obstacle avoidance module from the ESP32 kit', size:'≈3.2 × 1.4 cm', owner:OWN.sens,
+    pins:[['VCC','b24','3.3 V node (suggested, keeps OUT safe)'],['OUT','a35','GPIO 19 · LOW when a car is there'],['GND','T−26','']],
+    notes:['Turn its trimmer so it triggers at about one lane width (≈7 cm).','Strong sunlight can blind it; test under the presentation room lights.'] });
+  tag('IR sensor', V3(11.5, Y0+3.8, -8.6), 'sensors', { pid:'ir' });
+}
+{ // water sensor
+  const g = new THREE.Group(); g.position.set(CUP.x, 0, CUP.z);
+  g.add(at(bx(1.9,6.2,0.12, M(0xC0392B,{roughness:0.5})), 0, -0.1, 0));
+  const trace = M(0xD8C08A, { metalness:0.5, roughness:0.4 });
+  for (let k = 0; k < 6; k++) g.add(at(bx(0.12,4.6,0.02, trace), -0.75 + k*0.3, -0.9, 0.07));
+  g.add(at(bx(1.0,0.5,0.5, M(0x151515)), 0, 3.1, 0));
+  part('water','sensors', g, { name:'Water level sensor', src:'mix',
+    role:'Reads water in the flood well. Wet for 5 s puts the signal into Level 4 Flashing Amber.',
+    item:'Water sensor board from the kit', size:'≈2 × 6 cm', owner:OWN.sens,
+    pins:[['+','c24','3.3 V node'],['S','j33','GPIO 34 (ADC1)'],['−','T−28','']],
+    notes:['GPIO 34 is on ADC1, so readings keep working while Wi-Fi is on.','Rinse and dry it after each flood test; the traces corrode.'] });
+  tag('Flood well', V3(CUP.x, Y0+4.8, CUP.z), 'sensors', { pid:'water' });
+}
+
+/* =====================================================================
+   CONTROLLER BOX — component-level breadboard
+   ===================================================================== */
+const BOX = { x:20, z:-20, w:20, d:10, h:6 };
+const PITCH = 0.254, BBX = 20, BBZ = -18.5, BBT = Y0 + 0.25 + 0.85; // breadboard top surface
+const RZ = { a:-19.897, b:-19.643, c:-19.389, d:-19.135, e:-18.881, f:-18.119, g:-17.865, h:-17.611, i:-17.357, j:-17.103,
+  'T-':-20.55, 'T+':-20.80, 'B-':-16.45, 'B+':-16.20 };
+const colX = c => BBX + (c - 32)*PITCH;
+const H = (c, r) => V3(colX(c), BBT, RZ[r]);
+const hn = (c, r) => (r.length > 1 ? r.replace('-','−') : r) + c;
+const BUILD = [];
+const step = (grp, what, from, to, pid, note) => BUILD.push({ grp, what, from, to, pid, note:note || '' });
+
+{
+  const g = new THREE.Group(); g.position.set(BOX.x, Y0, BOX.z);
+  const wall = GLASS(0xDCE6EE, 0.2);
+  g.add(at(bx(BOX.w,0.25,BOX.d, M(0xDCE4EA,{transparent:true,opacity:0.65})), 0, 0.125, 0));
+  g.add(at(bx(BOX.w,BOX.h,0.25, wall), 0, BOX.h/2, BOX.d/2-0.125));
+  g.add(at(bx(BOX.w,BOX.h,0.25, wall), 0, BOX.h/2, -BOX.d/2+0.125));
+  g.add(at(bx(0.25,BOX.h,BOX.d, wall), BOX.w/2-0.125, BOX.h/2, 0));
+  g.add(at(bx(0.25,BOX.h,BOX.d, wall), -BOX.w/2+0.125, BOX.h/2, 0));
+  const hole = new THREE.Mesh(new THREE.CircleGeometry(1.4, 24), M(0x2A2F33)); hole.rotation.x = -Math.PI/2; g.add(at(hole, 7.1, 0.26, -3.4));
+  part('box','controller', g, { name:'Controller box', src:'sugg',
+    role:'Holds the ESP32, power parts and breadboard in the NE corner, away from the roads and the water.',
+    item:'Clear plastic food container', size:'≈20 × 10 × 6 cm', owner:OWN.pwr,
+    notes:['A clear box lets the panel see the electronics without opening it.','All harness wires leave through one ≈2.5 cm hole in the floor and run under the board.'] });
+  tag('Controller box', V3(BOX.x-7, Y0+7.2, BOX.z), 'controller', { pid:'box' });
+}
+
+/* breadboard with a drawn hole map */
+function breadboardTexture(){
+  const S = 100, W = 1650, Hh = 550, c = document.createElement('canvas'); c.width = W; c.height = Hh;
+  const g = c.getContext('2d');
+  const px = x => (x - (BBX - 8.25))*S, py = z => (z - (BBZ - 2.75))*S;
+  g.fillStyle = '#F3F3EE'; g.fillRect(0,0,W,Hh);
+  g.fillStyle = '#DADCD8'; g.fillRect(px(BBX-8.1), py(BBZ-0.17), 16.2*S, 34);
+  const line = (z, col) => { g.fillStyle = col; g.fillRect(px(BBX-7.95), py(z)-2, 15.9*S, 4); };
+  line(-21.03,'#D33A3A'); line(-20.32,'#2C6FB5'); line(-16.68,'#2C6FB5'); line(-15.97,'#D33A3A');
+  g.fillStyle = '#3B3E42';
+  const sq = (x, z) => g.fillRect(px(x)-5, py(z)-5, 10, 10);
+  for (let col = 1; col <= 63; col++) {
+    'abcdefghij'.split('').forEach(r => sq(colX(col), RZ[r]));
+    if (col % 6 !== 0) ['T-','T+','B-','B+'].forEach(r => sq(colX(col), RZ[r]));
+  }
+  g.fillStyle = '#6A7178'; g.font = '500 15px monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (let col = 1; col <= 63; col++) if (col === 1 || col % 5 === 0) {
+    g.fillText(String(col), px(colX(col)), py(-20.2)); g.fillText(String(col), px(colX(col)), py(-16.8));
+  }
+  'abcdefghij'.split('').forEach(r => { g.fillText(r, px(colX(0)), py(RZ[r])); g.fillText(r, px(colX(64)), py(RZ[r])); });
+  g.font = '600 18px monospace';
+  g.fillStyle = '#D33A3A'; g.fillText('+', px(colX(0)), py(RZ['T+'])); g.fillText('+', px(colX(64)), py(RZ['B+']));
+  g.fillStyle = '#2C6FB5'; g.fillText('−', px(colX(0)), py(RZ['T-'])); g.fillText('−', px(colX(64)), py(RZ['B-']));
+  const t = new THREE.CanvasTexture(c); t.anisotropy = renderer.capabilities.getMaxAnisotropy(); return t;
+}
+{
+  const g = new THREE.Group();
+  g.add(at(bx(16.5,0.85,5.5, M(0xF0F0EB,{roughness:0.6})), BBX, Y0+0.25+0.425, BBZ));
+  const top = new THREE.Mesh(new THREE.PlaneGeometry(16.5, 5.5), new THREE.MeshStandardMaterial({ map:breadboardTexture(), roughness:0.7 }));
+  top.rotation.x = -Math.PI/2; g.add(at(top, BBX, BBT + 0.003, BBZ));
+  part('breadboard','controller', g, { name:'Breadboard', src:'spec', role:'Carries the ESP32, power module, diodes, resistors and every jumper.',
+    item:'830-point breadboard from the kit', size:'16.5 × 5.5 cm · 63 columns, rows a–j, two rail pairs', owner:OWN.pwr,
+    pinsHead:['Rail','Carries'], pins:[['T+ (top +)','MB102 5 V, raw (feeds D2 only)'],['T− / B−','GND'],['B+ (bottom +)','5 V bus after the diodes'],['Column 24, rows a–e','3.3 V node from the ESP32']],
+    notes:['If the red and blue rail lines have a gap in the middle, your rails are split. Bridge each rail across the gap with a short jumper, or VIN and the right half will get no power.','Each ESP32 pin has exactly one free hole (row a or row j), so every connection to a pin uses that hole.'] });
+}
+
+/* ESP32 DevKit V1 (30-pin) — pins in rows b and i, columns 30–44, USB toward the east wall */
+const ESP_N = ['D23','D22','TX0','RX0','D21','D19','D18','D5','TX2','RX2','D4','D2','D15','GND','3V3'];
+const ESP_S = ['EN','VP','VN','D34','D35','D32','D33','D25','D26','D27','D14','D12','D13','GND','VIN'];
+{
+  const g = new THREE.Group();
+  const pcbX0 = colX(30) - 1.25, pcbX1 = colX(44) + 0.4, pcbCx = (pcbX0 + pcbX1)/2, pcbLen = pcbX1 - pcbX0, pcbY = BBT + 0.33;
+  g.add(at(bx(pcbLen, 0.16, 2.5, M(0x15181B,{roughness:0.5})), pcbCx, pcbY, BBZ));
+  const hdr = M(0x0E0F11);
+  g.add(at(bx(14*PITCH + 0.25, 0.25, 0.25, hdr), colX(37), BBT + 0.125, RZ.b));
+  g.add(at(bx(14*PITCH + 0.25, 0.25, 0.25, hdr), colX(37), BBT + 0.125, RZ.i));
+  for (let k = 0; k < 15; k++) {
+    g.add(at(bx(0.07, 0.12, 0.07, gold), colX(30+k), pcbY + 0.12, RZ.b));
+    g.add(at(bx(0.07, 0.12, 0.07, gold), colX(30+k), pcbY + 0.12, RZ.i));
+  }
+  g.add(at(bx(2.55, 0.32, 1.8, silver), pcbX0 + 1.4, pcbY + 0.24, BBZ));
+  g.add(at(bx(0.6, 0.02, 1.8, M(0x1E3D6E)), pcbX0 + 0.15, pcbY + 0.09, BBZ));
+  g.add(at(bx(0.55, 0.28, 0.75, silver), pcbX1 - 0.2, pcbY + 0.22, BBZ));
+  g.add(at(bx(0.35, 0.2, 0.35, M(0x2A2A2A)), pcbX1 - 0.95, pcbY + 0.18, BBZ - 0.75));
+  g.add(at(bx(0.35, 0.2, 0.35, M(0x2A2A2A)), pcbX1 - 0.95, pcbY + 0.18, BBZ + 0.75));
+  g.add(at(bx(0.5, 0.1, 0.5, M(0x111111)), pcbX1 - 1.7, pcbY + 0.13, BBZ));
+  part('esp32','controller', g, { name:'ESP32 DevKit V1 (30-pin)', src:'spec',
+    role:'Runs the signal controller: state machine, sensors, fail-safes and MQTT.',
+    item:'ESP32 dev board from the ESP32 kit', size:'≈5.2 × 2.5 cm · pins in rows b and i, columns 30–44', owner:OWN.lead,
+    pinsHead:['Pin','Free hole'],
+    pins:[['GPIO 25 / 26 / 27 · N–S G Y R','j37 / j38 / j39'],['GPIO 14 / 12 / 13 · E–W G Y R','j40 / j41 / j42','12 low at boot'],
+      ['GPIO 21 SDA / 22 SCL','a34 / a31'],['GPIO 5 TRIG / 18 ECHO','a37 / a36','ECHO via divider'],['GPIO 19 · IR OUT','a35'],
+      ['GPIO 34 · water','j33','ADC1'],['GPIO 35 · power sense','j34','10 kΩ / 10 kΩ on the bus'],['VIN','j44','from B+'],['3V3','a44','to column 24'],['GND','a43 / j43','to T− / B−']],
+    notes:['Seat it with the USB end at column 44 so the cable exits the east wall toward the laptop.','Its onboard USB diode is the USB leg of the Diode-OR. Check it before wiring: USB only → VIN ≈4.6–4.8 V; battery only → USB connector ≈0 V.','Non-blocking millis() loop, watchdog on, boot counter in NVS. The UNO R3 never joins this circuit.'] });
+  tag('ESP32', V3(colX(37), BBT + 1.6, BBZ), 'controller', { pid:'esp32' });
+  const nLab = { 1:'GPIO22 SCL', 4:'GPIO21 SDA', 5:'GPIO19 IR', 6:'GPIO18 ECHO', 7:'GPIO5 TRIG', 13:'GND', 14:'3V3' };
+  const sLab = { 3:'GPIO34 water', 4:'GPIO35 sense', 7:'GPIO25 NS-G', 8:'GPIO26 NS-Y', 9:'GPIO27 NS-R', 10:'GPIO14 EW-G', 11:'GPIO12 EW-Y', 12:'GPIO13 EW-R', 13:'GND', 14:'VIN' };
+  Object.entries(nLab).forEach(([k, t]) => tag(t, V3(colX(30 + +k), BBT + 0.9 + (k % 2)*0.55, RZ.a - 0.15), 'controller', { cls:'pin', kind:'pin' }));
+  Object.entries(sLab).forEach(([k, t]) => tag(t, V3(colX(30 + +k), BBT + 0.9 + (k % 2)*0.55, RZ.j + 0.15), 'controller', { cls:'pin', kind:'pin' }));
+}
+step('ESP32', 'Seat the ESP32: pins in rows b and i, USB end at column 44', 'b30–b44', 'i30–i44', 'esp32');
+
+/* MB102 power module on the west end */
+{
+  const g = new THREE.Group(); const y = BBT + 0.9;
+  g.add(at(bx(3.2, 0.16, 5.3, M(0xB3261E,{roughness:0.5})), colX(1) + 0.75, y, BBZ));
+  g.add(at(bx(1.4, 1.1, 0.9, M(0x121212)), colX(1) - 0.2, y + 0.6, BBZ - 1.7));
+  g.add(at(bx(1.3, 0.6, 1.4, silver), colX(1) - 0.15, y + 0.38, BBZ + 1.0));
+  g.add(at(bx(0.5, 0.5, 0.8, M(0x222222)), colX(1) + 1.6, y + 0.33, BBZ - 1.9));
+  g.add(at(bx(0.9, 0.45, 0.9, M(0x1A1A1A)), colX(1) + 1.4, y + 0.3, BBZ - 0.4));
+  g.add(at(bx(0.9, 0.45, 0.9, M(0x1A1A1A)), colX(1) + 1.4, y + 0.3, BBZ + 0.6));
+  [[-2.15],[2.15]].forEach(([dz]) => {
+    g.add(at(bx(0.25, 0.3, 0.8, M(0x111111)), colX(1) + 2.0, y + 0.23, BBZ + dz));
+    g.add(at(bx(0.27, 0.28, 0.28, M(0xF2C230)), colX(1) + 2.0, y + 0.42, BBZ + dz + (dz < 0 ? 0.25 : 0)));
+  });
+  [RZ['T+'], RZ['T-'], RZ['B-'], RZ['B+']].forEach(z => g.add(at(bx(0.5, 0.9, 0.07, gold), colX(3), BBT + 0.45, z)));
+  part('mb102','controller', g, { name:'MB102 power module', src:'spec', role:'Turns the 9 V battery into 5 V for the backup feed.',
+    item:'MB102 breadboard power supply from the kit', size:'≈3.2 × 5.3 cm', owner:OWN.pwr,
+    pinsHead:['Side','Jumper'], pins:[['Top rail pair (T)','5 V','raw 5 V, feeds D2'],['Bottom rail pair (B)','OFF','B+ is the diode bus instead'],['GND','both − rails','always connected']],
+    notes:['Setting the bottom jumper to OFF matters: if it is on 5 V, the battery would feed the bus directly and bypass D2.'] });
+  tag('MB102', V3(colX(1) + 0.75, BBT + 2.3, BBZ), 'controller', { pid:'mb102' });
+}
+step('Power', 'MB102 into the left end of both rail pairs; top jumper 5 V, bottom jumper OFF', 'T±1–3', 'B±1–3', 'mb102');
+
+/* 9 V battery + lead */
+{
+  const g = new THREE.Group();
+  g.add(at(bx(4.8,1.7,2.6, M(0x2D4E7C,{roughness:0.5})), 15.4, Y0+0.25+0.85, -23.2));
+  g.add(at(bx(0.6,1.7,2.6, M(0xC9A13B,{metalness:0.4,roughness:0.4})), 17.5, Y0+0.25+0.85, -23.2));
+  [-0.55,0.55].forEach(dz => { const s = cy(0.28,0.28,0.4, silver, 12); s.rotation.z = Math.PI/2; g.add(at(s, 18.0, Y0+1.3, -23.2+dz)); });
+  const jx = colX(1) - 0.2, jy = BBT + 1.5, jz = BBZ - 1.7;
+  g.add(wire([[18.2,1.3,-22.65],[18.5,2.9,-22.3],[11.0,3.3,-22.3],[jx-1.0,jy,jz],[jx-0.75,jy,jz]], 0xD33A3A, 0.08));
+  g.add(wire([[18.2,1.3,-23.75],[18.6,3.0,-22.5],[11.2,3.4,-22.5],[jx-1.0,jy+0.05,jz+0.08],[jx-0.75,jy+0.05,jz+0.08]], 0x222428, 0.08));
+  g.add(at(cy(0.3,0.3,0.6, M(0x111111), 14), jx - 0.95, jy, jz).rotateZ(Math.PI/2));
+  part('battery','controller', g, { name:'9 V battery', src:'spec', role:'Backup supply when USB is pulled. It proves the zero-reboot failover.',
+    item:'9 V battery with a snap-to-barrel lead', size:'4.8 × 2.6 × 1.7 cm', owner:OWN.pwr,
+    notes:['A 9 V cell sags fast under Wi-Fi load. Keep spares for the soak test.'] });
+}
+step('Power', '9 V battery lead into the MB102 barrel jack', 'battery', 'MB102 jack', 'battery');
+
+/* axial parts: resistors and diodes */
+const BAND = { black:0x1A1A1A, brown:0x7A4A24, red:0xD02B20, orange:0xF07C1A, yellow:0xF5CE1E, green:0x2E9E44, blue:0x2D5FD0, violet:0x7B3FBF, grey:0x8C8C8C, white:0xF2F2F2, gold:0xC9A13B };
+const CODES = {
+  '220 Ω':  { five:['red','red','black','black','brown'], four:['red','red','brown','gold'] },
+  '1 kΩ':   { five:['brown','black','black','brown','brown'], four:['brown','black','red','gold'] },
+  '2 kΩ':   { five:['red','black','black','brown','brown'], four:['red','black','red','gold'] },
+  '10 kΩ':  { five:['brown','black','black','red','brown'], four:['brown','black','orange','gold'] }
+};
+const leadMat = M(0xB8BEC4, { metalness:0.7, roughness:0.3 });
+function axial(a, b, kind, value){
+  const g = new THREE.Group();
+  const lift = 0.36, L = Math.min(kind === 'diode' ? 0.52 : 0.6, a.distanceTo(b) - 0.16);
+  const mid = a.clone().add(b).multiplyScalar(0.5); mid.y = BBT + lift;
+  const dir = b.clone().sub(a); dir.y = 0; dir.normalize();
+  const s = mid.clone().addScaledVector(dir, -L/2), e = mid.clone().addScaledVector(dir, L/2);
+  g.add(tube([V3(a.x, BBT-0.02, a.z), V3(a.x, mid.y, a.z), s], leadMat, 0.022));
+  g.add(tube([e, V3(b.x, mid.y, b.z), V3(b.x, BBT-0.02, b.z)], leadMat, 0.022));
+  const q = new THREE.Quaternion().setFromUnitVectors(V3(0,1,0), dir);
+  const put = (mesh, t) => { mesh.quaternion.copy(q); mesh.position.copy(s.clone().addScaledVector(dir, t*L)); g.add(mesh); };
+  if (kind === 'diode') {
+    put(cy(0.13, 0.13, L, M(0x161616,{roughness:0.4}), 16), 0.5);
+    put(cy(0.135, 0.135, 0.09, M(0xD9DDE1,{roughness:0.4}), 16), 0.86);
+  } else {
+    const body = M(0x4A86C8, { roughness:0.45 });
+    put(cy(0.1, 0.1, L*0.7, body, 16), 0.5);
+    put(cy(0.12, 0.12, L*0.2, body, 16), 0.12);
+    put(cy(0.12, 0.12, L*0.2, body, 16), 0.88);
+    CODES[value].five.forEach((col, k) => put(cy(k < 4 ? 0.104 : 0.124, k < 4 ? 0.104 : 0.124, 0.04, M(BAND[col],{roughness:0.5}), 16), [0.12, 0.3, 0.42, 0.54, 0.86][k] + (k === 0 ? 0 : 0)));
+  }
+  return g;
+}
+const bandHtml = names => '<span class="bands">' + names.map(n => '<i style="background:#' + BAND[n].toString(16).padStart(6,'0') + '"></i>').join('') + '</span>' + names.join(' · ');
+function resistor(id, from, to, value, info){
+  const g = axial(H(...from), H(...to), 'res', value);
+  part(id, 'controller', g, Object.assign({ cat:'Resistors', src:'spec', item:value + ' metal-film resistor from the kit', owner:OWN.pwr,
+    value, size:'Leads ' + hn(...from) + ' → ' + hn(...to),
+    pinsHead:['Lead','Hole'], pins:[['From', hn(...from), info.fromNote || ''], ['To', hn(...to), info.toNote || '']] }, info));
+}
+function diode(id, anode, cathode, info){
+  const g = axial(H(...anode), H(...cathode), 'diode');
+  part(id, 'controller', g, Object.assign({ cat:'Power parts', src:'spec', item:'1N4007 rectifier diode', owner:OWN.pwr,
+    pinsHead:['Lead','Hole'], pins:[['Anode', hn(...anode), info.aNote || ''], ['Cathode (silver band)', hn(...cathode), info.kNote || '']] }, info));
+}
+const housingMat = M(0x111214, { roughness:0.5 });
+const WC = { red:0xD33A3A, blk:0x222428, v33:0xF7D046, ns:0xE5741B, ew:0x1593B8, sens:0x8A5CF0, white:0xE6E6E6, blue:0x3B7DD8, green:0x2BB24C, yel:0xF2C230 };
+let jn = 0;
+function jumper(from, to, color, grp, what, opts){
+  opts = opts || {};
+  const a = H(...from), b = H(...to), g = new THREE.Group(), id = 'j' + (++jn);
+  if (opts.link) {
+    g.add(tube([V3(a.x,BBT-0.02,a.z), V3(a.x,BBT+0.12,a.z), V3(b.x,BBT+0.12,b.z), V3(b.x,BBT-0.02,b.z)], M(color,{roughness:0.5}), 0.035));
+  } else {
+    [a, b].forEach(p => g.add(at(bx(0.21, 0.5, 0.21, housingMat), p.x, BBT + 0.25, p.z)));
+    const a2 = V3(a.x, BBT + 0.5, a.z), b2 = V3(b.x, BBT + 0.5, b.z);
+    g.add(arc(a2, b2, 0.6 + a2.distanceTo(b2)*0.22 + (opts.lift || 0), color, 0.055));
+  }
+  part(id, 'controller', g, { cat:'Jumper wires', name:'Jumper ' + hn(...from) + ' → ' + hn(...to), src:opts.src || 'sugg', role:what,
+    item: opts.link ? 'Short bare-wire link (or the shortest kit jumper)' : 'Male–male jumper wire from the kit', owner:OWN.pwr,
+    pinsHead:['End','Hole'], pins:[['From', hn(...from)], ['To', hn(...to)]] });
+  step(grp, (opts.link ? 'Link: ' : 'Jumper: ') + what, hn(...from), hn(...to), id);
+}
+
+/* power path: Diode-OR, bus, optional cap */
+diode('d2', [15,'T+'], [15,'a'], { name:'D2 · 1N4007 (battery path)', role:'Lets MB102 5 V onto the bus, and blocks the bus from back-feeding the MB102.',
+  aNote:'MB102 5 V (top + rail)', kNote:'bus node, column 15',
+  notes:['Silver band toward a15.','The USB leg of the Diode-OR is the diode already on the ESP32 board (USB → onboard diode → VIN), so there is no external D1.','If the bus reads under 4.4 V on battery with Wi-Fi on, swap D2 for a 1N5819 Schottky (≈₱20), then re-check the GPIO 35 threshold.'] });
+step('Power', 'D2 1N4007, silver band toward a15', 'T+15', 'a15', 'd2');
+jumper([15,'e'], [15,'B+'], WC.red, 'Power', '5 V bus node onto the bottom + rail (B+ becomes the bus)', { src:'spec' });
+{
+  const g = new THREE.Group(); const zc = (RZ['B+'] + RZ['B-'])/2, x = colX(22);
+  g.add(at(cy(0.4, 0.4, 1.05, M(0x1E2A5A,{roughness:0.4}), 24), x, BBT + 0.72, zc));
+  g.add(at(bx(0.12, 0.95, 0.3, M(0xC9CED4)), x, BBT + 0.72, zc - 0.33));
+  g.add(at(cy(0.36, 0.36, 0.02, silver, 24), x, BBT + 1.26, zc));
+  [RZ['B+'], RZ['B-']].forEach(z => g.add(tube([V3(x, BBT-0.02, z), V3(x, BBT + 0.2, zc + (z - zc)*0.4)], leadMat, 0.022)));
+  part('cap','controller', g, { name:'C1 · 1000 µF capacitor (optional)', cat:'Power parts', src:'spec',
+    role:'Rides through the dip when USB is pulled and the battery takes over.', item:'1000 µF electrolytic, ≥10 V (buy only if the power test needs it)', owner:OWN.pwr,
+    pinsHead:['Lead','Hole'], pins:[['+ (long lead)','B+22','5 V bus'],['− (stripe side)','B−22','GND']],
+    notes:['Polarity matters: the stripe marks the − lead.'] });
+}
+step('Power', 'C1 1000 µF (optional), stripe to B−', 'B+22', 'B−22', 'cap', 'Optional');
+
+/* ESP32 power and ground */
+jumper([44,'j'], [44,'B+'], WC.red, 'ESP32', 'ESP32 VIN from the 5 V bus', { src:'spec' });
+jumper([43,'j'], [43,'B-'], WC.blk, 'ESP32', 'ESP32 GND to bottom − rail', { src:'spec' });
+jumper([43,'a'], [43,'T-'], WC.blk, 'ESP32', 'ESP32 GND to top − rail', { src:'spec' });
+jumper([44,'a'], [24,'a'], WC.v33, 'ESP32', 'ESP32 3V3 to the 3.3 V node, column 24', { src:'spec', lift:0.5 });
+
+/* USB sense and ECHO dividers */
+resistor('r-sense-hi', [15,'d'], [19,'d'], '10 kΩ', { name:'R · 10 kΩ power sense (top)', role:'Upper half of the power-source divider: halves the 5 V bus for GPIO 35.', fromNote:'5 V bus node', toNote:'sense node, column 19',
+  notes:['On USB the bus is ≈4.7 V (GPIO 35 ≈2.35 V); on battery it is ≈4.2 V (≈2.1 V). Calibrate the threshold on the real board with hysteresis.'] });
+step('Sense & echo', 'R 10 kΩ, power sense top', 'd15', 'd19', 'r-sense-hi');
+resistor('r-sense-lo', [19,'b'], [19,'T-'], '10 kΩ', { name:'R · 10 kΩ power sense (bottom)', role:'Lower half of the power-source divider.', fromNote:'sense node', toNote:'GND' });
+step('Sense & echo', 'R 10 kΩ, power sense bottom', 'b19', 'T−19', 'r-sense-lo');
+jumper([19,'e'], [34,'j'], WC.white, 'Sense & echo', 'Sense node to GPIO 35', { src:'spec', lift:0.7 });
+resistor('r-echo-1k', [16,'g'], [20,'g'], '1 kΩ', { name:'R · 1 kΩ ECHO divider (top)', role:'Upper half of the ECHO divider that turns the HC-SR04 5 V echo into ≈3.3 V.', fromNote:'ECHO wire, column 16', toNote:'divider node, column 20' });
+step('Sense & echo', 'R 1 kΩ, ECHO divider top', 'g16', 'g20', 'r-echo-1k');
+resistor('r-echo-2k', [20,'h'], [20,'B-'], '2 kΩ', { name:'R · 2 kΩ ECHO divider (bottom)', role:'Lower half of the ECHO divider.', fromNote:'divider node', toNote:'GND' });
+step('Sense & echo', 'R 2 kΩ, ECHO divider bottom', 'h20', 'B−20', 'r-echo-2k');
+jumper([20,'f'], [36,'a'], 0xB59CFF, 'Sense & echo', 'ECHO divider node to GPIO 18', { src:'spec', lift:0.9 });
+
+/* lamp outputs: GPIO → node → link → two 220 Ω across the centre gap → harness holes in row a */
+const LAMPS = [
+  { gpio:25, pin:37, B:46, phase:'ns', col:'green',  h1:'NW', h2:'SE' },
+  { gpio:26, pin:38, B:49, phase:'ns', col:'yellow', h1:'NW', h2:'SE' },
+  { gpio:27, pin:39, B:52, phase:'ns', col:'red',    h1:'NW', h2:'SE' },
+  { gpio:14, pin:40, B:55, phase:'ew', col:'green',  h1:'NE', h2:'SW' },
+  { gpio:12, pin:41, B:58, phase:'ew', col:'yellow', h1:'NE', h2:'SW' },
+  { gpio:13, pin:42, B:61, phase:'ew', col:'red',    h1:'NE', h2:'SW' }
+];
+LAMPS.forEach(L => {
+  const ph = L.phase === 'ns' ? 'N–S' : 'E–W', c = L.phase === 'ns' ? WC.ns : WC.ew;
+  jumper([L.pin,'j'], [L.B,'j'], c, 'Lamp outputs', 'GPIO ' + L.gpio + ' (' + ph + ' ' + L.col + ') to its node, column ' + L.B, { src:'spec' });
+  jumper([L.B,'g'], [L.B+1,'g'], c, 'Lamp outputs', 'Join columns ' + L.B + ' and ' + (L.B+1) + ' so both resistors share GPIO ' + L.gpio, { link:true });
+  [[L.B, L.h1], [L.B+1, L.h2]].forEach(([col, hd]) => {
+    const id = 'r-' + L.gpio + '-' + hd.toLowerCase();
+    resistor(id, [col,'f'], [col,'e'], '220 Ω', { name:'R · 220 Ω · ' + ph + ' ' + L.col + ' → head ' + hd,
+      role:'Limits current for the ' + L.col + ' LED in head ' + hd + ' (GPIO ' + L.gpio + ').', src:'sugg',
+      fromNote:'GPIO ' + L.gpio + ' node', toNote:'harness to head ' + hd + ' leaves from a' + col,
+      notes: L.gpio === 12 ? ['This path also holds GPIO 12 low at boot, which the ESP32 needs to start.'] : undefined });
+    step('Lamp outputs', 'R 220 Ω across the centre gap (' + ph + ' ' + L.col + ' → head ' + hd + ')', 'f' + col, 'e' + col, id);
+  });
+});
+tag('5 V bus node', V3(colX(15), BBT + 1.1, RZ.c), 'controller', { cls:'pin', kind:'pin' });
+tag('Sense node', V3(colX(19), BBT + 1.6, RZ.c), 'controller', { cls:'pin', kind:'pin' });
+tag('3.3 V node', V3(colX(25), BBT + 1.6, RZ.d), 'controller', { cls:'pin', kind:'pin' });
+tag('ECHO divider', V3(colX(18), BBT + 1.0, RZ.h), 'controller', { cls:'pin', kind:'pin' });
+tag('T+ · MB102 5 V', V3(colX(20), BBT + 0.6, RZ['T+'] - 0.4), 'controller', { cls:'pin', kind:'pin' });
+tag('B+ · 5 V bus', V3(colX(27), BBT + 0.6, RZ['B+'] + 0.4), 'controller', { cls:'pin', kind:'pin' });
+tag('220 Ω × 12', V3(colX(54), BBT + 1.2, (RZ.e + RZ.f)/2), 'controller', { cls:'pin', kind:'pin' });
+
+/* OLED on the front wall */
+const oled = { canvas:document.createElement('canvas'), tex:null, last:'' };
+oled.canvas.width = 128; oled.canvas.height = 64;
+oled.tex = new THREE.CanvasTexture(oled.canvas); oled.tex.magFilter = THREE.NearestFilter;
+{
+  const g = new THREE.Group(); const wz = BOX.z + BOX.d/2;
+  g.add(at(bx(2.7,2.7,0.15, M(0x1B3A6B)), 24, Y0+3.4, wz + 0.08));
+  const scr = new THREE.Mesh(new THREE.PlaneGeometry(2.3,1.25), new THREE.MeshBasicMaterial({ map:oled.tex }));
+  g.add(at(scr, 24, Y0+3.55, wz + 0.17));
+  const back = V3(24, Y0+4.4, wz - 0.4);
+  [[[24,'d'],WC.v33],[[29,'T-'],WC.blk],[[34,'a'],WC.blue],[[31,'a'],WC.green]].forEach(([h, col], k) => {
+    const p = H(...h); g.add(at(bx(0.21,0.5,0.21, housingMat), p.x, BBT + 0.25, p.z));
+    g.add(arc(V3(p.x, BBT + 0.5, p.z), back.clone().add(V3(-0.4 + k*0.27, 0, 0)), 1.3, col, 0.05));
+  });
+  part('oled','controller', g, { name:'0.96″ OLED display', src:'spec',
+    role:'Shows mode, phase and power state on the front of the box. In this model it mirrors the simulation.',
+    item:'I²C OLED from the kit', size:'2.7 × 2.7 cm', owner:OWN.lead,
+    pinsHead:['Pin','Hole'], pins:[['VCC','d24','3.3 V node'],['GND','T−29',''],['SDA','a34','GPIO 21'],['SCL','a31','GPIO 22']] });
+  tag('OLED', V3(24, Y0+5.6, wz), 'controller', { pid:'oled' });
+}
+step('Sensors & OLED', 'OLED: VCC, GND, SDA, SCL', 'OLED', 'd24 · T−29 · a34 · a31', 'oled');
+
+/* ---------- harness: fan-in from holes, sleeved bundle under the board ---------- */
+const COND = { G:WC.green, Y:WC.yel, R:WC.red, K:WC.blk, V5:WC.red, V3:WC.v33, S1:WC.sens, S2:WC.white, S3:WC.blue };
+const HARNESS = [
+  { id:'w-nw', to:'head NW', sleeve:WC.ns, rise:[-9.15,-9.15], tail:(r)=>[[r[0],10.2,r[1]]],
+    ends:[[46,'a','Green','G'],[49,'a','Yellow','Y'],[52,'a','Red','R'],[46,'T-','GND','K']] },
+  { id:'w-se', to:'head SE', sleeve:WC.ns, rise:[9.15,9.15], tail:(r)=>[[r[0],10.2,r[1]]],
+    ends:[[47,'a','Green','G'],[50,'a','Yellow','Y'],[53,'a','Red','R'],[50,'T-','GND','K']] },
+  { id:'w-ne', to:'head NE', sleeve:WC.ew, rise:[9.85,-9.15], tail:(r)=>[[r[0],10.2,r[1]]],
+    ends:[[55,'a','Green','G'],[58,'a','Yellow','Y'],[61,'a','Red','R'],[56,'T-','GND','K']] },
+  { id:'w-sw', to:'head SW', sleeve:WC.ew, rise:[-9.85,9.15], tail:(r)=>[[r[0],10.2,r[1]]],
+    ends:[[56,'a','Green','G'],[59,'a','Yellow','Y'],[62,'a','Red','R'],[62,'T-','GND','K']] },
+  { id:'w-hc', to:'HC-SR04', sleeve:WC.sens, rise:[-10.4,-11.5], tail:()=>[[-10.4,2.7,-11.5],[-8.75,2.7,-11.5]],
+    ends:[[26,'B+','VCC (5 V bus)','V5'],[37,'a','TRIG · GPIO 5','S2'],[16,'j','ECHO → divider','S1'],[27,'B-','GND','K']] },
+  { id:'w-ir', to:'IR sensor', sleeve:WC.sens, rise:[11.5,-10.0], tail:()=>[[11.5,1.7,-10.0],[11.5,1.35,-9.1]],
+    ends:[[24,'b','VCC (3.3 V)','V3'],[35,'a','OUT · GPIO 19','S1'],[26,'T-','GND','K']] },
+  { id:'w-water', to:'water sensor', sleeve:WC.sens, rise:[-21.5,11.5], tail:()=>[[-21.5,3.4,11.5],[-17.4,3.4,11.5]],
+    ends:[[24,'c','+ (3.3 V)','V3'],[33,'j','S · GPIO 34','S3'],[28,'T-','−','K']] }
+];
+const holeX = BOX.x + 7.1, holeZ = BOX.z - 3.4;
+HARNESS.forEach((h, i) => {
+  const g = new THREE.Group();
+  const yu = -0.45 - i*0.3, gx = holeX - 0.9 + i*0.3, zi = -23.4 + i*0.45, gp = V3(gx, BBT + 0.9, holeZ + 0.6);
+  h.ends.forEach(([c, r, , k], n) => {
+    const p = H(c, r); g.add(at(bx(0.21, 0.5, 0.21, housingMat), p.x, BBT + 0.25, p.z));
+    g.add(arc(V3(p.x, BBT + 0.5, p.z), gp.clone().add(V3(0, 0, n*0.05)), 1.0 + Math.min(2.4, p.distanceTo(gp)*0.25), COND[k], 0.05));
+  });
+  const pts = [[gx, gp.y, gp.z], [gx, 0.95, holeZ], [gx, yu, holeZ], [gx, yu, zi],
+    [h.rise[0], yu, zi], [h.rise[0], yu, h.rise[1]], [h.rise[0], Y0+0.12, h.rise[1]]].concat(h.tail(h.rise));
+  g.add(wire(pts, h.sleeve, 0.16));
+  part(h.id, 'wiring', g, { name:'Harness → ' + h.to, src:'sugg', role:'Carries every conductor for the ' + h.to + ' from the breadboard, through the box floor and under the board.',
+    item:'Kit jumper wires, taped into one bundle with a colour sleeve', owner:OWN.pwr,
+    pinsHead:['Conductor','Hole'], pins:h.ends.map(e => [e[2], hn(e[0], e[1])]),
+    notes:['Route: from the breadboard to the floor hole, under the board, then up through a small hole beside the part.','Label both ends with tape so faults are quick to trace.'] });
+  step('Harness out', 'Harness to ' + h.to, h.ends.map(e => hn(e[0], e[1])).join(' · '), h.to, h.id);
+});
+
+/* ---------- USB, camera rig, laptop ---------- */
+{
+  const ux = colX(44) + 0.75;
+  const m = wire([[ux,BBT+0.55,BBZ],[BOX.x+BOX.w/2-0.1,BBT+0.55,BBZ],[31.5,1.2,BBZ],[33,-8.75,BBZ],[33,-8.75,-12],[36.2,-8.3,-12]], WC.blk, 0.2);
+  part('usb','wiring', m, { name:'USB cable (laptop → ESP32)', src:'spec',
+    role:'Main 5 V supply plus the serial and flashing link from the edge laptop.', item:'Micro-USB data cable', owner:OWN.lead,
+    notes:['Pull it 20 times with zero reboots to pass the Phase 2 gate; the battery takes over through the Diode-OR.'] });
+}
+{
+  const g = new THREE.Group(); const metal = M(0x6E767E, { metalness:0.55, roughness:0.4 });
+  g.add(at(bx(5,3,7, M(0x3B4248)), -34, -7.5, 34));
+  g.add(at(cy(0.6,0.6,67, metal, 16), -34, 24.5, 34));
+  const a = V3(-34,58,34), b = V3(0,58,0), len = a.distanceTo(b);
+  const armM = cy(0.45,0.45,len, metal, 14);
+  armM.position.copy(a.clone().add(b).multiplyScalar(0.5));
+  armM.quaternion.setFromUnitVectors(V3(0,1,0), b.clone().sub(a).normalize());
+  g.add(armM);
+  g.add(at(bx(2.4,2.2,2.4, M(0x2C3136)), 0, 57.4, 0));
+  part('stand','camera', g, { name:'Clamp stand', src:'spec', role:'Holds the phone level above the centre of the intersection.',
+    item:'Clamp stand with a horizontal arm, clamped to the table', owner:'Squad B (vision)',
+    notes:['Clamp it outside the board so bumps to the stand do not shake the diorama.'] });
+}
+{
+  const g = new THREE.Group();
+  g.add(at(bx(7.5,0.8,15.5, M(0x1E2328,{roughness:0.35})), 0, 56, 0));
+  g.add(at(cy(0.45,0.45,0.2, M(0x0A0A0A), 16), 1.8, 55.5, -5.8));
+  part('phone','camera', g, { name:'Overhead phone camera', src:'mix',
+    role:'Sends video to YOLOv8 on the laptop for Level 1 vision-adaptive timing.', item:'Phone on the clamp stand, USB-tethered to the laptop',
+    size:'≈55 cm above the board (suggested)', owner:'Squad B (vision)',
+    notes:['Frame all four stop lines. The dashed lines in the model show a ≈60° view.','Lock focus and exposure so the frame does not pulse.'] });
+  tag('Phone camera', V3(0, 59.5, 0), 'camera', { pid:'phone' });
+  const lm = new THREE.LineDashedMaterial({ color:0x8A5CF0, dashSize:1.6, gapSize:1.2, transparent:true, opacity:0.75 });
+  const lens = V3(1.8, 55.4, -5.8), corners = [V3(-30,Y0,-30),V3(30,Y0,-30),V3(30,Y0,30),V3(-30,Y0,30)];
+  const fov = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(corners.flatMap(c => [lens, c])), lm);
+  fov.computeLineDistances(); layer.camera.add(fov);
+}
+{
+  const m = wire([[0,56,7.9],[-1.2,57.2,8.6],[-8.5,57.2,8.5],[-33.3,57.2,33.3],[-33.3,-8.7,33.3],[-33.3,-8.75,40],[33,-8.75,40],[33,-8.75,-4],[36.2,-8.3,-4]], WC.white, 0.2);
+  part('phoneusb','wiring', m, { name:'Phone USB cable', src:'spec', role:'Tethers the phone to the laptop for the video feed.', item:'Long USB cable (≈2 m)', owner:'Squad B (vision)',
+    notes:['Tape it along the arm and stand so it never drapes into the camera view.'] });
+}
+{
+  const cv = document.createElement('canvas'); cv.width = 512; cv.height = 320;
+  const c = cv.getContext('2d');
+  c.fillStyle = '#0f151b'; c.fillRect(0,0,512,320);
+  c.fillStyle = '#f0a93a'; c.font = '600 30px sans-serif'; c.fillText('Edge laptop', 28, 54);
+  c.font = '22px monospace';
+  [['#9fd1ff','MQTT broker'],['#9fd1ff','MySQL Server'],['#c7a4ff','Node ingest  · A'],['#8fe3a8','YOLOv8       · B'],['#ffd28a','Next.js dash · C']]
+    .forEach(([col,t],i) => { c.fillStyle = col; c.fillText(t, 28, 104 + i*42); });
+  const tex = new THREE.CanvasTexture(cv);
+  const g = new THREE.Group();
+  g.add(at(bx(32,1.6,22, M(0x8A939C,{metalness:0.3,roughness:0.45})), 52, -8.2, -10));
+  g.add(at(bx(28,0.1,10, M(0x2C3136)), 52, -7.35, -13));
+  const hinge = new THREE.Group(); hinge.position.set(52, -7.4, -21); hinge.rotation.x = -0.25;
+  hinge.add(at(bx(32,21,0.6, M(0x7C858E,{metalness:0.3,roughness:0.45})), 0, 10.5, 0));
+  hinge.add(at(new THREE.Mesh(new THREE.PlaneGeometry(29.5,18.5), new THREE.MeshBasicMaterial({ map:tex })), 0, 10.6, 0.32));
+  g.add(hinge);
+  part('laptop','camera', g, { name:'Edge laptop', src:'spec', role:'Runs the whole backend beside the diorama.', item:'Team laptop on the same table', owner:'Squads A, B and C',
+    pinsHead:['Service','Owner'], pins:[['MQTT broker','host still to confirm'],['MySQL Server','schema in Workbench'],['Node MQTT → MySQL ingest','Jim Ivan S. Benzon (Squad A)'],['YOLOv8 vision','Squad B'],['Next.js dashboard + Express API','Squad C']],
+    notes:['Confirm the broker host with the Squad B and C leaders before Phase 3.'] });
+  tag('Edge laptop', V3(52, 14.5, -21), 'camera', { pid:'laptop' });
+}
+
+/* ---------- dimensions ---------- */
+const dimMat = new THREE.LineBasicMaterial({ color:0x6E7C89 });
+function dim(a, b, text, lp, tick){
+  tick = tick || V3(0,0.9,0);
+  const pts = [a, b, a.clone().sub(tick), a.clone().add(tick), b.clone().sub(tick), b.clone().add(tick)];
+  layer.dims.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), dimMat));
+  tag(text, lp, 'dims', { cls:'dim', kind:'dim' });
+}
+dim(V3(-30,Y0,33), V3(30,Y0,33), '60 cm board', V3(0,Y0+0.4,34.5), V3(0,0,0.9));
+dim(V3(33,Y0,-30), V3(33,Y0,30), '60 cm', V3(35.5,Y0+0.4,6), V3(0.9,0,0));
+dim(V3(-7.5,Y0+0.1,26), V3(7.5,Y0+0.1,26), '15 cm road', V3(0,Y0+0.6,27.6), V3(0,0,0.9));
+dim(V3(-3.75,Y0+0.1,0), V3(-3.75,Y0+0.1,-9), '9 cm', V3(-5.6,Y0+0.5,-4.5), V3(0.9,0,0));
+dim(V3(5,Y0,0), V3(5,55.4,0), '≈55 cm camera height', V3(5.5,30,0), V3(0.9,0,0));
+dim(V3(12,Y0,12), V3(12,Y0+14.9,12), '≈15 cm to top of head', V3(12.5,Y0+8,12), V3(0.9,0,0));
+dim(V3(30.5,-9,27), V3(30.5,0,27), '≥9 cm', V3(31,-4.5,27), V3(0.9,0,0));
+dim(V3(BBX-8.25,BBT,BBZ+3.3), V3(BBX+8.25,BBT,BBZ+3.3), '16.5 cm breadboard', V3(BBX,BBT+0.3,BBZ+3.6), V3(0,0,0.4));
+
+/* ---------- shadows ---------- */
+scene.traverse(o => { if (o.isMesh && !(o.material && o.material.transparent)) { o.castShadow = true; o.receiveShadow = true; } });
+table.castShadow = false;
+
+/* ---------- theme ---------- */
+function applyTheme(){
+  const cs = getComputedStyle(document.documentElement);
+  const sc = cs.getPropertyValue('--scene').trim() || '#D9E0E6';
+  scene.background = new THREE.Color(sc);
+  scene.fog = new THREE.Fog(sc, 260, 560);
+  tableMat.color.set(cs.getPropertyValue('--table').trim() || '#C3CCD4');
+  dimMat.color.set(cs.getPropertyValue('--dim3d').trim() || '#6E7C89');
+}
+applyTheme();
+try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme); } catch(e){}
+new MutationObserver(applyTheme).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+
+/* ---------- selection & picking ---------- */
+const pickables = [];
+scene.traverse(o => { if (o.isMesh && o.userData.pid && !o.userData.nopick) pickables.push(o); });
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+let selected = null, helper = null;
+const visibleChain = o => { while (o) { if (!o.visible) return false; o = o.parent; } return true; };
+function hit(e){
+  const r = renderer.domElement.getBoundingClientRect();
+  ndc.set(((e.clientX - r.left)/r.width)*2 - 1, -((e.clientY - r.top)/r.height)*2 + 1);
+  ray.setFromCamera(ndc, camera);
+  const h = ray.intersectObjects(pickables, false).find(x => visibleChain(x.object));
+  return h ? h.object.userData.pid : null;
+}
+let down = null;
+renderer.domElement.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
+renderer.domElement.addEventListener('pointerup', e => {
+  if (down && Math.hypot(e.clientX-down[0], e.clientY-down[1]) < 5) select(hit(e), false);
+  down = null;
+});
+let hoverPending = false;
+renderer.domElement.addEventListener('pointermove', e => {
+  if (e.buttons || hoverPending) return; hoverPending = true;
+  requestAnimationFrame(() => { hoverPending = false; renderer.domElement.style.cursor = hit(e) ? 'pointer' : 'grab'; });
+});
+
+function select(id, fly){
+  selected = id && parts[id] ? id : null;
+  if (helper) { scene.remove(helper); helper.geometry.dispose(); helper = null; }
+  if (selected) {
+    const p = parts[selected];
+    if (!layer[p.layer].visible) setLayer(p.layer, true);
+    helper = new THREE.BoxHelper(p.obj, 0xF0A93A); scene.add(helper);
+    if (fly) zoomTo(selected);
+  }
+  labels.forEach(l => l.el.classList.toggle('sel', l.el.dataset.pid === selected));
+  document.querySelectorAll('#index button').forEach(b => b.classList.toggle('on', b.dataset.pid === selected));
+  document.querySelectorAll('#build tr[data-pid]').forEach(t => t.classList.toggle('on', t.dataset.pid === selected));
+  renderInspector();
+}
+
+/* ---------- camera moves ---------- */
+let tw = null;
+const reduceMotion = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch(e){ return false; } };
+function flyTo(pos, tgt, fov){
+  tw = { t:0, d: reduceMotion() ? 0.001 : 0.9, p0:camera.position.clone(), t0:controls.target.clone(),
+    p1:pos.clone(), t1:tgt.clone(), f0:camera.fov, f1:fov || 40 };
+}
+controls.addEventListener('start', () => { tw = null; });
+function zoomTo(id){
+  const b = new THREE.Box3().setFromObject(parts[id].obj);
+  const c = b.getCenter(new THREE.Vector3()), s = b.getSize(new THREE.Vector3()).length();
+  const dir = camera.position.clone().sub(controls.target).normalize();
+  if (dir.y < 0.35) { dir.y = 0.7; dir.normalize(); }
+  flyTo(c.clone().add(dir.multiplyScalar(Math.min(130, Math.max(4.5, s*1.8)))), c, 40);
+}
+let camHiddenForView = false;
+const VIEWS = [
+  ['overview','Overview', V3(64,56,74), V3(2,0,0), 40],
+  ['top','Plan', V3(0,122,0.01), V3(0,0,0), 40],
+  ['driver','Driver N', V3(-3.75,4.5,-44), V3(-3.75,4,0), 40],
+  ['headnw','Head NW', V3(-14,14.5,-24), V3(-9.5,11.5,-9.5), 40],
+  ['box','Box', V3(26,21,0), V3(20,1.5,-19.5), 40],
+  ['bb','Breadboard', V3(21.5,12.5,-10.2), V3(21.5,1.6,-18.6), 40],
+  ['phone','Phone view', V3(0.02,54.8,0.02), V3(0,0,0), 60],
+  ['under','Underside', V3(34,-44,50), V3(0,-2,0), 40]
+];
+const viewsEl = document.getElementById('views');
+VIEWS.forEach(([k, label, pos, tgt, fov]) => {
+  const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.dataset.view = k;
+  b.addEventListener('click', () => {
+    viewsEl.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+    if (k === 'under') setLayer('wiring', true);
+    if (k === 'bb') { setLayer('pins', true); setLayer('controller', true); }
+    if (k === 'phone') setLayer('camera', false, true);
+    else if (!layer.camera.visible && camHiddenForView) setLayer('camera', true);
+    flyTo(pos, tgt, fov);
+  });
+  viewsEl.appendChild(b);
+});
+
+/* ---------- layers ---------- */
+const togglesEl = document.getElementById('toggles');
+let labelsOn = true, pinsOn = false;
+LAYERS.forEach(([k, name]) => {
+  const lab = document.createElement('label');
+  lab.innerHTML = '<input type="checkbox" id="lay-' + k + '"' + (k === 'pins' ? '' : ' checked') + '><span>' + name + '</span>';
+  lab.querySelector('input').addEventListener('change', e => setLayer(k, e.target.checked));
+  togglesEl.appendChild(lab);
+});
+function setLayer(k, on, fromView){
+  if (k === 'labels') labelsOn = on; else if (k === 'pins') pinsOn = on; else layer[k].visible = on;
+  const box = document.getElementById('lay-' + k); if (box) box.checked = on;
+  if (k === 'camera') camHiddenForView = !on && !!fromView;
+}
+{
+  const lab = document.createElement('label');
+  lab.innerHTML = '<input type="checkbox" id="lay-xray"><span>See-through board</span>';
+  lab.querySelector('input').addEventListener('change', e => {
+    const on = e.target.checked;
+    [boardMat, roadMat].forEach(m => { m.transparent = on; m.opacity = on ? 0.28 : 1; m.depthWrite = !on; m.needsUpdate = true; });
+  });
+  togglesEl.appendChild(lab);
+}
+
+/* ---------- parts index, build list, inspector ---------- */
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const indexEl = document.getElementById('index');
+{
+  const groups = new Map();
+  Object.values(parts).forEach(p => {
+    if (p.cat === 'Jumper wires') return;
+    const key = p.cat || LAYER_NAME[p.layer];
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(p);
+  });
+  groups.forEach((list, key) => {
+    const wrap = document.createElement('div');
+    wrap.innerHTML = '<h4>' + esc(key) + (list.length > 3 ? ' · ' + list.length : '') + '</h4><div class="list"></div>';
+    list.forEach(p => {
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = p.name.replace(/^R · /, ''); b.dataset.pid = p.id;
+      b.addEventListener('click', () => select(p.id, true));
+      wrap.querySelector('.list').appendChild(b);
+    });
+    indexEl.appendChild(wrap);
+  });
+}
+{
+  const ORDER = ['ESP32','Power','Sense & echo','Lamp outputs','Sensors & OLED','Harness out'];
+  let html = '<table><thead><tr><th>#</th><th>Step</th><th>From</th><th>To</th></tr></thead><tbody>', n = 0;
+  ORDER.forEach(gname => {
+    const rows = BUILD.filter(r => r.grp === gname); if (!rows.length) return;
+    html += '<tr><th class="grp" colspan="4">' + esc(gname) + '</th></tr>';
+    rows.forEach(r => {
+      n++;
+      html += '<tr tabindex="0" data-pid="' + r.pid + '"><td class="n">' + n + '</td><td>' + esc(r.what) + (r.note ? ' <span class="src ' + (r.note === 'Open question' ? 'open' : 'sugg') + '">' + esc(r.note) + '</span>' : '') +
+        '</td><td class="h">' + esc(r.from) + '</td><td class="h">' + esc(r.to) + '</td></tr>';
+    });
+  });
+  html += '</tbody></table>';
+  const el = document.getElementById('build'); el.innerHTML = html;
+  document.getElementById('buildSum').textContent = 'Show all ' + n + ' steps';
+  el.querySelectorAll('tr[data-pid]').forEach(tr => {
+    const go = () => { setLayer('controller', true); select(tr.dataset.pid, true); };
+    tr.addEventListener('click', go);
+    tr.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+  });
+}
+const SRC = { spec:['spec','From handoff'], sugg:['sugg','Suggested'], mix:['mix','Handoff · sizes suggested'], open:['open','Open question'] };
+const insp = document.getElementById('inspector');
+function renderInspector(){
+  if (!selected) {
+    insp.innerHTML = '<p class="empty">Click any part in the model, or pick one under All parts. You will see what it is, where it plugs in and who builds it.</p>';
+    return;
+  }
+  const p = parts[selected], s = SRC[p.src] || SRC.spec, head = p.pinsHead || ['Signal','Connects to'];
+  const hasNote = p.pins && p.pins.some(r => r[2]);
+  const code = p.value && CODES[p.value];
+  insp.innerHTML =
+    '<div class="ihead"><h3>' + esc(p.name) + '</h3><button type="button" class="ghost" id="zoomBtn">Zoom to</button></div>' +
+    '<div class="chips"><span class="chip">' + esc(p.cat || LAYER_NAME[p.layer]) + '</span><span class="src ' + s[0] + '">' + s[1] + '</span></div>' +
+    '<dl class="kv"><dt>Role</dt><dd>' + esc(p.role) + '</dd><dt>Item</dt><dd>' + esc(p.item) + '</dd>' +
+    (p.size ? '<dt>Size</dt><dd>' + esc(p.size) + '</dd>' : '') +
+    (code ? '<dt>Bands</dt><dd>' + bandHtml(code.five) + '<br><span class="small">If your kit has 4-band resistors: ' + code.four.join(' · ') + '</span></dd>' : '') +
+    '<dt>Owner</dt><dd>' + esc(p.owner) + '</dd></dl>' +
+    (p.pins ? '<div class="tbl"><table><thead><tr><th>' + head[0] + '</th><th>' + head[1] + '</th>' + (hasNote ? '<th>Note</th>' : '') + '</tr></thead><tbody>' +
+      p.pins.map(r => '<tr><td>' + esc(r[0]) + '</td><td class="pin">' + esc(r[1]) + '</td>' + (hasNote ? '<td class="note">' + esc(r[2] || '') + '</td>' : '') + '</tr>').join('') +
+      '</tbody></table></div>' : '') +
+    (p.notes ? '<ul class="notes">' + p.notes.map(n => '<li>' + esc(n) + '</li>').join('') + '</ul>' : '');
+  document.getElementById('zoomBtn').addEventListener('click', () => zoomTo(selected));
+}
+
+/* ---------- signal simulation ---------- */
+const PH = [
+  { ns:'G', ew:'R', d:10, label:'N–S green' }, { ns:'Y', ew:'R', d:3, label:'N–S yellow' }, { ns:'R', ew:'R', d:2, label:'All-red clearance' },
+  { ns:'R', ew:'G', d:10, label:'E–W green' }, { ns:'R', ew:'Y', d:3, label:'E–W yellow' }, { ns:'R', ew:'R', d:2, label:'All-red clearance' }
+];
+const sim = { running:true, speed:1, clock:0, i:0, t:0, water:0, target:0, wetT:0, dryT:0, flood:false, fault:false };
+const WET_LEVEL = (water.sensorBottom + 0.4 - (Y0-7.95)) / 7.8;
+function simStep(dt){
+  if (!sim.running) return;
+  dt *= sim.speed; sim.clock += dt;
+  const diff = sim.target - sim.water;
+  sim.water += Math.sign(diff) * Math.min(Math.abs(diff), 0.3*dt);
+  const wet = sim.water > WET_LEVEL;
+  if (wet) { sim.wetT += dt; sim.dryT = 0; if (!sim.flood && sim.wetT >= 5) sim.flood = true; }
+  else { sim.wetT = 0; if (sim.flood) { sim.dryT += dt; if (sim.dryT >= 30) { sim.flood = false; sim.dryT = 0; sim.i = 2; sim.t = 0; } } }
+  if (!sim.flood && !sim.fault) {
+    sim.t += dt;
+    while (sim.t >= PH[sim.i].d) { sim.t -= PH[sim.i].d; sim.i = (sim.i + 1) % PH.length; }
+  }
+}
+function lampsNow(){
+  if (sim.flood || sim.fault) { const on = Math.floor(sim.clock*2) % 2 === 0; return { ns: on ? 'Y' : '', ew: on ? 'Y' : '', flash:true }; }
+  return { ns:PH[sim.i].ns, ew:PH[sim.i].ew, flash:false };
+}
+function setLamps(phase, c){
+  ['R','Y','G'].forEach(k => lamp[phase][k].forEach(m => {
+    const on = k === c; m.emissiveIntensity = on ? 1 : 0; m.color.setHex(on ? LAMP_ON[k] : LAMP_OFF[k]);
+  }));
+}
+const WORD = { G:'GREEN', Y:'YELLOW', R:'RED', '':'—' };
+const el = id => document.getElementById(id);
+let lastUi = '';
+function updateUi(L){
+  const mode = sim.fault ? ['fault','Fault · Flashing Amber'] : sim.flood ? ['flood','L4 · Flood Flashing Amber'] : ['','L3 · Fixed timer'];
+  const pill = el('modePill');
+  const pillCls = 'pill' + (mode[0] ? ' ' + mode[0] : '') + (!sim.running ? ' paused' : '');
+  const next = sim.fault ? 'until cleared' : sim.flood ? (sim.dryT > 0 ? 'exit in ' + Math.ceil(30 - sim.dryT) + ' s dry' : 'waiting for 30 s dry') :
+    PH[sim.i].label + ' · ' + Math.ceil(PH[sim.i].d - sim.t) + ' s';
+  const ns = L.flash ? 'FLASHING AMBER' : WORD[L.ns], ew = L.flash ? 'FLASHING AMBER' : WORD[L.ew];
+  const wet = sim.water > WET_LEVEL;
+  const fl = 'Water sensor: ' + (wet ? 'wet ' + Math.min(5, sim.wetT).toFixed(1) + ' s' + (sim.flood ? '' : ' of 5 s') : 'dry') + (sim.target > 0 ? ' · filling' : (sim.water > 0.01 ? ' · draining' : ''));
+  const key = [pillCls, mode[1], next, ns, ew, L.ns, L.ew, fl].join('|');
+  if (key === lastUi) return; lastUi = key;
+  pill.className = pillCls; pill.textContent = (sim.running ? '' : 'Paused · ') + mode[1];
+  el('nextChange').textContent = next;
+  el('nsTxt').textContent = ns; el('ewTxt').textContent = ew;
+  [['nsDots',L.ns],['ewDots',L.ew]].forEach(([id,c]) => el(id).querySelectorAll('i').forEach(i => i.classList.toggle('on', i.classList.contains(c.toLowerCase() || 'x'))));
+  el('floodTxt').textContent = fl;
+  const short = { G:'GRN', Y:'YEL', R:'RED', '':'---' };
+  drawOled([sim.fault ? 'INT-01  FAULT' : sim.flood ? 'INT-01  L4 FLOOD' : 'INT-01  L3 FIXED',
+    'NS:' + (L.flash ? 'FLS' : short[L.ns]) + '  EW:' + (L.flash ? 'FLS' : short[L.ew]),
+    'WTR:' + (wet ? 'WET' : 'DRY') + '  PWR:USB']);
+}
+function drawOled(lines){
+  const k = lines.join('|'); if (k === oled.last) return; oled.last = k;
+  const c = oled.canvas.getContext('2d');
+  c.fillStyle = '#000'; c.fillRect(0,0,128,64);
+  c.fillStyle = '#BDE8FF'; c.font = '11px monospace';
+  lines.forEach((l,i) => c.fillText(l, 4, 15 + i*18));
+  oled.tex.needsUpdate = true;
+}
+el('btnRun').addEventListener('click', e => { sim.running = !sim.running; e.target.textContent = sim.running ? 'Pause' : 'Resume'; lastUi = ''; });
+el('btnSpeed').addEventListener('click', e => { sim.speed = sim.speed === 1 ? 4 : 1; e.target.textContent = 'Speed ' + sim.speed + '×'; e.target.classList.toggle('on', sim.speed > 1); });
+el('btnWater').addEventListener('click', e => { sim.target = sim.target > 0 ? 0 : 0.85; e.target.textContent = sim.target > 0 ? 'Drain water' : 'Pour water'; e.target.classList.toggle('on', sim.target > 0); });
+el('btnFault').addEventListener('click', e => {
+  sim.fault = !sim.fault; if (!sim.fault) { sim.i = 2; sim.t = 0; }
+  e.target.textContent = sim.fault ? 'Clear fault' : 'Trigger fault'; e.target.classList.toggle('on', sim.fault);
+});
+
+/* ---------- resize & loop ---------- */
+function resize(){
+  const w = stage.clientWidth, h = stage.clientHeight; if (!w || !h) return;
+  renderer.setSize(w, h, false); camera.aspect = w/h; camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage); resize();
+
+const tmp = new THREE.Vector3();
+function placeLabels(){
+  const w = stage.clientWidth, h = stage.clientHeight;
+  for (const l of labels) {
+    const lv = l.kind === 'dim' ? layer.dims.visible : l.kind === 'pin' ? (pinsOn && layer.controller.visible) : (labelsOn && layer[l.lay].visible);
+    tmp.copy(l.pos).project(camera);
+    const show = lv && tmp.z < 1 && tmp.z > -1 && Math.abs(tmp.x) < 1.1 && Math.abs(tmp.y) < 1.1;
+    if (!show) { if (!l.el.hidden) l.el.hidden = true; continue; }
+    if (l.el.hidden) l.el.hidden = false;
+    const x = (tmp.x + 1)/2*w, y = (1 - tmp.y)/2*h;
+    l.el.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) translate(-50%,-100%)';
+  }
+}
+const clock = new THREE.Clock();
+function frame(){
+  const dt = Math.min(clock.getDelta(), 0.1);
+  simStep(dt);
+  const L = lampsNow(); setLamps('ns', L.ns); setLamps('ew', L.ew);
+  water.mesh.scale.y = Math.max(0.001, sim.water);
+  updateUi(L);
+  if (tw) {
+    tw.t += dt; const k = Math.min(1, tw.t/tw.d), e = k < 0.5 ? 4*k*k*k : 1 - Math.pow(-2*k + 2, 3)/2;
+    camera.position.lerpVectors(tw.p0, tw.p1, e); controls.target.lerpVectors(tw.t0, tw.t1, e);
+    camera.fov = tw.f0 + (tw.f1 - tw.f0)*e; camera.updateProjectionMatrix();
+    if (k >= 1) tw = null;
+  }
+  controls.update();
+  renderer.render(scene, camera);
+  placeLabels();
+  requestAnimationFrame(frame);
+}
+select('esp32', false);
+viewsEl.querySelector('[data-view="overview"]').classList.add('on');
+loadingEl.hidden = true;
+frame();
+})();
+</script>
+
+</body></html>

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Signal Hardware Mockups</title>
+<style>
+  /* Signal Hardware tokens: surface-page #0B0C0D, housing #1A1C1F, edge-light #3A3F45,
+     text #F1F1EC, text-2 #AEB3B8, signal red #FF3B2F, yellow #FFB000, green #19E68C */
+  :root { --bg: #0B0C0D; --card: #1A1C1F; --line: #3A3F45; --text: #F1F1EC; --muted: #AEB3B8; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; }
+  main { max-width: 960px; margin: 0 auto; padding: 40px 16px; }
+  .head { display: flex; gap: 10px; margin-bottom: 24px; }
+  .head span { width: 18px; height: 18px; border-radius: 50%; }
+  .r { background: #FF3B2F; } .y { background: #FFB000; } .g { background: #19E68C; }
+  h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: .04em; text-transform: uppercase; }
+  p { color: var(--muted); line-height: 1.5; }
+  ol { list-style: none; padding: 0; display: grid; gap: 12px; }
+  a { display: block; padding: 18px 20px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; color: inherit; text-decoration: none; }
+  a:hover { border-color: var(--muted); }
+  b { font-size: 18px; } small { display: block; color: var(--muted); margin-top: 4px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="head"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+  <h1>Signal Hardware: all five screens</h1>
+  <p>Each page is the 1920×1080 TV view at native size (Ctrl + minus to fit). DESIGN.md and EXPERIENCE.md win over these mocks wherever they differ.</p>
+  <ol>
+    <li><a href="live-status.html"><b>Live status ( / )</b><small>Intersection, signal heads, level ladder, flood, PCU, counts, override panel, latest breach. Plus the loader, L4 flood variant and confirm dialog.</small></a></li>
+    <li><a href="traffic-peaks.html"><b>Traffic peaks ( /traffic/ )</b><small>24-hour stacked chart by vehicle class, peak plate, live hour, approach totals.</small></a></li>
+    <li><a href="breach-log.html"><b>Breach log ( /breaches/ )</b><small>Anonymized breaches with blurred crops, expired crops, detail panel, filters.</small></a></li>
+    <li><a href="override-log.html"><b>Override log ( /log/overrides/ )</b><small>MDRRMO commands: requested, applied, rejected, timeout; active override strip.</small></a></li>
+    <li><a href="state-history.html"><b>State history ( /log/states/ )</b><small>Level and aspect changes: L2 handover, L4 flood, corridor ended by link loss, conflict fault.</small></a></li>
+  </ol>
+</main>
+</body>
+</html>

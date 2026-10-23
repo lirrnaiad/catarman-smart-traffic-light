@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard Directions</title>
+<style>
+  :root { --bg: #f6f5f2; --text: #1d1d1b; --muted: #5d5b55; --card: #ffffff; --line: #dedbd3; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #151514; --text: #ecebe7; --muted: #a8a59d; --card: #1f1f1d; --line: #34332f; } }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; }
+  main { max-width: 960px; margin: 0 auto; padding: 40px 16px; }
+  .bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 24px; }
+  .bar span { flex: 1; } .r { background: #d7263d; } .y { background: #f4b400; } .g { background: #1e9e5a; }
+  h1 { margin: 0 0 8px; font-size: 28px; } p { color: var(--muted); line-height: 1.5; }
+  ol { list-style: none; padding: 0; display: grid; gap: 12px; }
+  a { display: block; padding: 18px 20px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; color: inherit; text-decoration: none; }
+  a:hover { border-color: var(--muted); }
+  b { font-size: 18px; } small { display: block; color: var(--muted); margin-top: 4px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="bar"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+  <h1>Live status screen: four directions</h1>
+  <p>Same screen, same data, four personalities, all built on red, yellow and green. Each page shows the 1920×1080 TV view at native size (Ctrl + minus to fit), then the loader, one state variant and the override confirm dialog.</p>
+  <ol>
+    <li><a href="direction-signal-hardware.html"><b>1. Signal Hardware</b><small>Dark signal housings, glowing lenses, hazard stripes. Weighty and physical.</small></a></li>
+    <li><a href="direction-control-room.html"><b>2. Control Room HUD</b><small>Near-black grid, thin neon line work, monospace telemetry, three panels. Precise and technical.</small></a></li>
+    <li><a href="direction-road-sign.html"><b>3. Road Sign</b><small>Asphalt, lane markings, sign plates, big highway type. Bold and public.</small></a></li>
+    <li><a href="direction-color-block.html"><b>4. Color Block</b><small>Light canvas, rounded cards, tri-color stripes, pill chips. Friendly and clean.</small></a></li>
+  </ol>
+</main>
+</body>
+</html>

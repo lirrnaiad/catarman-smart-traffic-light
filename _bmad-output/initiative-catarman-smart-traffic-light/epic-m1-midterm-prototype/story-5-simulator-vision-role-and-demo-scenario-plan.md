@@ -3,7 +3,8 @@ title: 'Simulator: vision role and demo scenario'
 type: 'feature'
 ticket: '5'
 created: '2026-10-23'
-status: 'draft'
+baseline_commit: 'f9e27a4541f96415279d0a6a8e2b6f8ec2dd3b82'
+status: 'done'
 route: 'dispatch'
 risk: 'low'
 review_loop_iteration: 0
@@ -96,13 +97,13 @@ context:
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] `simulator/assets/placeholder-crop.jpg` -- generate and commit it as described in the Code Map.
-- [ ] `simulator/src/vision-role.ts`:
+- [x] `simulator/assets/placeholder-crop.jpg` -- generate and commit it as described in the Code Map.
+- [x] `simulator/src/vision-role.ts`:
   - `createVision(now, {rand, classes})`: the pure core, with `step(t, signals?)`, `heartbeat(t)`, `demand()`, `takeCounts(t)` and `breach(t, approach?, vehicleClass?)`;
   - `startVisionRole({config, force, controller?})`: the link, start check, timers (step 100 ms, heartbeat 1 s, counts 1 s, demand throttle) and status. It returns `{vision, stop(), start()}`.
-- [ ] `simulator/src/scenarios/demo.ts` and its registration line -- the demo steps (see the Demo row).
-- [ ] `simulator/src/repl.ts`, `simulator/src/index.ts` -- the Code Map changes.
-- [ ] `simulator/src/vision-role.test.ts` and additions to `repl.test.ts`:
+- [x] `simulator/src/scenarios/demo.ts` and its registration line -- the demo steps (see the Demo row).
+- [x] `simulator/src/repl.ts`, `simulator/src/index.ts` -- the Code Map changes.
+- [x] `simulator/src/vision-role.test.ts` and additions to `repl.test.ts`:
   - every matrix row, using fake timers and the mocked `mqtt`;
   - the asset file is a baseline JPEG with no APP1 and a long side of 64 px or less;
   - every demo line runs through `runCommand` without a usage or "unknown" answer.
@@ -115,9 +116,35 @@ context:
 
 ## Implementation Notes
 
+- **Role API:** `startVisionRole` returns `{vision, running(), emitBreach(approach?, class?), stop(), start()}`. `running()` and `emitBreach()` are additions: the REPL needs to know the state for "already stopped/running", and a breach must be published on the role's link.
+- **Traffic model:** each approach gets an arrival with chance `dt / 6 s` per step (class uniform over `vehicle-classes.json`), capped at 12 queued. The first vehicle leaves one interval (1.5 s or 3 s) after its approach can move with a queue present. One `rand()` draw per approach per step picks both arrival and class, so tests script traffic exactly.
+- **Demand throttle:** the 100 ms step tick flushes demand right after stepping. A change inside the 100 ms hold is deferred to the end of the hold by a timer. The first demand goes out on going online (zeros or the current queues).
+- **Counts while stopped:** traffic keeps moving after `vision stop`, but the crossings seen while stopped are dropped when it comes back online. A stopped node detects nothing.
+- **Start check, same clientId:** as in story 4, a second vision instance is kicked by the live one's reconnect, so it fails on "link closed during the vision start check". Each takeover fires an LWT, so `vision/status` flickers `online:false` before the live node republishes `online:true`.
+- **Asset:** `simulator/assets/placeholder-crop.jpg` is 898 bytes, 64x48, made with `System.Drawing` (grey ellipse, scaled down to 8x6 and back up, quality 75). Its markers are SOI, APP0 JFIF, DQT x2, SOF0 64x48, DHT x4, SOS, with no APP1.
+- **Demo timing:** `state` @22, `emit-breach` @24, `emit-breach E tricycle` @28, `vision stop` @32, `state` @37, `sensor fault` @42, `flood on` @52, `state` @60.
+
 ## Spec Change Log
 
 ## Review Triage Log
+
+| # | Source | Finding | Verdict | Evidence | Route |
+|---|--------|---------|---------|----------|-------|
+| 1 | verification-gap, blind | Broker reconnect (the `!firstConnect` branch) is untested | medium | Deleting `goOnline()` there passes every test; the code is right today | patch |
+| 2 | verification-gap, blind | Dropping crossings seen while stopped is untested | low | Removing `vision.takeCounts` from `goOnline` passes every test | patch |
+| 3 | verification-gap, blind, edge | `--scenario` with closed or non-TTY stdin quits at once | medium | `startRepl` always runs and its `close` calls `quit`; before this story, scenario mode never read stdin | patch |
+| 4 | blind, edge | Counts are taken and discarded while the link is down | medium | The 1 s interval calls `takeCounts` without checking `online`, and `publish` drops the result; QoS 1 counts are lost in every broker blip | patch |
+| 5 | blind, edge | `emit-breach` class is case-sensitive; `vision stop extra` is accepted | low | Approach is upper-cased but the class isn't; `vision` ignores extra args while `emit-breach` rejects them; both fixes are direct | patch |
+| 6 | verification-gap | `index.ts` role wiring is untested | low | Covered by the manual Mosquitto run; testing needs import-time code pulled out | reject |
+| 7 | blind | Heartbeat `seq` advances while offline | false | A gap in `seq` correctly reflects beats that weren't delivered; the controller doesn't read `seq` | reject |
+| 8 | blind | `stop()` can hang waiting for the PUBACK | low | Needs the broker to die between the publish and its ack; a second Ctrl+C exits; fix adds a timeout | reject |
+| 9 | blind | `vision stop` during the 3 s check, then `start`, skips the check | low | Needs a stop typed within 3 s of launch beside a live node; fix adds state | reject |
+| 10 | blind, edge | The 100 ms traffic tick is never cleared | low | Every exit path ends the process; no in-process host exists | reject |
+| 11 | blind | Spec drift (`running()`, `emitBreach()`) isn't in the Spec Change Log | low | Recorded in Implementation Notes; fix edits this spec | reject |
+| 12 | blind | Demo timing test is loose and the demo never runs `vision start` | low | Frozen decision: the demo holds at L4; the first-breach-after-20 s check exists | reject |
+| 13 | blind | Crop path is resolved from `src/` | false | The simulator runs from source through `tsx` (AD-13); nothing bundles it | reject |
+| 14 | edge | DARK aspect treated as red | false | No M1 controller state reports DARK; YELLOW holding is the frozen decision | reject |
+| 15 | edge | A failed heartbeat subscribe lets the check pass | low | The local broker is anonymous and the ACL grants that read; same handling as story 4's controller | reject |
 
 ## Verification
 
@@ -126,3 +153,17 @@ context:
 
 **Manual checks:**
 - Against Mosquitto, run the acceptance criteria and record the steps here (epic Done rule 4).
+- **Run (2026-10-23, Mosquitto native via `npm run broker`):** a scripted driver subscribed to `stl/#` with MQTT.js and fed the sim's stdin. Results:
+  - **`npm run sim`:**
+    - vision check passed at 3 s (`vision/status` online, heartbeat seq 0, first demand); controller check passed at 5 s;
+    - L1 at the first all-red (~13 s after start); `vision/status` repeated 10 s later;
+    - counts every ~1 s while vehicles crossed, demand on change;
+    - `emit-breach` and `emit-breach E tricycle` each sent a `vision/breach` with an `image/jpeg` crop of 1200 base64 characters; `emit-breach X` printed the usage line;
+    - `vision stop` sent a retained `online:false` and the controller reported L2 2.4 s later; a second `vision stop` answered "vision already stopped";
+    - `vision start` sent `online:true` with no check, heartbeats resumed, and the controller was back at L1 at the next all-red (~6 s); a second `vision start` answered "vision already running";
+    - `quit` sent both statuses `online:false` and exited 0; 48 heartbeats over 48 online seconds.
+  - **`npm run sim -- --scenario demo`, no input:** L1 at ~13 s; breaches N tricycle (@24) and E tricycle (@28); `vision stop` @32 → L2 at +2.4 s; `sensor fault` @42 → L3; `flood on` @52 → WET, then L4 FLASHING_AMBER FLOODED at ~57 s, held until `quit`.
+  - **Second `npm run sim -- --roles vision` while one ran:** "link closed during the vision start check", exit 1. The first instance's status flickered `online:false` twice and then recovered to `online:true`.
+- **Re-run after review fixes (2026-10-23, Mosquitto 2.1.2 native, MQTT.js subscriber on `stl/#`):**
+  - **`npm run sim`, REPL:** vision online at 3 s, controller at 5 s, L1 at 16 s; `vision/status` repeated 10 s later. `emit-breach E Tricycle` → `breach E tricycle`, a `vision/breach` with a 1,200-character `image/jpeg` crop. `vision stop extra` → usage. Broker killed 5 s and restarted → both links reconnected in 0.5 s, `vision/status` `online:true`, heartbeats resumed with `seq` 23 → 29; the controller dropped to L2 and climbed back to L1 at the next all-red (46.4 s). `vision stop` → `online:false`; L2 2.9 s later. `vision start` → `online:true`, back to L1 9.3 s later. `quit` → both statuses `online:false`, exit 0. 58 heartbeats, 21 counts, 65 demand messages.
+  - **`npm run sim -- --scenario demo < NUL` (stdin closed):** ran unattended. L1 at 16 s; breaches W tricycle (@24) and E tricycle (@28); `vision stop` (@32) → L2 2.3 s later; `sensor fault` (@42) → L3; `flood on` (@52) → L4 FLASHING_AMBER at about 57 s, held until the driver killed the process.

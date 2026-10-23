@@ -41,3 +41,15 @@ it("clears the region first, so a repeat is re-read", () => {
   act(() => vi.advanceTimersByTime(ANNOUNCE_DELAY_MS));
   expect(region()).toBe("Controller stale");
 });
+
+it("reads identical messages from the same tick once", () => {
+  const region = setup();
+  act(() => {
+    announce("Controller stale");
+    announce("Controller stale");
+    announce("Vision stale");
+    announce("Controller stale");
+  });
+  act(() => vi.advanceTimersByTime(ANNOUNCE_DELAY_MS));
+  expect(region()).toBe("Controller stale. Vision stale");
+});

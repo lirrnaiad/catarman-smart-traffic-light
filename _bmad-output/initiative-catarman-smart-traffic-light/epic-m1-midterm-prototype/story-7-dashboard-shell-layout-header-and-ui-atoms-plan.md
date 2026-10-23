@@ -3,7 +3,8 @@ title: 'Dashboard shell: layout, header and UI atoms'
 type: 'feature'
 ticket: '7'
 created: '2026-10-23'
-status: 'draft'
+baseline_commit: 'b7d12192916a2e62b426b4613a9d8e3f055602b5'
+status: 'done'
 route: 'dispatch'
 risk: 'low'
 review_loop_iteration: 0
@@ -47,7 +48,7 @@ It creates no `page.tsx`.
 - Atoms:
   - `AspectLamp`: `color`, `lit`, `flashing`, `size`, and `stale`, which removes the glow and breathing.
   - `LevelBadge`: `level`, with the per-level pattern and name.
-  - `StaleBadge`: `role`, plus `since`, an ISO time shown as "STALE · HH:mm:ss". It renders nothing while LIVE.
+  - `StaleBadge`: `of` (the live role, `controller` or `vision`), plus `since`, an ISO time shown as "STALE · HH:mm:ss". It renders nothing while LIVE.
   - `ClassLabel`: `id` and `classes`. It shows the file's label, or the raw id for an unknown id, with its `classColor` chip.
   - `ConfirmDialog`: `open`, `title`, `effect`, `confirmLabel`, `onConfirm` (returns a promise) and `onCancel`.
 - `ConfirmDialog` behavior:
@@ -107,10 +108,10 @@ It creates no `page.tsx`.
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] `dashboard/src/components/ui/{aspect-lamp,level-badge,stale-badge,class-label,confirm-dialog}.tsx` and `motion.css` -- the atoms and the three animations.
-- [ ] `dashboard/src/components/shell/{top-bar,link-health-bar,state-banners,loader,live-region}.tsx` -- the frame pieces and `useAnnounce`.
-- [ ] `dashboard/src/app/layout.tsx` -- mount the frame and `motion.css`; the content area below the two bars is 948px tall on `/` and scrolls on other routes.
-- [ ] Tests next to each component -- every matrix row.
+- [x] `dashboard/src/components/ui/{aspect-lamp,level-badge,stale-badge,class-label,confirm-dialog}.tsx` and `motion.css` -- the atoms and the three animations.
+- [x] `dashboard/src/components/shell/{top-bar,link-health-bar,state-banners,loader,live-region}.tsx` -- the frame pieces and `useAnnounce`.
+- [x] `dashboard/src/app/layout.tsx` -- mount the frame and `motion.css`; the content area below the two bars is 948px tall on `/` and scrolls on other routes.
+- [x] Tests next to each component -- every matrix row.
 
 **Acceptance Criteria:**
 - When `npm run build -w dashboard` runs, then it exports with no error.
@@ -121,7 +122,29 @@ It creates no `page.tsx`.
 
 ## Spec Change Log
 
+- Frozen intent renegotiated by the user (2026-10-23): `StaleBadge`'s prop `role` becomes `of`, because Biome's `useValidAriaRole` rejects a non-ARIA `role` value at every call site (review finding 1). Code was kept and renamed rather than reverted and re-planned, because the change is one prop.
+
 ## Review Triage Log
+
+| # | Source | Finding | Verdict | Evidence | Route |
+|---|--------|---------|---------|----------|-------|
+| 1 | blind | `StaleBadge`'s `role` prop collides with the ARIA `role` attribute | medium | Biome's `useValidAriaRole` fails every `<StaleBadge role="controller" />`, so every panel from entry 8 on needs a `biome-ignore`; the prop name is in the frozen block. Resolved by the user: renamed to `of` | intent_gap → user |
+| 2 | blind, edge | `useAnnounce` drops one of two announcements in one commit and never repeats identical text | medium | `setText` keeps only the last value; a lost stream turns controller and vision STALE in the same commit, so one transition is never announced | patch |
+| 3 | blind, edge | ConfirmDialog's trap fails once focus leaves the panel: a backdrop click, or Confirm disabling itself | medium | The keydown handler sits on the panel; a disabled focused button drops focus to `body`, so Esc and Tab stop working while pending | patch |
+| 4 | blind | Dialog buttons use `focus:` instead of the shared `focus-visible` ring; Confirm restates the hazard gradient | low | Direct correction to the shared `focusRing` and `hazardStripes` in `styles.ts` | patch |
+| 5 | verification-gap, blind | Untested: `<main>` clipping on `/` versus scrolling elsewhere, no banner for `override.mode` NONE, and the first frame of `counts` or `demand` clearing the loader | medium | Flipping the overflow ternary, dropping the NONE check, or removing a slice from `useFirstFrame` passes every test | patch |
+| 6 | blind | `role="status"` on the link bar is a second implicit live region | false | EXPERIENCE → Accessibility Floor makes the link health bar `role="status"` | reject |
+| 7 | blind, edge | A second dialog never takes over after the first closes | low | The override panel is the only dialog user, one at a time | reject |
+| 8 | blind | Esc and Cancel still close the dialog while `onConfirm` is pending | low | The override panel shows the command as Pending either way (entry 10) | reject |
+| 9 | blind | ConfirmDialog hard-codes the MDRRMO wording; `effect` renders inside a `<p>` | low | EXPERIENCE: ConfirmDialog is the only modal and exists only for overrides | reject |
+| 10 | blind | The page radial gradient is duplicated; the stale pilot border is hard-coded; AspectLamp casts token names | low | Cosmetic or developer-only, with no named breakage | reject |
+| 11 | blind, edge | The L4 banner always says "Flood" | false | The frozen text fixes the banner as "L4 · FLASHING AMBER · FLOOD"; L4 is the flood level | reject |
+| 12 | edge | The opener is removed before the dialog closes | low | The opener is a static override button | reject |
+| 13 | edge | An invalid `since` crashes StaleBadge | low | `since` comes from schema-validated `receivedAt` | reject |
+| 14 | edge | A stale flashing lens keeps flashing | false | The frozen text says `stale` removes the glow and breathing; the flash is the reported aspect | reject |
+| 15 | edge | A sixth class shows the unknown chip | false | DESIGN defines five class tokens | reject |
+| 16 | edge | Four keyframe sets against "three animations" | false | The loader animation is the R→Y→G cycle plus its text fade (EXPERIENCE → Motion) | reject |
+| 17 | edge, verification-gap, blind | No tests next to loader, banners and live region; no test of the layout mount, `motion.css` class names, UnlitHead sizes or stripes | low | Covered through the frame and link-bar tests; entry 8 re-checks the shell live; fix 2 adds a live-region test | reject |
 
 ## Verification
 
@@ -130,3 +153,8 @@ It creates no `page.tsx`.
 
 **Manual checks:**
 - Entry 8 re-checks the header, link bar and banners against the simulator (ticket verify). Here, record the dev-server loader check.
+
+**Recorded (2026-10-23):**
+- `npm run typecheck`, `npm run lint`, `npm test` (dashboard: 15 files, 69 tests) and `npm run build -w dashboard` all exit 0. The built CSS holds the four keyframe sets and their `animation` rules only under `prefers-reduced-motion: no-preference`.
+- `next dev` on a scratch port served the 404 page (`/nope/`) with no backend: the HTML has the loader (`role="status"`, "Loading", "Connecting to INT-01"), the frame behind it `inert`, one polite live region, and no `aria-current` tab. The 1920×1080 no-horizontal-scroll check in a real browser was not run; entry 8 re-checks it with the simulator.
+- **After review fixes and the `of` rename (2026-10-23):** `npm run typecheck`, `npm run lint`, `npm test` (81 dashboard tests) and `npm run build -w dashboard` exit 0, with no `biome-ignore` left. The 1920×1080 browser check (no horizontal scroll, look against the mock) and the header against the simulator are re-checked in entry 8.

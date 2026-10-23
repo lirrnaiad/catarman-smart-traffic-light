@@ -21,6 +21,8 @@ export function LiveRegion({ children }: { children: ReactNode }) {
   const queue = useRef<string[]>([]);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const announce = useCallback((t: string) => {
+    // Several badges for one role announce the same change; read it once.
+    if (queue.current.includes(t)) return;
     queue.current.push(t);
     if (queue.current.length > 1) return; // joins the text already pending
     // Clear first, so a repeat of the same text is a change and is re-read.

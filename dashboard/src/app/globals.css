@@ -1,0 +1,194 @@
+@import "tailwindcss";
+
+/*
+ * Every DESIGN.md token, 1:1 (keys from its frontmatter). `--color-*: initial`
+ * drops Tailwind's default hues so none can leak (Signal Semantics); `static`
+ * emits every variable, so `var(--color-…)` from visuals.ts always resolves.
+ */
+@theme static {
+  --color-*: initial;
+  --font-*: initial;
+  --text-*: initial;
+  --radius-*: initial;
+  /* --spacing (the base step) stays: numeric steps with no DESIGN key (w-24, gap-10) still scale from it. */
+  --color-surface-page: #0b0c0d;
+  --color-surface-page-hi: #15171a;
+  --color-surface-housing: #1a1c1f;
+  --color-surface-housing-hi: #24272b;
+  --color-surface-housing-lo: #151719;
+  --color-surface-title-hi: #202327;
+  --color-surface-title-lo: #191b1e;
+  --color-surface-recess: #0f1012;
+  --color-surface-plate: #2c3035;
+  --color-surface-plate-hi: #383d43;
+  --color-surface-backplate: #08090a;
+  --color-surface-head-lo: #131517;
+  --color-surface-head-hi: #262a2e;
+  --color-visor: #0c0d0e;
+  --color-lens-socket: #070809;
+  --color-lens-bezel: #2e3237;
+  --color-edge-light: #3a3f45;
+  --color-edge-dark: #050607;
+  --color-rivet: #555b62;
+  --color-rivet-hi: #8a9097;
+  --color-reflector: #6b7178;
+  --color-map-asphalt: #232528;
+  --color-map-block: #141618;
+  --color-map-block-hatch: #1b1e21;
+  --color-map-sidewalk: #34383d;
+  --color-map-paint: #d8dbde;
+  --color-map-zone: #8c939a;
+  --color-flood-water: #3b82b5;
+  --color-text: #f1f1ec;
+  --color-text-2: #aeb3b8;
+  --color-text-3: #737a81;
+  --color-text-inverse: #0b0b0b;
+  --color-signal-red: #ff3b2f;
+  --color-signal-red-core: #ffc2b8;
+  --color-signal-red-deep: #b0150c;
+  --color-signal-red-glass: #3a110e;
+  --color-signal-red-glass-hi: #5a1b16;
+  --color-signal-yellow: #ffb000;
+  --color-signal-yellow-core: #ffe3a3;
+  --color-signal-yellow-deep: #b26a00;
+  --color-signal-yellow-glass: #3a2a08;
+  --color-signal-yellow-glass-hi: #5c440f;
+  --color-signal-green: #19e68c;
+  --color-signal-green-core: #bdffe0;
+  --color-signal-green-deep: #04935a;
+  --color-signal-green-glass: #0b2c1f;
+  --color-signal-green-glass-hi: #154a35;
+  --color-hazard-paint: #ebc81a;
+  --color-hazard-ink: #0d0d0d;
+  --color-status-ok: #6ec6f2;
+  --color-status-ok-deep: #1d5e80;
+  --color-status-off: #2a2d31;
+  --color-focus: #6ec6f2;
+  --color-thumb-1: #8a8f95;
+  --color-thumb-2: #5e6369;
+  --color-thumb-3: #4a4f55;
+  --color-class-car: #9d3eb1;
+  --color-class-tricycle: #5a8ff3;
+  --color-class-motorcycle: #c770a8;
+  --color-class-jeepney: #4c55bc;
+  --color-class-utility-van: #028a9b;
+  --color-class-unknown: #737a81;
+  --font-stencil:
+    "Bahnschrift", "DIN Condensed", "Roboto Condensed", "Arial Narrow",
+    "Liberation Sans Narrow", "Nimbus Sans Narrow", "Helvetica Neue",
+    "Noto Sans", "DejaVu Sans Condensed", system-ui, sans-serif;
+  --font-body:
+    system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue",
+    Arial, sans-serif;
+  --text-display-countdown: 92px;
+  --text-display-countdown--font-weight: 800;
+  --text-display-countdown--line-height: 0.92;
+  --text-display-approach: 80px;
+  --text-display-approach--font-weight: 800;
+  --text-display-approach--line-height: 0.84;
+  --text-display-approach--letter-spacing: 0.02em;
+  --text-display-total: 58px;
+  --text-display-total--font-weight: 800;
+  --text-display-total--line-height: 1;
+  --text-display-time: 50px;
+  --text-display-time--font-weight: 800;
+  --text-display-time--line-height: 1;
+  --text-display-time--letter-spacing: 0.02em;
+  --text-headline-aspect: 42px;
+  --text-headline-aspect--font-weight: 800;
+  --text-headline-aspect--line-height: 1;
+  --text-headline-aspect--letter-spacing: 0.03em;
+  --text-headline-map-state: 36px;
+  --text-headline-map-state--font-weight: 800;
+  --text-headline-map-state--line-height: 1;
+  --text-headline-map-state--letter-spacing: 0.04em;
+  --text-headline-dialog: 36px;
+  --text-headline-dialog--font-weight: 800;
+  --text-headline-dialog--line-height: 1.02;
+  --text-headline-dialog--letter-spacing: 0.03em;
+  --text-title-brand: 32px;
+  --text-title-brand--font-weight: 800;
+  --text-title-brand--line-height: 1;
+  --text-title-brand--letter-spacing: 0.05em;
+  --text-numeral-pcu: 32px;
+  --text-numeral-pcu--font-weight: 800;
+  --text-numeral-pcu--line-height: 1;
+  --text-label-loader: 30px;
+  --text-label-loader--font-weight: 800;
+  --text-label-loader--letter-spacing: 0.34em;
+  --text-numeral-count: 27px;
+  --text-numeral-count--font-weight: 800;
+  --text-value-md: 24px;
+  --text-value-md--font-weight: 800;
+  --text-value-md--letter-spacing: 0.06em;
+  --text-label-lg: 21px;
+  --text-label-lg--font-weight: 800;
+  --text-label-lg--letter-spacing: 0.1em;
+  --text-label-row: 20px;
+  --text-label-row--font-weight: 800;
+  --text-label-row--line-height: 1.05;
+  --text-label-row--letter-spacing: 0.06em;
+  --text-label-tab: 19px;
+  --text-label-tab--font-weight: 800;
+  --text-label-tab--letter-spacing: 0.1em;
+  --text-label-panel: 18px;
+  --text-label-panel--font-weight: 800;
+  --text-label-panel--letter-spacing: 0.14em;
+  --text-label-control: 17px;
+  --text-label-control--font-weight: 800;
+  --text-label-control--line-height: 1.1;
+  --text-label-control--letter-spacing: 0.06em;
+  --text-label-link: 16px;
+  --text-label-link--font-weight: 800;
+  --text-label-link--letter-spacing: 0.1em;
+  --text-label-sub: 14px;
+  --text-label-sub--font-weight: 700;
+  --text-label-sub--letter-spacing: 0.16em;
+  --text-caption: 13px;
+  --text-caption--font-weight: 700;
+  --text-caption--line-height: 1.4;
+  --text-caption--letter-spacing: 0.12em;
+  --text-micro: 12px;
+  --text-micro--font-weight: 700;
+  --text-micro--letter-spacing: 0.16em;
+  --text-body-dialog: 20px;
+  --text-body-dialog--font-weight: 600;
+  --text-body-dialog--line-height: 1.3;
+  --radius-xs: 2px;
+  --radius-sm: 3px;
+  --radius: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+  --spacing-1: 4px;
+  --spacing-2: 6px;
+  --spacing-3: 8px;
+  --spacing-4: 10px;
+  --spacing-5: 12px;
+  --spacing-6: 14px;
+  --spacing-7: 16px;
+  --spacing-8: 20px;
+  --spacing-9: 24px;
+  --spacing-page-margin: 24px;
+  --spacing-gutter: 24px;
+  --spacing-panel-gap: 20px;
+  --spacing-panel-pad-x: 20px;
+  --spacing-panel-pad-bottom: 18px;
+  --spacing-topbar-height: 88px;
+  --spacing-linkbar-height: 44px;
+  --spacing-grid-height: 948px;
+  --spacing-panel-title-height: 46px;
+  --spacing-column-side: 432px;
+  --spacing-column-center: 960px;
+  --spacing-hazard-frame: 10px;
+  --spacing-hazard-band: 12px;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-surface-page);
+    color: var(--color-text);
+    font-family: var(--font-body);
+  }
+}

@@ -5,6 +5,7 @@ import type { Link } from "../../services/link.ts";
 import type { Hub } from "../../sse/hub.ts";
 import type { Publisher } from "../publisher.ts";
 import controllerStateLink from "./controller-state.link.ts";
+import controllerStateSlice from "./controller-state.slice.ts";
 import controllerStatusLink from "./controller-status.link.ts";
 import visionBreachPersist from "./vision-breach.persist.ts";
 import visionCountsPersist from "./vision-counts.persist.ts";
@@ -35,6 +36,7 @@ export type Handler = { [T in TopicName]: HandlerFor<T> }[TopicName];
 /** Every MQTT handler; several may share a topic (fan-out). One line per file, alphabetical (AD-14). */
 export const handlers: Handler[] = [
   controllerStateLink,
+  controllerStateSlice,
   controllerStatusLink,
   visionBreachPersist,
   visionCountsPersist,

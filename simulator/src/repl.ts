@@ -1,15 +1,22 @@
 import { createInterface } from "node:readline";
-import { type ControllerState, Level } from "@stl/contracts";
+import { Approach, type ControllerState, Level } from "@stl/contracts";
+import vehicleClasses from "@stl/contracts/vehicle-classes.json" with {
+  type: "json",
+};
 import type { Behavior } from "./behaviors/index.ts";
 import type { Controller } from "./controller-role.ts";
 import type { Scenario } from "./scenarios/index.ts";
+import type { VisionRole } from "./vision-role.ts";
 
 export type ReplCtx = {
-  controller: Controller;
+  controller?: Controller;
+  vision?: VisionRole;
   behaviors: readonly Behavior[];
   now: () => number;
   quit: () => void;
 };
+
+const CLASS_IDS = vehicleClasses.map((k) => k.id);
 
 const HELP = [
   "level L1|L2|L3|L4|auto   force the reported level, or return to automatic",
@@ -17,6 +24,8 @@ const HELP = [
   "sensor fault|ok          stop-line sensors unreadable or readable",
   "conflict raise|reset     latch or clear a conflict-monitor fault",
   "state                    show the current state",
+  "emit-breach [approach] [class]  publish a breach; random when omitted",
+  "vision stop|start        take the vision node offline or back online",
   "help                     this list",
   "quit                     go offline and exit",
 ];
@@ -28,17 +37,50 @@ export function summary(s: ControllerState): string {
   return `${s.level} NS ${s.signals.NS} EW ${s.signals.EW} flood ${s.flood}${s.fault ? " FAULT" : ""} override ${ov}`;
 }
 
-/** One REPL line; returns the text to print, if any. */
-export function runCommand(line: string, ctx: ReplCtx): string | undefined {
-  const [cmd = "", ...args] = line.trim().split(/\s+/);
+function visionCommand(
+  cmd: string,
+  args: string[],
+  v: VisionRole | undefined,
+): string {
+  if (cmd === "emit-breach") {
+    const [a, kRaw] = args;
+    const k = kRaw?.toLowerCase();
+    const approach =
+      a === undefined ? undefined : Approach.safeParse(a.toUpperCase());
+    if (
+      args.length > 2 ||
+      approach?.success === false ||
+      (k !== undefined && !CLASS_IDS.includes(k))
+    )
+      return `usage: emit-breach [N|S|E|W] [${CLASS_IDS.join("|")}]`;
+    if (!v) return "vision role not running";
+    const b = v.emitBreach(approach?.data, k);
+    return b
+      ? `breach ${b.approach} ${b.vehicleClass}`
+      : "vision is offline; nothing sent";
+  }
   const [arg] = args;
-  const c = ctx.controller;
-  const t = ctx.now();
-  const done = () => summary(c.state());
+  if (args.length !== 1 || (arg !== "stop" && arg !== "start"))
+    return "usage: vision stop|start";
+  if (!v) return "vision role not running";
+  if (arg === "stop") {
+    if (!v.running()) return "vision already stopped";
+    void v.stop();
+    return "vision going offline";
+  }
+  if (v.running()) return "vision already running";
+  v.start();
+  return "vision reconnecting";
+}
 
+function controllerCommand(
+  cmd: string,
+  arg: string | undefined,
+  c: Controller,
+  t: number,
+): string {
+  const done = () => summary(c.state());
   switch (cmd) {
-    case "":
-      return undefined;
     case "level": {
       if (arg === "auto") {
         c.setForcedLevel(undefined, t);
@@ -67,8 +109,28 @@ export function runCommand(line: string, ctx: ReplCtx): string | undefined {
         return done();
       }
       return "usage: conflict raise|reset";
-    case "state":
+    default: // state
       return done();
+  }
+}
+
+/** One REPL line; returns the text to print, if any. */
+export function runCommand(line: string, ctx: ReplCtx): string | undefined {
+  const [cmd = "", ...args] = line.trim().split(/\s+/);
+  switch (cmd) {
+    case "":
+      return undefined;
+    case "level":
+    case "flood":
+    case "sensor":
+    case "conflict":
+    case "state":
+      return ctx.controller
+        ? controllerCommand(cmd, args[0], ctx.controller, ctx.now())
+        : "controller role not running";
+    case "emit-breach":
+    case "vision":
+      return visionCommand(cmd, args, ctx.vision);
     case "help":
       return [
         ...HELP,

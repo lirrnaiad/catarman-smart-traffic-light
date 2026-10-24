@@ -16,3 +16,6 @@
 - source_spec: `_bmad-output/initiative-catarman-smart-traffic-light/epic-m1-midterm-prototype/story-12-history-vehicle-counts-and-the-counts-slice-plan.md`
   summary: AD-5's redelivery rule ("affectedRows is 0") never fires, because mysql2 connects with CLIENT_FOUND_ROWS; story 15's breach insert needs the same insertId-based check that story 12 uses, or the spine's wording should change.
   evidence: The story 12 implementer probed this against MySQL. `vehicle_count.insert.ts` returns `insertId > 0`, and its redelivery test runs against the real database.
+- source_spec: `_bmad-output/initiative-catarman-smart-traffic-light/epic-m1-midterm-prototype/story-15-breach-ingest-and-breach-log-plan.md`
+  summary: A transient DB error during breach ingest loses that breach for good, because the 1.3 dispatcher acks QoS 1 messages even when a handler fails.
+  evidence: `vision-breach.persist.ts` logs `not stored` and returns, like `vision-counts.persist.ts`; a breach is enforcement evidence, so this loss weighs more than a lost count.

@@ -21,6 +21,10 @@ const state = {
 };
 const STATE_TOPIC = "stl/int-01/controller/state";
 
+function withoutV<T extends { v: number }>({ v: _v, ...rest }: T) {
+  return rest;
+}
+
 function deps(handlers: Handler[]): DispatchDeps {
   const hub = createHub({ validate: "throw" });
   const link = createLink(hub);
@@ -198,6 +202,28 @@ describe("dispatch through the link handlers", () => {
     );
     expect(d.link.get().vision.status).toBe("OFFLINE");
   });
+
+  it.each([
+    { retained: false, expected: { ...withoutV(state), remainingS: 7 } },
+    { retained: true, expected: withoutV(state) },
+  ])(
+    "controller/state (retained $retained) writes the state slice",
+    async ({ retained, expected }) => {
+      const T = 1_800_000_000_000;
+      vi.useFakeTimers({ now: T, toFake: ["Date"] });
+      try {
+        const d = deps(registry);
+        const raw = JSON.stringify({ ...state, remainingS: 7 });
+        await dispatch(STATE_TOPIC, raw, retained, d);
+        expect(d.hub.getSlice("state")).toEqual({
+          ...expected,
+          receivedAt: new Date(T).toISOString(),
+        });
+      } finally {
+        vi.useRealTimers();
+      }
+    },
+  );
 
   it("ignores an empty payload (a cleared retained topic) without a warning", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});

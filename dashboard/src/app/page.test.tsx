@@ -1,9 +1,18 @@
 import type { LinkSlice } from "@stl/contracts";
 import { render, screen, within } from "@testing-library/react";
-import { expect, it } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { simLink, state } from "../components/shell/fixtures.ts";
 import { LiveTestProvider } from "../lib/live/live-test-provider.tsx";
 import LivePage from "./page.tsx";
+
+// The Latest breach card loads over REST; these tests cover the controller panels, so it never answers.
+beforeEach(() => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(() => new Promise(() => {})),
+  );
+});
+afterEach(() => vi.unstubAllGlobals());
 
 it("mounts the three left-column panels", () => {
   render(
@@ -22,7 +31,10 @@ it("state null: No data yet in every panel", () => {
       <LivePage />
     </LiveTestProvider>,
   );
-  expect(screen.getAllByText("No data yet")).toHaveLength(3);
+  for (const name of ["Signal state", "Degradation level", "Flood sensor"])
+    expect(
+      within(screen.getByRole("region", { name })).getByText("No data yet"),
+    ).toBeTruthy();
 });
 
 it("controller STALE: last values kept, StaleBadge on all three panels, no glow", () => {

@@ -1,3 +1,4 @@
+import { LatestBreach } from "../components/breach/latest-breach.tsx";
 import { FloodFaultPanel } from "../components/live/flood-fault-panel.tsx";
 import { LadderPanel } from "../components/live/ladder-panel.tsx";
 import { SignalStatePanel } from "../components/live/signal-state-panel.tsx";
@@ -16,7 +17,7 @@ export default function LivePage() {
       </div>
       <div className="flex min-h-0 flex-col gap-panel-gap">
         {/* entry 13: vehicle counts this hour */}
-        {/* entry 16: latest breach */}
+        <LatestBreach />
         {/* entry 10: MDRRMO override panel */}
       </div>
     </div>

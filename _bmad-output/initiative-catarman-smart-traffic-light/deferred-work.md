@@ -10,3 +10,9 @@
 - source_spec: `_bmad-output/initiative-catarman-smart-traffic-light/epic-m1-midterm-prototype/story-2-backend-core-http-database-and-sse-hub-plan.md`
   summary: Test the `DASHBOARD_ORIGINS` parse default and trimming in `backend/src/config.ts`.
   evidence: The tests always load `.env.test`'s exact, space-free value, so changing the default or removing `.trim()` passes. It needs the `Env` schema exported or a mocked-env re-import.
+- source_spec: `_bmad-output/initiative-catarman-smart-traffic-light/epic-m1-midterm-prototype/story-12-history-vehicle-counts-and-the-counts-slice-plan.md`
+  summary: A persist handler that hits a transient DB error loses that QoS 1 message, because dispatch acks it anyway and handlers swallow errors per message.
+  evidence: `backend/src/mqtt/client.ts` runs `void dispatch(...)`; `vision-counts.persist.ts` logs and returns on an insert failure. This comes from the 1.3 ingest design and affects every persist handler (counts, breaches).
+- source_spec: `_bmad-output/initiative-catarman-smart-traffic-light/epic-m1-midterm-prototype/story-12-history-vehicle-counts-and-the-counts-slice-plan.md`
+  summary: AD-5's redelivery rule ("affectedRows is 0") never fires, because mysql2 connects with CLIENT_FOUND_ROWS; story 15's breach insert needs the same insertId-based check that story 12 uses, or the spine's wording should change.
+  evidence: The story 12 implementer probed this against MySQL. `vehicle_count.insert.ts` returns `insertId > 0`, and its redelivery test runs against the real database.

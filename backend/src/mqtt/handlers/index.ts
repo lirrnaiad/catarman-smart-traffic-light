@@ -6,6 +6,7 @@ import type { Hub } from "../../sse/hub.ts";
 import type { Publisher } from "../publisher.ts";
 import controllerStateLink from "./controller-state.link.ts";
 import controllerStatusLink from "./controller-status.link.ts";
+import visionBreachPersist from "./vision-breach.persist.ts";
 import visionCountsPersist from "./vision-counts.persist.ts";
 import visionHeartbeatLink from "./vision-heartbeat.link.ts";
 import visionStatusLink from "./vision-status.link.ts";
@@ -35,6 +36,7 @@ export type Handler = { [T in TopicName]: HandlerFor<T> }[TopicName];
 export const handlers: Handler[] = [
   controllerStateLink,
   controllerStatusLink,
+  visionBreachPersist,
   visionCountsPersist,
   visionHeartbeatLink,
   visionStatusLink,

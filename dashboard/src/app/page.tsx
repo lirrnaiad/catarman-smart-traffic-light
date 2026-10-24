@@ -1,6 +1,7 @@
 import { FloodFaultPanel } from "../components/live/flood-fault-panel.tsx";
 import { LadderPanel } from "../components/live/ladder-panel.tsx";
 import { SignalStatePanel } from "../components/live/signal-state-panel.tsx";
+import { OverridePanel } from "../components/override/override-panel.tsx";
 
 /** `/`: the 432 · 960 · 432 grid (DESIGN.md → Layout & Spacing). Only mount lines here. */
 export default function LivePage() {
@@ -17,7 +18,7 @@ export default function LivePage() {
       <div className="flex min-h-0 flex-col gap-panel-gap">
         {/* entry 13: vehicle counts this hour */}
         {/* entry 16: latest breach */}
-        {/* entry 10: MDRRMO override panel */}
+        <OverridePanel />
       </div>
     </div>
   );

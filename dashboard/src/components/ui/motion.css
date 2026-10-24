@@ -1,0 +1,68 @@
+/*
+ * M1's only animations (EXPERIENCE.md → Motion). Everything, keyframes included,
+ * sits inside the media query, so under `reduce` nothing runs: a flashing lens
+ * stays steadily lit, lit lenses stop breathing, and the loader head stays unlit.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .lamp-glow {
+    animation: lamp-glow 3.2s ease-in-out infinite;
+  }
+  .lamp-flash {
+    animation: amber-flash 1s linear infinite;
+  }
+  /* The loader's lit layers start at opacity 0; the cycle lights each for its first second. */
+  .loader-head [data-lens] {
+    animation: loader-seq 3s linear infinite;
+  }
+  .loader-head [data-lens="YELLOW"] {
+    animation-delay: 1s;
+  }
+  .loader-head [data-lens="GREEN"] {
+    animation-delay: 2s;
+  }
+  .loader-text {
+    animation: loader-text 1.5s ease-in-out infinite;
+  }
+
+  @keyframes lamp-glow {
+    0%,
+    100% {
+      filter: brightness(1);
+    }
+    50% {
+      filter: brightness(1.14);
+    }
+  }
+  @keyframes amber-flash {
+    0%,
+    46% {
+      opacity: 1;
+    }
+    52%,
+    96% {
+      opacity: 0.04;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  @keyframes loader-seq {
+    0%,
+    30% {
+      opacity: 1;
+    }
+    33.4%,
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes loader-text {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.55;
+    }
+  }
+}

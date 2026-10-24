@@ -4,6 +4,7 @@ import type { Publisher } from "../mqtt/publisher.ts";
 import type { Link } from "../services/link.ts";
 import type { Hub } from "../sse/hub.ts";
 import linkWatchdog from "./link-watchdog.ts";
+import overrideTimeouts from "./override-timeouts.ts";
 
 /** Core dependencies only (AD-16). `link` is for the link watchdog; CAP jobs read `getLink`. */
 export type JobCtx = {
@@ -20,4 +21,4 @@ export type Job = {
 };
 
 /** Every startup task or timer. One line per file, alphabetical (AD-14). */
-export const jobs: Job[] = [linkWatchdog];
+export const jobs: Job[] = [linkWatchdog, overrideTimeouts];

@@ -10,3 +10,7 @@
 - source_spec: `_bmad-output/initiative-catarman-smart-traffic-light/epic-m1-midterm-prototype/story-2-backend-core-http-database-and-sse-hub-plan.md`
   summary: Test the `DASHBOARD_ORIGINS` parse default and trimming in `backend/src/config.ts`.
   evidence: The tests always load `.env.test`'s exact, space-free value, so changing the default or removing `.trim()` passes. It needs the `Env` schema exported or a mocked-env re-import.
+
+- source_spec: `_bmad-output/initiative-catarman-smart-traffic-light/epic-m1-midterm-prototype/story-9-override-lifecycle-and-override-log-plan.md`
+  summary: The backend publisher can leave an override command in flight when the broker drops between send and PUBACK, so POST /api/overrides hangs until reconnect and MQTT.js resends the command late, or the row is marked REJECTED while the controller applies it.
+  evidence: medium, timing unverified. `backend/src/mqtt/publisher.ts` checks `client.connected` only before `publishAsync` (backend core, 1.3), and the backend connects with `clean: false`, so in-flight QoS 1 is resent on reconnect, the very late-apply AD-5 guards against. Story 9's review (finding 1). Settle it by dropping the broker mid-publish in a test, then bounding the publish (a timeout plus discarding the in-flight packet) in the publisher.

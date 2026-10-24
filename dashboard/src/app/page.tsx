@@ -1,4 +1,6 @@
+import { CountsPanel } from "../components/live/counts-panel.tsx";
 import { FloodFaultPanel } from "../components/live/flood-fault-panel.tsx";
+import { IntersectionMap } from "../components/live/intersection-map.tsx";
 import { LadderPanel } from "../components/live/ladder-panel.tsx";
 import { SignalStatePanel } from "../components/live/signal-state-panel.tsx";
 
@@ -12,10 +14,10 @@ export default function LivePage() {
         <FloodFaultPanel />
       </div>
       <div className="flex min-h-0 flex-col gap-panel-gap">
-        {/* entry 13: intersection map */}
+        <IntersectionMap />
       </div>
       <div className="flex min-h-0 flex-col gap-panel-gap">
-        {/* entry 13: vehicle counts this hour */}
+        <CountsPanel />
         {/* entry 16: latest breach */}
         {/* entry 10: MDRRMO override panel */}
       </div>

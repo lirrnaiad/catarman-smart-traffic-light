@@ -8,6 +8,7 @@ import controllerStateLink from "./controller-state.link.ts";
 import controllerStateSlice from "./controller-state.slice.ts";
 import controllerStatusLink from "./controller-status.link.ts";
 import visionCountsPersist from "./vision-counts.persist.ts";
+import visionDemandSlice from "./vision-demand.slice.ts";
 import visionHeartbeatLink from "./vision-heartbeat.link.ts";
 import visionStatusLink from "./vision-status.link.ts";
 
@@ -38,6 +39,7 @@ export const handlers: Handler[] = [
   controllerStateSlice,
   controllerStatusLink,
   visionCountsPersist,
+  visionDemandSlice,
   visionHeartbeatLink,
   visionStatusLink,
 ];

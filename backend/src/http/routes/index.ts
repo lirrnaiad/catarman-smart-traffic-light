@@ -2,6 +2,7 @@ import type { Router } from "express";
 import type { AppDeps } from "../../app.ts";
 import health from "./health.ts";
 import overrides from "./overrides.ts";
+import stateChanges from "./state-changes.ts";
 import stream from "./stream.ts";
 import vehicleClasses from "./vehicle-classes.ts";
 
@@ -9,6 +10,7 @@ import vehicleClasses from "./vehicle-classes.ts";
 export const routes: Array<(deps: AppDeps) => Router> = [
   health,
   overrides,
+  stateChanges,
   stream,
   vehicleClasses,
 ];

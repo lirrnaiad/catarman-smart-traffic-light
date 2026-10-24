@@ -3,6 +3,7 @@ export * from "./api/common.ts";
 export * from "./api/counts.ts";
 export * from "./api/overrides.ts";
 export * from "./api/speed-alerts.ts";
+export * from "./api/state-changes.ts";
 export * from "./api/stream/index.ts";
 export * from "./enums.ts";
 export * from "./mqtt/controller-override-ack.ts";

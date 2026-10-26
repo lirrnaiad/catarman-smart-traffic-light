@@ -4,6 +4,7 @@ import { config } from "./config.ts";
 import { startControllerRole } from "./controller-role.ts";
 import { type ReplCtx, runScenario, startRepl } from "./repl.ts";
 import { scenarios } from "./scenarios/index.ts";
+import { startVisionRole } from "./vision-role.ts";
 
 function fatal(message: string): never {
   console.error(`[sim] ${message}`);
@@ -27,12 +28,6 @@ function cliArgs() {
 const args = cliArgs();
 if (!["controller", "vision", "both"].includes(args.roles))
   fatal(`--roles must be controller, vision or both (got ${args.roles})`);
-// shortcut: the vision role lands in entry 5; until then both = controller only.
-if (args.roles === "vision") fatal("the vision role is not available yet");
-if (args.roles === "both")
-  console.warn(
-    "[sim] the vision role is not available yet; starting the controller only",
-  );
 const scenario =
   args.scenario === undefined
     ? undefined
@@ -40,18 +35,27 @@ const scenario =
       ? scenarios[args.scenario]
       : fatal(`unknown scenario: ${args.scenario}`);
 
-const role = startControllerRole({ config, force: args.force, behaviors });
+const { force } = args;
+const ctrl =
+  args.roles === "vision"
+    ? undefined
+    : startControllerRole({ config, force, behaviors });
+const vision =
+  args.roles === "controller"
+    ? undefined
+    : startVisionRole({ config, force, controller: ctrl?.controller });
 
 let stopping = false;
 async function quit() {
   if (stopping) process.exit(1); // a second Ctrl+C skips a stuck shutdown
   stopping = true;
-  await role.stop();
+  await Promise.all([ctrl?.stop(), vision?.stop()]);
   process.exit(0);
 }
 
 const ctx: ReplCtx = {
-  controller: role.controller,
+  controller: ctrl?.controller,
+  vision,
   behaviors,
   now: () => Date.now(),
   quit: () => void quit(),
@@ -59,5 +63,6 @@ const ctx: ReplCtx = {
 process.on("SIGINT", ctx.quit);
 process.on("SIGTERM", ctx.quit);
 
+// The REPL stays open during a scenario at a terminal; without a TTY its close would quit before any step.
 if (scenario) void runScenario(scenario, ctx);
-else startRepl(ctx);
+if (!scenario || process.stdin.isTTY) startRepl(ctx);

@@ -3,7 +3,7 @@ title: 'Refactor sweep'
 type: 'refactor'
 ticket: '17'
 created: '2026-10-26'
-status: 'built'
+status: done
 baseline_revision: 'f99b906800a9bc7396e11e292ce203ffe4d1311d'
 route: 'full'
 route_source: 'auto'
@@ -83,7 +83,7 @@ Behavior changes go out to a new story, not into this one.
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] Chore PR first (`chore/contracts-slice-names`): `contracts/src/api/stream/index.ts` and `contracts/test/stream.test.ts`. Run `npm run contracts:schema` and `git diff --exit-code contracts/schema`, then `npm test -w contracts`. One commit, naming Sean's AD-4 waiver. Merge before the rest.
+- [x] Chore PR first (`chore/contracts-slice-names`, merged as #29 before the sweep, #30): `contracts/src/api/stream/index.ts` and `contracts/test/stream.test.ts`. Run `npm run contracts:schema` and `git diff --exit-code contracts/schema`, then `npm test -w contracts`. One commit, naming Sean's AD-4 waiver. Merge before the rest.
 - [x] `backend/src/sse/hub.ts`, `dashboard/src/lib/live/hooks.ts` -- import the slice list and types from contracts -- one declaration (F7).
 - [x] `dashboard/src/lib/time.ts`, `time.test.ts`, `traffic-peaks.tsx` -- move `dayLabel` into `manilaDayLabel` -- one formatting path (F8).
 - [x] `backend/test/db-seed-cli.test.ts` -- the two seed CLI rows of the matrix.
@@ -108,7 +108,7 @@ Behavior changes go out to a new story, not into this one.
 
 ## Implementation Notes
 
-- **Chore (uncommitted):** only `contracts/src/api/stream/index.ts` and `contracts/test/stream.test.ts` change, so the orchestrator can commit them alone as `chore/contracts-slice-names`. With that commit on `main` by itself, `hub.ts` and `hooks.ts` still typecheck, because neither imported the new names before. The commit and its PR, naming Sean's AD-4 waiver, are still to do; that's why the first task stays unticked.
+- **Chore:** only `contracts/src/api/stream/index.ts` and `contracts/test/stream.test.ts` change, so the orchestrator committed them alone as `chore/contracts-slice-names` (`35b2941`), naming Sean's AD-4 waiver. It merged as #29 before the sweep (#30). With that commit on `main` by itself, `hub.ts` and `hooks.ts` still typecheck, because neither imported the new names before.
 - **Contracts:** `sliceNames` (`as const satisfies readonly StreamName[]`), `SliceName` and `OccurrenceName` sit right after `StreamData`. The `streamSchemas` comment now points at `sliceNames`. In `stream.test.ts`, one new test pins `sliceNames` to `["link","state","counts","demand"]` and checks they are the leading keys of `streamSchemas`. The old "%s is nullable" test now iterates `sliceNames` without `link` instead of its own list, so there's no third copy of the slice names.
 - **hub.ts:** imports `sliceNames` and the two types, and re-exports the types (`export type { OccurrenceName, SliceName } from "@stl/contracts"`) so the exported names stay. `attach` loops over `sliceNames`.
 - **hooks.ts:** re-exports `sliceNames as SLICE_NAMES` plus the two types, so `live-provider.tsx` is unchanged. `StreamName` is no longer imported.

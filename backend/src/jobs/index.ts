@@ -3,6 +3,7 @@ import type { Pool } from "../db/pool.ts";
 import type { Publisher } from "../mqtt/publisher.ts";
 import type { Link } from "../services/link.ts";
 import type { Hub } from "../sse/hub.ts";
+import countsSlice from "./counts-slice.ts";
 import linkWatchdog from "./link-watchdog.ts";
 import overrideTimeouts from "./override-timeouts.ts";
 import stateDedupPreload from "./state-dedup-preload.ts";
@@ -22,4 +23,9 @@ export type Job = {
 };
 
 /** Every startup task or timer. One line per file, alphabetical (AD-14). */
-export const jobs: Job[] = [linkWatchdog, overrideTimeouts, stateDedupPreload];
+export const jobs: Job[] = [
+  countsSlice,
+  linkWatchdog,
+  overrideTimeouts,
+  stateDedupPreload,
+];

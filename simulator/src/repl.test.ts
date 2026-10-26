@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createController } from "./controller-role.ts";
 import { type ReplCtx, runCommand, runScenario } from "./repl.ts";
+import { demo } from "./scenarios/demo.ts";
+import { scenarios } from "./scenarios/index.ts";
+import type { VisionRole } from "./vision-role.ts";
 
 function ctx(over: Partial<ReplCtx> = {}): ReplCtx {
   let t = 0;
@@ -42,9 +45,6 @@ describe("runCommand", () => {
     expect(runCommand("flood maybe", c)).toBe("usage: flood on|off");
     expect(runCommand("sensor", c)).toBe("usage: sensor fault|ok");
     expect(runCommand("conflict", c)).toBe("usage: conflict raise|reset");
-    expect(runCommand("emit-breach", c)).toBe(
-      "unknown command: emit-breach (try help)",
-    );
     expect(runCommand("toString", c)).toBe(
       "unknown command: toString (try help)",
     );
@@ -56,6 +56,125 @@ describe("runCommand", () => {
     expect(runCommand("ping a b", c)).toBe("pong");
     expect(ping).toHaveBeenCalledWith(["a", "b"], c);
     expect(runCommand("help", c)).toContain("ping");
+  });
+});
+
+/** A stand-in vision role; emitBreach echoes what it was asked for. */
+function fakeVision(running = true) {
+  let up = running;
+  return {
+    vision: {} as VisionRole["vision"],
+    running: () => up,
+    emitBreach: vi.fn((approach = "N", vehicleClass = "car") => ({
+      approach,
+      vehicleClass,
+    })),
+    stop: vi.fn(async () => {
+      up = false;
+    }),
+    start: vi.fn(() => {
+      up = true;
+    }),
+  } as unknown as VisionRole & {
+    emitBreach: ReturnType<typeof vi.fn>;
+    stop: ReturnType<typeof vi.fn>;
+    start: ReturnType<typeof vi.fn>;
+  };
+}
+
+describe("vision commands", () => {
+  it("emit-breach takes an optional approach and class", () => {
+    const vision = fakeVision();
+    const c = ctx({ vision });
+    expect(runCommand("emit-breach", c)).toBe("breach N car");
+    expect(vision.emitBreach).toHaveBeenLastCalledWith(undefined, undefined);
+    expect(runCommand("emit-breach e", c)).toBe("breach E car");
+    expect(runCommand("emit-breach E tricycle", c)).toBe("breach E tricycle");
+    expect(runCommand("emit-breach E Tricycle", c)).toBe("breach E tricycle");
+    expect(vision.emitBreach).toHaveBeenLastCalledWith("E", "tricycle");
+  });
+
+  it("answers a bad approach or unknown class with usage and sends nothing", () => {
+    const vision = fakeVision();
+    const c = ctx({ vision });
+    for (const line of [
+      "emit-breach X",
+      "emit-breach E bus",
+      "emit-breach E car extra",
+    ])
+      expect(runCommand(line, c)).toMatch(
+        /^usage: emit-breach \[N\|S\|E\|W\] \[car\|/,
+      );
+    expect(vision.emitBreach).not.toHaveBeenCalled();
+  });
+
+  it("says when the vision is offline and nothing went out", () => {
+    const vision = fakeVision();
+    vision.emitBreach.mockReturnValue(undefined);
+    expect(runCommand("emit-breach", ctx({ vision }))).toBe(
+      "vision is offline; nothing sent",
+    );
+  });
+
+  it("vision stop|start, with a message when already in that state", () => {
+    const vision = fakeVision();
+    const c = ctx({ vision });
+    expect(runCommand("vision start", c)).toBe("vision already running");
+    expect(runCommand("vision stop", c)).toBe("vision going offline");
+    expect(runCommand("vision stop", c)).toBe("vision already stopped");
+    expect(vision.stop).toHaveBeenCalledOnce();
+    expect(runCommand("vision start", c)).toBe("vision reconnecting");
+    expect(vision.start).toHaveBeenCalledOnce();
+    expect(runCommand("vision", c)).toBe("usage: vision stop|start");
+    expect(runCommand("vision stop extra", c)).toBe("usage: vision stop|start");
+    expect(runCommand("help", c)).toContain("vision stop|start");
+  });
+
+  it("answers the absent role's commands with <role> role not running", () => {
+    const noVision = ctx();
+    expect(runCommand("emit-breach", noVision)).toBe("vision role not running");
+    expect(runCommand("vision stop", noVision)).toBe("vision role not running");
+    const noController = ctx({ controller: undefined, vision: fakeVision() });
+    for (const line of [
+      "state",
+      "level L1",
+      "flood on",
+      "sensor fault",
+      "conflict raise",
+    ])
+      expect(runCommand(line, noController)).toBe(
+        "controller role not running",
+      );
+    expect(runCommand("help", noController)).toContain("quit");
+  });
+});
+
+describe("demo scenario", () => {
+  it("is registered and every line runs without a usage or unknown answer", () => {
+    expect(scenarios.demo).toBe(demo);
+    const c = ctx({ vision: fakeVision() });
+    for (const { line } of demo.steps) {
+      const out = runCommand(line, c) ?? "";
+      expect(out).not.toMatch(/^usage|^unknown|not running/);
+    }
+  });
+
+  it("walks L1 with two breaches, then vision stop, sensor fault and flood on, in order, after 8 s", () => {
+    const lines = demo.steps.map((s) => s.line);
+    const at = (l: string) => lines.indexOf(l);
+    expect(demo.steps[0]?.atS).toBeGreaterThanOrEqual(8);
+    expect(
+      lines.filter((l) => l.startsWith("emit-breach")).length,
+    ).toBeGreaterThanOrEqual(2);
+    const lastBreach = lines.findLastIndex((l) => l.startsWith("emit-breach"));
+    expect(lastBreach).toBeLessThan(at("vision stop"));
+    expect(at("vision stop")).toBeLessThan(at("sensor fault"));
+    expect(at("sensor fault")).toBeLessThan(at("flood on"));
+    // L1 takes up to about 20 s; the first breach comes after it.
+    const firstBreach = demo.steps.find((s) =>
+      s.line.startsWith("emit-breach"),
+    );
+    expect(firstBreach?.atS).toBeGreaterThanOrEqual(20);
   });
 });
 
@@ -78,9 +197,9 @@ describe("runScenario", () => {
       c,
     );
     await vi.advanceTimersByTimeAsync(1000);
-    expect(c.controller.state()).toMatchObject({ level: "L3", fault: false });
+    expect(c.controller?.state()).toMatchObject({ level: "L3", fault: false });
     await vi.advanceTimersByTimeAsync(1000);
-    expect(c.controller.state().fault).toBe(true);
+    expect(c.controller?.state().fault).toBe(true);
     await done;
     vi.restoreAllMocks();
   });

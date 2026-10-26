@@ -207,3 +207,40 @@ export function classColor(
   const i = classes.findIndex((c) => c.id === id);
   return CLASS_TOKENS[i] ?? "class-unknown";
 }
+
+/**
+ * A class label without its trailing aside, for tight headers, and the aside as a footnote
+ * (DESIGN.md → Counts table): "Motorcycle (incl. habal-habal)" gives "Motorcycle" and
+ * "Motorcycle includes habal-habal". A label with no aside has no note.
+ */
+export function classLabelParts(label: string): {
+  short: string;
+  note: string | null;
+} {
+  const m = /^(.+?)\s*\((.+)\)$/.exec(label);
+  if (!m) return { short: label, note: null };
+  const [, short, aside] = m;
+  const incl = /^incl\.\s*/i;
+  return {
+    short,
+    note: `${short} ${incl.test(aside) ? aside.replace(incl, "includes ") : `(${aside})`}`,
+  };
+}
+
+/** Where a class word may break in a narrow header, as in the live-status mockup ("Motor-cycle*"). */
+const WORD_BREAKS: Record<string, number> = {
+  motorcycle: 5,
+  tricycle: 3,
+  jeepney: 4,
+};
+
+/**
+ * Puts a soft hyphen at each known break, so a header that can't fit a word breaks it there
+ * with a hyphen. Unlike `hyphens: auto`, this needs no hyphenation dictionary in the browser.
+ */
+export function softHyphenate(text: string): string {
+  return text.replace(/\p{L}+/gu, (word) => {
+    const at = WORD_BREAKS[word.toLowerCase()];
+    return at ? `${word.slice(0, at)}­${word.slice(at)}` : word;
+  });
+}

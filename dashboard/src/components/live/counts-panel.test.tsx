@@ -41,8 +41,11 @@ const view = (c: CountsSlice | undefined, link: LinkSlice = simLink) => (
   </LiveTestProvider>
 );
 
+// Header text without its soft hyphens, which show only when a word breaks.
 const headers = () =>
-  screen.getAllByRole("columnheader").map((h) => h.textContent);
+  screen
+    .getAllByRole("columnheader")
+    .map((h) => h.textContent?.replaceAll("­", ""));
 const row = (a: string) =>
   screen
     .getByRole("rowheader", { name: a })
@@ -63,6 +66,29 @@ it("columns in file order, the total as sent, zero cells dimmed", () => {
   expect(screen.getByText("Hour total")).toBeTruthy();
   expect(screen.getByText("All approaches, all classes")).toBeTruthy();
   expect(screen.getByText("Since 14:00")).toBeTruthy();
+});
+
+it("a label's aside moves to a footnote; the header keeps the full name", () => {
+  classes.result = {
+    classes: [
+      ...loaded.classes,
+      { id: "motorcycle", label: "Motorcycle (incl. habal-habal)", pcu: 0.25 },
+    ],
+    error: null,
+  };
+  render(view(counts("2026-10-23T06:00:00.000Z")));
+  expect(headers()).toEqual(["Appr.", "Car", "Tricycle", "Motorcycle*"]);
+  expect(
+    screen.getByRole("columnheader", {
+      name: "Motorcycle (incl. habal-habal)",
+    }).textContent,
+  ).toBe("Motor­cycle*");
+  expect(screen.getByText("* Motorcycle includes habal-habal")).toBeTruthy();
+});
+
+it("no aside, no footnote", () => {
+  render(view(counts("2026-10-23T06:00:00.000Z")));
+  expect(screen.queryByText(/^\*/)).toBeNull();
 });
 
 it("an unknown class gets an extra raw column after the file's", () => {

@@ -43,7 +43,7 @@ it("state null: No data yet in every panel and the Current plate", () => {
     ).toBeTruthy();
 });
 
-it("controller STALE: last values kept, StaleBadge on all four panels, no glow", () => {
+it("controller STALE: last values kept, StaleBadge on the three left panels, the map and the override panel, no glow", () => {
   const link: LinkSlice = {
     ...simLink,
     controller: { ...simLink.controller, status: "STALE" },
@@ -58,7 +58,7 @@ it("controller STALE: last values kept, StaleBadge on all four panels, no glow",
       <LivePage />
     </LiveTestProvider>,
   );
-  expect(screen.getAllByText("STALE · 14:32:08")).toHaveLength(4);
+  expect(screen.getAllByText("STALE · 14:32:08")).toHaveLength(5);
   for (const tag of ["Live · INT-01", "Degrades downward", "Immersion probe"])
     expect(screen.queryByText(tag)).toBeNull();
   for (const name of ["Signal state", "Degradation level", "Flood sensor"])
@@ -67,11 +67,11 @@ it("controller STALE: last values kept, StaleBadge on all four panels, no glow",
         "STALE · 14:32:08",
       ),
     ).toBeTruthy();
-  expect(screen.getByText("Green")).toBeTruthy();
+  expect(screen.getAllByText("Green")).toHaveLength(3);
   expect(screen.getByText("FAULT · Conflict monitor")).toBeTruthy();
   const lit = [
     ...container.querySelectorAll<HTMLElement>("[data-lens]"),
   ].filter((l) => l.style.opacity === "1");
-  expect(lit).toHaveLength(2);
+  expect(lit).toHaveLength(6);
   for (const l of lit) expect(l.className).not.toMatch(/\blamp-glow\b/);
 });

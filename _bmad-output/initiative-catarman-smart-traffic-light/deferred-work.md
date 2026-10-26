@@ -22,3 +22,9 @@
 - source_spec: `_bmad-output/initiative-catarman-smart-traffic-light/epic-m1-midterm-prototype/story-15-breach-ingest-and-breach-log-plan.md`
   summary: A transient DB error during breach ingest loses that breach for good, because the 1.3 dispatcher acks QoS 1 messages even when a handler fails.
   evidence: `vision-breach.persist.ts` logs `not stored` and returns, like `vision-counts.persist.ts`; a breach is enforcement evidence, so this loss weighs more than a lost count.
+- source_plan: `_bmad-output/initiative-catarman-smart-traffic-light/plan-live-layout-overflow.md`
+  summary: When the right column runs out of room, the counts table clips its bottom rows (E, W) with no visible sign, while the Hour total still shows the full sum.
+  evidence: `counts-panel.tsx` wraps the table in `min-h-0 flex-1 overflow-hidden`. Rows measured 35 px against a 30 px minimum in every state at 1920×1080 on Linux fonts, which is about 20 px of slack. A taller font on the Windows demo laptop (Bahnschrift), or a raw rejection code long enough to wrap the notice, could use it up. Check on the demo laptop. If it clips, enforce a minimum or shorten the labels.
+- source_plan: `_bmad-output/initiative-catarman-smart-traffic-light/plan-live-layout-overflow.md`
+  summary: DESIGN.md still says the right column's last panel (MDRRMO override) fills, and that count rows sit 5 px apart. Since 2026-10-26 the counts panel flexes, the override panel keeps its content height, and Pending shows in the button's label place.
+  evidence: DESIGN.md Layout & Spacing ("the last panel in a side column flexes to fill", "MDRRMO override (fills…)") and Components (counts table, 5px spacing), against `counts-panel.tsx` and `override-panel.tsx` after the fix. Record the user's option-A decision through `bmad-ux`, so a later change built from DESIGN.md doesn't restore the old layout.

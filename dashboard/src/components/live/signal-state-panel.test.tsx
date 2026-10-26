@@ -26,6 +26,14 @@ function litLenses(name: RegExp): string[] {
     .map((l) => l.dataset.lens ?? "");
 }
 
+it("other aspects keep the 42px headline: no fitted size, free to wrap", () => {
+  render(view(state("GREEN", "RED")));
+  for (const label of [screen.getByText("Green"), screen.getByText("Red")]) {
+    expect(label.className).not.toContain("whitespace-nowrap");
+    expect(label.getAttribute("style") ?? "").not.toMatch(/font-size/);
+  }
+});
+
 it("cycle: NS green then yellow, EW red", () => {
   const { rerender } = render(view(state("GREEN", "RED")));
   expect(litLenses(/^Phase NS/)).toEqual(["GREEN"]);
@@ -53,6 +61,11 @@ it("labels the cards and their heads", () => {
 it("flashing: both cards read Flashing amber", () => {
   render(view(state("FLASHING_AMBER", "FLASHING_AMBER")));
   expect(screen.getAllByText("Flashing amber")).toHaveLength(2);
+  // One line, scaled to the card: on two it pushes the fault row off the artboard.
+  for (const label of screen.getAllByText("Flashing amber")) {
+    expect(label.className).toContain("whitespace-nowrap");
+    expect(label.getAttribute("style")).toMatch(/font-size: min\(42px/);
+  }
   expect(litLenses(/^Phase NS/)).toEqual(["YELLOW"]);
   expect(litLenses(/^Phase EW/)).toEqual(["YELLOW"]);
 });

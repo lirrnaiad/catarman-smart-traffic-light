@@ -37,7 +37,7 @@ export function FloodFaultPanel() {
                   key={f}
                   data-flood={f}
                   data-on={on || undefined}
-                  className={`${stencil} grid h-[46px] place-items-center rounded-md text-label-lg ${
+                  className={`${stencil} grid h-[42px] place-items-center rounded-md text-label-lg ${
                     on
                       ? "text-text-inverse shadow-[0_3px_0_var(--color-edge-dark)]"
                       : "text-text-3"
@@ -54,7 +54,7 @@ export function FloodFaultPanel() {
           </div>
           {state.flood === "WET" && (
             <p
-              className={`${stencil} mx-[2px] mt-[6px] text-caption text-text-2`}
+              className={`${stencil} mx-[2px] mt-[4px] text-caption text-text-2`}
             >
               Wet · immersion seen, debounce running
             </p>
@@ -72,7 +72,7 @@ function FaultRow({ fault }: { fault: boolean }) {
   const { label, token } = faultVisual(fault);
   return (
     <div
-      className={`${well} ${stencil} mt-[8px] flex items-center gap-[12px] px-[12px] py-[7px]`}
+      className={`${well} ${stencil} mt-[8px] flex items-center gap-[12px] px-[12px] py-[5px]`}
     >
       <i
         aria-hidden="true"

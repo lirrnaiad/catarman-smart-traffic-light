@@ -166,6 +166,11 @@ it("corridor applied: Pending and all disabled, then enabled; Current follows st
   expect(button(/corridor — NS/).textContent).toContain(
     "Pending · waiting for controller",
   );
+  // Pending reads in the label's place, so the panel doesn't grow; the label stays in the name.
+  expect(
+    within(button(/corridor — NS/)).getByText("Evacuation corridor — NS")
+      .className,
+  ).toContain("sr-only");
   expect(button(/corridor — EW/).textContent).not.toContain("Pending");
   expect(
     buttons().every((b) => b.getAttribute("aria-disabled") === "true"),
@@ -283,6 +288,20 @@ it("conflict: SSE REJECTED CONFLICT_FAULT shows its label; an unknown code shows
   expect(screen.queryByText(/Conflict fault/)).toBeNull();
   emit(cmd({ commandId: OTHER, status: "REJECTED", reason: "SOME_CODE" }));
   expect(within(panel()).getByText("Rejected · SOME_CODE")).toBeTruthy();
+});
+
+it("a notice takes the footer's slot, and the footer returns when it clears", async () => {
+  stub([json(cmd(), 202)]);
+  const { emit } = setup();
+  const footer = "Every override asks for confirmation first";
+  await confirm(/corridor — NS/);
+  emit(cmd({ status: "TIMEOUT" }));
+  expect(
+    within(panel()).getByText("No reply from controller in 5 s"),
+  ).toBeTruthy();
+  expect(within(panel()).queryByText(footer)).toBeNull();
+  emit(cmd({ status: "APPLIED" }));
+  expect(within(panel()).getByText(footer)).toBeTruthy();
 });
 
 it("timeout, then late: the notice shows with buttons enabled, and a later APPLIED clears it", async () => {

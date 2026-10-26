@@ -20,6 +20,8 @@ function PhaseCard({
 }) {
   const { label, token } = aspectVisuals[aspect];
   const name = `Phase ${phaseVisuals[phase].label}`;
+  // On two lines it pushes the fault row off the 1080 artboard: one line, scaled to the card (user, 2026-10-26).
+  const fit = aspect === "FLASHING_AMBER";
   return (
     <div className={`${well} flex items-center gap-[14px] px-[12px] py-[4px]`}>
       <SignalHead
@@ -28,13 +30,16 @@ function PhaseCard({
         stale={stale}
         label={`${name}: ${label.toLowerCase()}`}
       />
-      <div className={stencil}>
+      <div className={`${stencil} min-w-0 flex-1 [container-type:inline-size]`}>
         <div className="text-[15px] font-extrabold tracking-[0.14em] text-text-2">
           {name}
         </div>
         <div
-          className="mt-[3px] mb-[2px] text-headline-aspect"
-          style={{ color: colorVar(token) }}
+          className={`mt-[3px] mb-[2px] text-headline-aspect ${fit ? "whitespace-nowrap" : ""}`}
+          style={{
+            color: colorVar(token),
+            fontSize: fit ? "min(42px, 11.5cqi)" : undefined,
+          }}
         >
           {label}
         </div>

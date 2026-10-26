@@ -1,8 +1,9 @@
 # /// script
-# requires-python = ">=3.10"
+# requires-python = ">=3.11"
 # dependencies = ["pytest>=8.0"]
 # ///
 """Tests for brain.py. Run: uv run -m pytest scripts/tests/test_brain.py"""
+
 import io
 import json
 import sys
@@ -75,6 +76,61 @@ def test_resolve_detail_missing_file_warns_not_fatal(lib, capsys):
     assert "not found" in capsys.readouterr().err
 
 
+def test_resolve_detail_nested_relative_path_reads(lib):
+    (lib.parent / "techniques" / "deep").mkdir()
+    (lib.parent / "techniques" / "deep" / "x.md").write_text("inside", encoding="utf-8")
+    row = {"technique_name": "T", "detail": "techniques/../techniques/deep/x.md"}
+    assert brain.resolve_detail(row, lib.parent) == "inside"
+
+
+@pytest.mark.parametrize("detail", ["../secret.txt", "techniques/../../secret.txt"])
+def test_resolve_detail_refuses_dotdot_escape(tmp_path, capsys, detail):
+    (tmp_path / "secret.txt").write_text("SECRET", encoding="utf-8")
+    catalog = tmp_path / "catalog"
+    (catalog / "techniques").mkdir(parents=True)
+    assert brain.resolve_detail({"technique_name": "T", "detail": detail}, catalog) is None
+    assert f"refused for T: {detail}" in capsys.readouterr().err
+
+
+def test_resolve_detail_refuses_absolute_path(tmp_path, capsys):
+    secret = tmp_path / "secret.txt"
+    secret.write_text("SECRET", encoding="utf-8")
+    catalog = tmp_path / "catalog"
+    catalog.mkdir()
+    assert brain.resolve_detail({"technique_name": "T", "detail": str(secret)}, catalog) is None
+    assert f"refused for T: {secret}" in capsys.readouterr().err
+
+
+def test_resolve_detail_refuses_symlink_out(tmp_path, capsys):
+    (tmp_path / "secret.txt").write_text("SECRET", encoding="utf-8")
+    catalog = tmp_path / "catalog"
+    catalog.mkdir()
+    try:
+        (catalog / "link.md").symlink_to(tmp_path / "secret.txt")
+    except OSError:
+        pytest.skip("symlinks not permitted here")
+    assert brain.resolve_detail({"technique_name": "T", "detail": "link.md"}, catalog) is None
+    assert "refused for T: link.md" in capsys.readouterr().err
+
+
+def test_show_refuses_extra_detail_outside_catalog(tmp_path, capsys):
+    secret = tmp_path / "secret.txt"
+    secret.write_text("SECRET", encoding="utf-8")
+    catalog = tmp_path / "catalog"
+    catalog.mkdir()
+    lib = catalog / "brain-methods.csv"
+    lib.write_text(CSV, encoding="utf-8")
+    extra = tmp_path / "extra.json"
+    extra.write_text(
+        json.dumps([{"category": "custom", "technique_name": "Pwn", "description": "gist", "detail": str(secret)}]),
+        encoding="utf-8",
+    )
+    assert brain.main(["--file", str(lib), "--extra", str(extra), "show", "Pwn"]) == 0
+    captured = capsys.readouterr()
+    assert "SECRET" not in captured.out and "gist" in captured.out
+    assert "refused for Pwn" in captured.err
+
+
 def test_show_inlines_detail(lib, capsys):
     assert brain.main(["--file", str(lib), "show", "Quantum Superposition"]) == 0
     out = capsys.readouterr().out
@@ -113,6 +169,7 @@ def test_list_all_dumps_everything(lib, capsys):
 
 def test_json_output(lib, capsys):
     import json
+
     brain.main(["--file", str(lib), "--json", "categories"])
     data = json.loads(capsys.readouterr().out)
     assert {"category": "wild", "count": 2} in data
@@ -136,6 +193,7 @@ def test_missing_file_returns_2(tmp_path):
 
 
 # --- html selection page ------------------------------------------------
+
 
 def test_html_requires_out(lib, capsys):
     # never dump the catalog to stdout — writing to a file is the whole point
@@ -192,7 +250,9 @@ def test_extra_replaces_shipped_row_by_name(lib, extra, tmp_path, capsys):
     shipped = brain.load(Path(lib))[0]
     overlay = tmp_path / "replace.json"
     overlay.write_text(
-        json.dumps([{"category": shipped["category"], "technique_name": shipped["technique_name"], "description": "RETUNED"}]),
+        json.dumps(
+            [{"category": shipped["category"], "technique_name": shipped["technique_name"], "description": "RETUNED"}]
+        ),
         encoding="utf-8",
     )
     brain.main(["--file", str(lib), "--extra", str(overlay), "list", "--all"])
@@ -203,10 +263,19 @@ def test_extra_replaces_shipped_row_by_name(lib, extra, tmp_path, capsys):
 
 def test_extra_malformed_exits_cleanly(lib, tmp_path, capsys):
     bad = tmp_path / "bad.json"
-    for content in ('{not json', '{"a": 1}', '["not-an-object"]'):
+    for content in ("{not json", '{"a": 1}', '["not-an-object"]'):
         bad.write_text(content, encoding="utf-8")
         assert brain.main(["--file", str(lib), "--extra", str(bad), "categories"]) == 2
         assert "could not read --extra" in capsys.readouterr().err
+
+
+def test_extra_row_missing_a_required_field_exits_2_naming_row_and_field(lib, tmp_path, capsys):
+    overlay = tmp_path / "partial.json"
+    overlay.write_text(json.dumps([{"technique_name": "Half Done", "description": "No category."}]), encoding="utf-8")
+    assert brain.main(["--file", str(lib), "--extra", str(overlay), "list", "--all"]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "Half Done" in captured.err and "category" in captured.err
 
 
 def test_extra_is_first_class_in_html(lib, extra, tmp_path):
@@ -230,6 +299,7 @@ def test_unknown_category_style_uses_fallback_glyph():
 
 # --- console encoding (Windows cp1252) ----------------------------------
 
+
 def _cp1252_stream():
     """A text stream that behaves like a Windows console: cp1252, strict."""
     return io.TextIOWrapper(io.BytesIO(), encoding="cp1252", errors="strict", write_through=True)
@@ -241,7 +311,9 @@ def test_extra_technique_prints_when_stdout_encoding_is_cp1252(lib, tmp_path, mo
     # and the command exits having printed nothing.
     overlay = tmp_path / "extra.json"
     overlay.write_text(
-        json.dumps([{"category": "wild", "technique_name": "Fikir Fırtınası 🌪", "description": "Beyin fırtınası — 日本語"}]),
+        json.dumps(
+            [{"category": "wild", "technique_name": "Fikir Fırtınası 🌪", "description": "Beyin fırtınası — 日本語"}]
+        ),
         encoding="utf-8",
     )
     fake = _cp1252_stream()
@@ -284,6 +356,5 @@ def test_shipped_selector_is_in_sync_with_catalog():
     assert asset.is_file(), "missing assets/brain-selector.html — generate it"
     expected = brain.html_doc(brain.load(brain.DEFAULT_FILE))
     assert asset.read_text(encoding="utf-8") == expected, (
-        "assets/brain-selector.html is stale; regenerate: "
-        "uv run brain.py html --out assets/brain-selector.html"
+        "assets/brain-selector.html is stale; regenerate: uv run brain.py html --out assets/brain-selector.html"
     )

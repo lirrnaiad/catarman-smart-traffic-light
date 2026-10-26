@@ -19,10 +19,14 @@ Conversational always; the user approves every write.
 
 ## On Activation
 
-1. Resolve customization: `uv run {project-root}/_bmad/scripts/resolve_customization.py --skill {skill-root} --project-root {project-root} --key workflow`. On failure, read `{skill-root}/customize.toml` directly and use defaults. Execute `{workflow.activation_steps_prepend}`; treat `{workflow.persistent_facts}` entries as standing context (`file:` = paths/globs to load, others verbatim).
-2. Config: if `{project-root}/_bmad` exists, `uv run {project-root}/_bmad/scripts/resolve_config.py --project-root {project-root}` and read `{user_name}`, `{communication_language}` (use it every turn), `{output_folder}`. Standalone: skip.
+1. Resolve customization: `uv run {project-root}/_bmad/scripts/resolve_customization.py --skill {skill-root} --project-root {project-root} --key workflow`.
+   - Script not found: BMad is not set up here. Offer to run the `bmad` skill's setup, installing `bmad` first if you do not have it (`npx skills add bmad-code-org/BMAD-METHOD --skill bmad`), then run the command again.
+   - Any other failure: read `{skill-root}/customize.toml` directly and use defaults.
+
+   Execute `{workflow.activation_steps_prepend}`; treat `{workflow.persistent_facts}` entries as standing context (`file:` = paths/globs to load, others verbatim).
+2. Config: if `{project-root}/_bmad` exists, `uv run {project-root}/_bmad/scripts/resolve_config.py --project-root {project-root}` and read `{output_folder}`. Standalone: skip.
 3. **Load `references/best-practices.md` and `references/template.md` before anything else.** Every decision below is made against them.
-4. Detect intent and greet `{user_name}`: **setup** (no instruction file in the target carries meaningful content — scaffolding alone, empty headings, a comment, a lone import line, is not meaningful; when unsure, adopt, since adopting a near-empty file costs one small ledger while setting up a meaningful one loses instructions), **adopt** (an instruction file has content but no managed block, whatever its state and whoever wrote it — the migration form of refresh; that file is the baseline and every instruction in it enters the ledger of step 1), **refresh** (a managed block exists), **record** (the user reports a mistake agents made), **audit** (re-verify and prune). A supplied intent that contradicts what detection finds — e.g. `setup` against a file with content — is surfaced and confirmed, never silently obeyed. Fold `{workflow.external_sources}` into the source list. Execute `{workflow.activation_steps_append}`.
+4. Detect intent and greet the user: **setup** (no instruction file in the target carries meaningful content — scaffolding alone, empty headings, a comment, a lone import line, is not meaningful; when unsure, adopt, since adopting a near-empty file costs one small ledger while setting up a meaningful one loses instructions), **adopt** (an instruction file has content but no managed block, whatever its state and whoever wrote it — the migration form of refresh; that file is the baseline and every instruction in it enters the ledger of step 1), **refresh** (a managed block exists), **record** (the user reports a mistake agents made), **audit** (re-verify and prune). A supplied intent that contradicts what detection finds — e.g. `setup` against a file with content — is surfaced and confirmed, never silently obeyed. Fold `{workflow.external_sources}` into the source list. Execute `{workflow.activation_steps_append}`.
 
 ## Setup, Adoption, and Refresh Steps
 
@@ -80,6 +84,8 @@ Never commit.
 - Maintenance: re-run after significant change, `record` the moment an agent gets something wrong, prefer a check over a new line.
 - Rules repeating across their projects, or personal rather than the team's, belong in their global agent config.
 
+Run `{workflow.on_complete}`.
+
 ### Refresh
 
 Same steps, step 1 as a diff. Read the provenance line, re-verify every path and every caveat, and run `git log --diff-filter=DR --name-only` since the recorded SHA against every line — update or remove lines whose evidence is gone. Every proposed removal is a ledger entry shown in step 5, never a silent edit, and handwritten instructions outside the block are treated as in adoption — any proposal touching them enters the ledger. Never re-ask what a prior run settled; the interview shrinks to what changed about how the team works. The block grows only on new evidence.
@@ -102,13 +108,13 @@ If the target has a `project-context.md` from the retired skills, commonly under
 
 Capture one observed agent mistake as it happens — the only admissible source for a pitfall.
 
-Take the task, the mistake, the correction, and its evidence. Check the block for a line already covering it. One occurrence is noted; a recurring or costly mistake earns a line now — an exact invocation under **Running and verifying** when it is a command error, otherwise a pitfall. Write it and show the diff. If it is mechanically preventable, propose the hook, lint rule, or CI check instead.
+Take the task, the mistake, the correction, and its evidence. Check the block for a line already covering it. One occurrence is noted; a recurring or costly mistake earns a line now — an exact invocation under **Running and verifying** when it is a command error, otherwise a pitfall. Write it and show the diff. If it is mechanically preventable, propose the hook, lint rule, or CI check instead. Run `{workflow.on_complete}`.
 
 ## Audit
 
 Re-check every caveat, path-check every file, follow every pointer, and ask of every line whether removing it would change agent behavior. Verify each command claim against the target or script that runs it. Check for contradictions with other instruction files.
 
-Failing lines get fixed, move behind an observable trigger, or become ledger entries: a removal needs one of the four grounds in `best-practices.md`, presented and settled as in step 5 before anything is removed. **A policy or pitfall goes only when the thing it guards is gone or the user retires it; nothing failing lately is not grounds.** Audit ends smaller or equal.
+Failing lines get fixed, move behind an observable trigger, or become ledger entries: a removal needs one of the four grounds in `best-practices.md`, presented and settled as in step 5 before anything is removed. **A policy or pitfall goes only when the thing it guards is gone or the user retires it; nothing failing lately is not grounds.** Audit ends smaller or equal. Run `{workflow.on_complete}`.
 
 ## Children
 

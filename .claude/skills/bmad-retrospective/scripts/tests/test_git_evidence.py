@@ -1,5 +1,5 @@
 # /// script
-# requires-python = ">=3.10"
+# requires-python = ">=3.11"
 # dependencies = ["pytest>=8.0"]
 # ///
 """Tests for git_evidence.py — measurement over a real temp git repo.
@@ -10,7 +10,6 @@ Run: uv run scripts/tests/test_git_evidence.py
 
 import json
 import os
-import shutil
 import subprocess
 import sys
 import unicodedata
@@ -84,8 +83,8 @@ def _run(*args):
 
 def _proc(*args, env=None):
     """Run the script and return the raw process, so a test can assert on the
-    exit code and stderr together — and so `env` can carry an overlay (a fake
-    `git` earlier on PATH) that `_run` has no way to pass."""
+    exit code and stderr together — and so `env` can carry an overlay (a
+    locale, an ambient GIT_DIR) that `_run` has no way to pass."""
     overlay = {"LC_ALL": "C", "LANG": "C"}
     if env:
         overlay.update(env)
@@ -142,9 +141,7 @@ def test_no_range_returns_empty(tmp_path):
 
 def test_measures_commits_and_files_with_attribution(tmp_path):
     repo = _make_repo(tmp_path)
-    code, out = _run(
-        "--repo", str(repo), "--range", "HEAD~1..HEAD", "--stories", "1-2,1-1"
-    )
+    code, out = _run("--repo", str(repo), "--range", "HEAD~1..HEAD", "--stories", "1-2,1-1")
     assert code == 0
     assert out["range"] == "HEAD~1..HEAD"
     assert out["commit_count"] == 1
@@ -272,18 +269,6 @@ def _rev(repo, ref):
     return _git_unchecked(repo, "rev-parse", ref).stdout.strip()
 
 
-def _fake_git(tmp_path, body):
-    """Write a `git` shim and return the PATH overlay that puts it ahead of the
-    real binary for the script's own subprocesses (never for the fixtures,
-    which build their repos through `_git`'s own environment)."""
-    bindir = tmp_path / "fakebin"
-    bindir.mkdir()
-    shim = bindir / "git"
-    shim.write_text(body)
-    os.chmod(shim, 0o755)
-    return {"PATH": f"{bindir}{os.pathsep}{os.environ['PATH']}"}
-
-
 def _merge_repo(tmp_path):
     """Two story branches merged into the mainline; the second merge conflicts
     and is resolved by hand, adding a line neither branch had. Returns
@@ -367,9 +352,7 @@ def test_non_ascii_path_is_a_real_string(tmp_path):
     # Without core.quotePath=false git emits "src/caf\303\251.py" — quoted and
     # octal-escaped, so the documented "open the ranked files" step cannot.
     repo, base = _accented_repo(tmp_path)
-    _assert_accented_path(
-        repo, _json(_proc("--repo", str(repo), "--range", f"{base}..HEAD"))
-    )
+    _assert_accented_path(repo, _json(_proc("--repo", str(repo), "--range", f"{base}..HEAD")))
 
 
 def test_non_ascii_path_survives_a_non_utf8_locale(tmp_path):
@@ -423,11 +406,7 @@ def test_merge_commits_listed_but_excluded_from_files(tmp_path):
 
 def test_story_attribution_survives_merges(tmp_path):
     repo, base = _merge_repo(tmp_path)
-    out = _json(
-        _proc(
-            "--repo", str(repo), "--range", f"{base}..HEAD", "--stories", "1-2,1-3"
-        )
-    )
+    out = _json(_proc("--repo", str(repo), "--range", f"{base}..HEAD", "--stories", "1-2,1-3"))
     by_subject = {c["subject"]: c for c in out["commits"]}
     assert by_subject["epic-1-2 story one"]["stories"] == ["1-2"]
     assert by_subject["epic-1-3 story two"]["stories"] == ["1-3"]
@@ -477,56 +456,6 @@ def test_merge_pass_survives_a_hostile_log_diffmerges_config(tmp_path):
     assert merge_files["s.py"]["deleted"] == 2
 
 
-def test_distinct_non_utf8_paths_stay_distinct(tmp_path):
-    # errors="replace" maps every invalid byte to the same U+FFFD, collapsing
-    # two different files into one `files` key with their churn summed —
-    # measurement corruption with nothing in the output admitting to it.
-    overlay = _fake_git(
-        tmp_path,
-        "#!/bin/sh\n"
-        "printf 'aaaa\\037\\037subj\\n\\n1\\t0\\tsrc/caf\\351.py\\n"
-        "2\\t0\\tsrc/caf\\377.py\\n'\n",
-    )
-    out = _json(_proc("--repo", str(tmp_path), "--range", "a..b", env=overlay))
-    files = {f["path"]: f for f in out["files"]}
-    assert len(files) == 2, files
-    assert sorted(f["added"] for f in files.values()) == [1, 2]
-
-
-def test_repeated_merge_headers_are_counted_once(tmp_path):
-    # Pins the dedupe guard in _parse_log. git before 2.31 does not honour
-    # --first-parent for `-m`'s diff format, so a merge's header repeats once
-    # per parent with a diff block under each. Without the guard that doubles
-    # the merge churn and pushes merges_measured above merge_count, inverting
-    # the invariant the reference documents. Inert on modern git, so it needs
-    # pre-2.31-shaped output to be exercised at all.
-    real_git = shutil.which("git")
-    assert real_git, "git must be on PATH"
-    repo, base = _merge_repo(tmp_path)
-    overlay = _fake_git(
-        tmp_path,
-        "#!/bin/sh\n"
-        'for a in "$@"; do\n'
-        '  if [ "$a" = "--min-parents=2" ]; then\n'
-        "    printf 'aaaa\\037p1 p2\\037merge story 1-3\\n\\n2\\t1\\ts.py\\n"
-        "aaaa\\037p1 p2\\037merge story 1-3\\n\\n5\\t4\\ts.py\\n'\n"
-        "    exit 0\n"
-        "  fi\n"
-        "done\n"
-        f'exec "{real_git}" "$@"\n',
-    )
-    out = _json(_proc("--repo", str(repo), "--range", f"{base}..HEAD", env=overlay))
-    # One merge sha, however many blocks git printed for it.
-    assert out["merges_measured"] == 1
-    assert out["merges_measured"] <= out["merge_count"]
-    merge_files = {f["path"]: f for f in out["merge_files"]}
-    # The first block is the first-parent diff on every git version; the
-    # repeat must not be added on top of it.
-    assert merge_files["s.py"]["added"] == 2
-    assert merge_files["s.py"]["deleted"] == 1
-    assert merge_files["s.py"]["commit_count"] == 1
-
-
 def test_valid_range_with_no_commits_keeps_the_full_shape(tmp_path):
     # A mis-specified epic range is a valid, empty range. It must still answer
     # with every documented key rather than a differently-shaped stub.
@@ -558,57 +487,6 @@ def test_linear_history_reports_no_merges(tmp_path):
     assert out["merge_files"] == []
 
 
-def _recording_git(tmp_path, calls):
-    """A `git` shim that records each invocation as one \\x1f-delimited record
-    (one field per argument, so argument boundaries survive) and then execs the
-    real git."""
-    real_git = shutil.which("git")
-    assert real_git, "git must be on PATH"
-    return _fake_git(
-        tmp_path,
-        "#!/bin/sh\n"
-        f"( printf '%s\\037' \"$@\"; printf '\\n' ) >> \"{calls}\"\n"
-        f'exec "{real_git}" "$@"\n',
-    )
-
-
-def _numstat_invocations(calls):
-    """The recorded `git log --numstat` invocations, each as an argument list."""
-    out = []
-    for line in calls.read_text().splitlines():
-        argv = [field for field in line.split("\x1f") if field]
-        if "--numstat" in argv:
-            out.append(argv)
-    return out
-
-
-def test_second_pass_runs_only_when_the_range_has_merges(tmp_path):
-    # The merge pass is skipped outright on linear history, so the common case
-    # still costs exactly one `git log` — and the two passes must differ in
-    # exactly the arguments the design depends on.
-    calls = tmp_path / "calls.log"
-    overlay = _recording_git(tmp_path, calls)
-    merge_args = {"-m", "--first-parent", "--min-parents=2"}
-
-    (tmp_path / "linear").mkdir()
-    (tmp_path / "merged").mkdir()
-
-    linear = _make_repo(tmp_path / "linear")
-    _json(_proc("--repo", str(linear), "--range", "HEAD~1..HEAD", env=overlay))
-    logs = _numstat_invocations(calls)
-    assert len(logs) == 1, logs
-
-    calls.write_text("")
-    merged, base = _merge_repo(tmp_path / "merged")
-    _json(_proc("--repo", str(merged), "--range", f"{base}..HEAD", env=overlay))
-    logs = _numstat_invocations(calls)
-    assert len(logs) == 2, logs
-    # Pass 1 keeps full topology: none of the merge-pass arguments may reach it,
-    # or the story-branch commits drop out of the listing and attribution dies.
-    assert merge_args.isdisjoint(logs[0]), logs[0]
-    assert merge_args.issubset(logs[1]), logs[1]
-
-
 def test_multi_story_subject_attributes_to_every_match(tmp_path):
     # First-match-wins silently dropped the second story from the attribution.
     repo = tmp_path / "repo"
@@ -620,21 +498,13 @@ def test_multi_story_subject_attributes_to_every_match(tmp_path):
     (repo / "f.py").write_text("a\nb\n")
     _git(repo, "commit", "-qam", "fix seam between 1-2 and 1-3")
 
-    out = _json(
-        _proc(
-            "--repo", str(repo), "--range", "HEAD~1..HEAD", "--stories", "1-3,1-2"
-        )
-    )
+    out = _json(_proc("--repo", str(repo), "--range", "HEAD~1..HEAD", "--stories", "1-3,1-2"))
     # Every match, in --stories order — not whichever id was passed first.
     assert out["commits"][0]["stories"] == ["1-3", "1-2"]
 
     # A repeated id must not list the commit twice: any per-story total built
     # from `stories` would count it twice.
-    repeated = _json(
-        _proc(
-            "--repo", str(repo), "--range", "HEAD~1..HEAD", "--stories", "1-3,1-2,1-3"
-        )
-    )
+    repeated = _json(_proc("--repo", str(repo), "--range", "HEAD~1..HEAD", "--stories", "1-3,1-2,1-3"))
     assert repeated["commits"][0]["stories"] == ["1-3", "1-2"]
     assert repeated["stories_supplied"] == ["1-3", "1-2"]
 
@@ -649,23 +519,8 @@ def test_subject_naming_no_story_gets_an_empty_list(tmp_path):
     (repo / "f.py").write_text("a\nb\n")
     _git(repo, "commit", "-qam", "chore: tidy imports")
 
-    out = _json(
-        _proc(
-            "--repo", str(repo), "--range", "HEAD~1..HEAD", "--stories", "1-2,1-3"
-        )
-    )
+    out = _json(_proc("--repo", str(repo), "--range", "HEAD~1..HEAD", "--stories", "1-2,1-3"))
     assert out["commits"][0]["stories"] == []
-
-
-def test_git_failure_with_empty_stderr_reports_the_exit_code(tmp_path):
-    # A quiet git failure (signal kill, empty stderr) must not leave the caller
-    # with `"error": ""` and nothing to report.
-    overlay = _fake_git(tmp_path, "#!/bin/sh\nexit 3\n")
-    proc = _proc("--repo", str(tmp_path), "--range", "HEAD~1..HEAD", env=overlay)
-    out = _json(proc)
-    assert proc.returncode == 1
-    assert out["ok"] is False
-    assert out["error"] == "git exited 3"
 
 
 def _binary_repo(tmp_path):

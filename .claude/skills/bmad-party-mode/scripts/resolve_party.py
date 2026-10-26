@@ -4,8 +4,9 @@
 # ///
 """Resolve the party-mode roster, lazily.
 
-Merges the installed BMAD agents with the user's custom `party_members`
-into one collective, then projects only what the moment needs:
+Merges the roster the installed skills offer (agents, guests and groups, read
+by `_bmad/scripts/roster.py`) with the user's custom `party_members` and
+`party_groups` into one collective, then projects only what the moment needs:
 
   * default (no flag) — the active roster to load on entry: the
     `default_party` group if one is configured, else the whole collective.
@@ -16,22 +17,19 @@ into one collective, then projects only what the moment needs:
   * --party <id> — full member detail for one chosen group, on demand
     (e.g. when the user switches rooms). Unknown id returns the available
     names instead of an error wall.
-  * --list-codes — every token that resolves to a member (code, alias,
-    lower-cased name, custom-only codes) mapped to that member's code and
-    name. The collision check before adding custom members.
 
 The merge is deterministic (a keyed union; a custom member whose code
 matches an installed agent overrides it), so the orchestrator consumes a
 resolved roster instead of re-deriving it every session.
 
-Stdlib only (Python 3.11+ for tomllib). Shells out to the project's
-resolve_config.py and resolve_customization.py; falls back to reading
-customize.toml directly if the customization resolver is unavailable.
+Stdlib only (Python 3.11+ for tomllib). Shells out to the project's roster.py
+and resolve_customization.py. An install whose `_bmad/scripts` predates
+roster.py falls back to the `[agents]` table resolve_config.py returns, and a
+missing customization resolver falls back to reading customize.toml directly.
 
   resolve_party.py --project-root P --skill S
   resolve_party.py --project-root P --skill S --list-groups
-  resolve_party.py --project-root P --skill S --party writers-room
-  resolve_party.py --project-root P --skill S --list-codes
+  resolve_party.py --project-root P --skill S --party writers-room   (alias: --group)
 """
 
 import argparse
@@ -47,39 +45,80 @@ except ImportError:  # pragma: no cover - guarded for <3.11
     sys.exit(3)
 
 
+# Why the last _run_json call failed; tests stub _run_json with one argument.
+_last_error = ""
+
+
 def _run_json(cmd):
     """Run a resolver script and parse its JSON stdout. None on any failure."""
+    global _last_error
+    _last_error = ""
     try:
-        out = subprocess.run(
-            cmd, capture_output=True, text=True, encoding="utf-8", timeout=60
-        )
-    except (OSError, subprocess.SubprocessError):
+        out = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", timeout=60)
+    except (OSError, subprocess.SubprocessError) as exc:
+        _last_error = str(exc)
         return None
     if out.returncode != 0 or not out.stdout.strip():
+        _last_error = out.stderr.strip() or f"exit {out.returncode}, no output"
         return None
     try:
         return json.loads(out.stdout)
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as exc:
+        _last_error = f"resolver printed invalid JSON: {exc}"
         return None
 
 
-def load_agents(project_root: Path):
-    """Installed agents as {code: entry}. Empty dict (with a flag) on failure."""
-    script = project_root / "_bmad" / "scripts" / "resolve_config.py"
-    data = _run_json([sys.executable, str(script), "--project-root", str(project_root), "--key", "agents"])
+def load_roster(project_root: Path, skill_root: Path):
+    """(agents, guests, groups, resolved, problems) from the skills installed beside this one.
+
+    agents are {code: entry} for the default room; guests are roster members
+    that are not installed agents, available to groups only. problems are what
+    roster.py could not use, so a missing agent or room is explained.
+    """
+    scripts = project_root / "_bmad" / "scripts"
+    data = _run_json(
+        [sys.executable, str(scripts / "roster.py"), "--skill", str(skill_root), "--project-root", str(project_root)]
+    )
+    if data is not None:
+        agents = data.get("agents", {}) or {}
+        guests = {code: m for code, m in (data.get("members", {}) or {}).items() if code not in agents}
+        problems = [p.get("problem", "") for p in data.get("problems", []) or [] if isinstance(p, dict)]
+        return agents, guests, data.get("groups", []) or [], True, [p for p in problems if p]
+    data = _run_json(
+        [sys.executable, str(scripts / "resolve_config.py"), "--project-root", str(project_root), "--key", "agents"]
+    )
     if data is None:
-        return {}, False
-    return data.get("agents", {}) or {}, True
+        return {}, {}, [], False, []
+    return data.get("agents", {}) or {}, {}, [], True, []
+
+
+def merge_groups(roster_groups: list, custom_groups: list) -> list:
+    """Roster groups first, then the user's; a custom group replaces a roster group with its id."""
+    merged = {g["id"]: g for g in roster_groups if isinstance(g, dict) and g.get("id")}
+    for g in custom_groups or []:
+        if isinstance(g, dict) and g.get("id"):
+            merged[g["id"]] = g
+    return list(merged.values())
 
 
 def load_workflow(project_root: Path, skill_root: Path):
     """Merged [workflow] table. Falls back to the skill's base customize.toml."""
     script = project_root / "_bmad" / "scripts" / "resolve_customization.py"
     data = _run_json(
-        [sys.executable, str(script), "--skill", str(skill_root), "--project-root", str(project_root), "--key", "workflow"]
+        [
+            sys.executable,
+            str(script),
+            "--skill",
+            str(skill_root),
+            "--project-root",
+            str(project_root),
+            "--key",
+            "workflow",
+        ]
     )
     if data is not None and "workflow" in data:
         return data["workflow"]
+    _warn(f"party customization override not applied, using the shipped party: {_last_error or 'no workflow table'}")
     # Fallback: read the skill's base customize.toml directly (no override merge).
     toml_path = skill_root / "customize.toml"
     if toml_path.exists():
@@ -91,16 +130,34 @@ def load_workflow(project_root: Path, skill_root: Path):
     return {}
 
 
+def _warn(message: str):
+    sys.stderr.write(f"warning: {message}\n")
+
+
+def _bad_member(code, name) -> bool:
+    """True, with a warning, when a member's code or name is not a string."""
+    if isinstance(code, str) and (name is None or isinstance(name, str)):
+        return False
+    _warn(f"party member {code!r} left out: code and name must be strings")
+    return True
+
+
 def _alias(code: str) -> str:
     """Short alias for an installed agent code: bmad-agent-analyst -> analyst."""
+    if "-agent-" in code:
+        return code.split("-agent-", 1)[1]
     for prefix in ("bmad-agent-", "bmad-"):
         if code.startswith(prefix):
-            return code[len(prefix):]
+            return code[len(prefix) :]
     return code
 
 
-def build_collective(agents: dict, party_members: list):
+def build_collective(agents: dict, party_members: list, guests: dict | None = None):
     """One pool keyed by code. Custom members override matching installed agents.
+
+    `guests` are roster members that are not installed agents: a module's extra
+    personas, or an agent whose skill is absent. They join the pool so a group
+    can seat them, and never the default room.
 
     Returns (collective, index, installed_codes):
       * collective — every member (installed + custom), the pool groups draw
@@ -116,39 +173,68 @@ def build_collective(agents: dict, party_members: list):
     collective = {}
     index = {}
     installed_codes = []
+    alias_owner = {}
 
     def register(code, entry):
         collective[code] = entry
         index[code] = code
         index[code.lower()] = code
-        index[_alias(code).lower()] = code
+        # A short alias two codes claim resolves to neither; the full code still works.
+        alias = _alias(code).lower()
+        owner = alias_owner.setdefault(alias, code)
+        if owner == code:
+            index.setdefault(alias, code)
+        elif owner is not None:
+            alias_owner[alias] = None
+            if index.get(alias) == owner and alias != owner.lower():
+                del index[alias]
         name = entry.get("name")
         if name:
             index[name.lower()] = code
 
     for code, info in agents.items():
-        register(code, {
+        if _bad_member(code, info.get("name")):
+            continue
+        entry = {
             "code": code,
             "name": info.get("name", code),
             "icon": info.get("icon", ""),
             "title": info.get("title", ""),
-            "description": info.get("description", ""),
             "module": info.get("module", ""),
-            "team": info.get("team", ""),
             "source": "installed",
-        })
+        }
+        # Installs from before rosters recorded the persona as `description`.
+        persona = info.get("persona") or info.get("description")
+        if persona:
+            entry["persona"] = persona
+        for field in ("capabilities", "model"):
+            if info.get(field):
+                entry[field] = info[field]
+        register(code, entry)
         installed_codes.append(code)
 
-    for m in (party_members if isinstance(party_members, list) else []):
+    for code, info in (guests or {}).items():
+        if _bad_member(code, info.get("name")):
+            continue
+        entry = {"code": code, "source": "roster"}
+        for field in ("name", "icon", "title", "persona", "capabilities", "model", "module", "skill", "install"):
+            if info.get(field):
+                entry[field] = info[field]
+        entry.setdefault("name", code)
+        if info.get("installed") is False:
+            entry["installed"] = False
+        register(code, entry)
+
+    for m in party_members if isinstance(party_members, list) else []:
         if not isinstance(m, dict):
             continue
         code = m.get("code")
-        if not code:
+        if code is None or code == "" or _bad_member(code, m.get("name")):
             continue
         # A custom member overrides an installed agent it matches by code/alias/name.
         canonical = index.get(code) or index.get(code.lower()) or code
         # Start from the installed entry so fields the override omits
-        # (icon, title, description, module, team) survive.
+        # (icon, title, persona, module) survive.
         entry = dict(collective.get(canonical, {}))
         entry.update({"code": canonical, "source": "custom"})
         for field in ("name", "icon", "title", "persona", "capabilities", "model"):
@@ -176,12 +262,6 @@ def resolve_members(member_tokens, collective, index):
     return resolved, unresolved
 
 
-def code_map(collective, index):
-    """Every resolvable token -> the member it resolves to (code + name)."""
-    return {token: {"code": code, "name": collective[code].get("name", code)}
-            for token, code in sorted(index.items()) if code in collective}
-
-
 def group_menu(groups):
     """Names only — the cheap menu. Open-cast groups (no roster) are flagged."""
     out = []
@@ -189,8 +269,7 @@ def group_menu(groups):
         if not isinstance(g, dict) or not g.get("id"):
             continue
         members = g.get("members", []) or []
-        entry = {"id": g["id"], "name": g.get("name", g["id"]),
-                 "member_count": len(members)}
+        entry = {"id": g["id"], "name": g.get("name", g["id"]), "member_count": len(members)}
         if not members:
             entry["open_cast"] = True
         out.append(entry)
@@ -218,9 +297,13 @@ def group_detail(g, collective, index):
     """
     raw_members = g.get("members", []) or []
     members, unresolved = resolve_members(raw_members, collective, index)
-    detail = {"active": g["id"], "name": g.get("name", g["id"]),
-              "members": members, "unresolved": unresolved,
-              "memory_enabled": bool(g.get("memory", False))}
+    detail = {
+        "active": g["id"],
+        "name": g.get("name", g["id"]),
+        "members": members,
+        "unresolved": unresolved,
+        "memory_enabled": bool(g.get("memory", False)),
+    }
     if g.get("scene"):
         detail["scene"] = g["scene"]
     if not raw_members:
@@ -228,64 +311,66 @@ def group_detail(g, collective, index):
     return detail
 
 
-def main():
+def build_parser():
     ap = argparse.ArgumentParser(description="Resolve the party-mode roster, lazily.")
     ap.add_argument("--project-root", required=True)
     ap.add_argument("--skill", required=True, help="Path to the bmad-party-mode skill dir")
-    ap.add_argument("--party", help="Resolve full detail for this group id")
+    ap.add_argument("--party", "--group", dest="party", help="Resolve full detail for this group id")
     ap.add_argument("--list-groups", action="store_true", help="Group names only")
-    ap.add_argument("--list-codes", action="store_true",
-                    help="Every code, alias and name in the collective, for collision checks")
-    args = ap.parse_args()
+    return ap
+
+
+def main():
+    args = build_parser().parse_args()
 
     project_root = Path(args.project_root).resolve()
     skill_root = Path(args.skill).resolve()
 
     workflow = load_workflow(project_root, skill_root)
-    groups = workflow.get("party_groups", []) or []
+    agents, guests, roster_groups, agents_ok, roster_problems = load_roster(project_root, skill_root)
+    groups = merge_groups(roster_groups, workflow.get("party_groups", []) or [])
     default_party = workflow.get("default_party", "") or ""
     party_mode = workflow.get("party_mode", "session") or "session"
     # The global party_memory flag governs only the DEFAULT installed-agent room;
     # a named group carries its own `memory` flag (resolved in group_detail).
     party_memory = bool(workflow.get("party_memory", True))
 
-    # Group menu never needs the (more expensive) installed-agent resolve.
     if args.list_groups:
-        _emit({
-            "party_mode": party_mode,
-            "default_party": default_party,
-            "groups": group_menu(groups),
-        })
+        _emit(
+            {
+                "party_mode": party_mode,
+                "default_party": default_party,
+                "groups": group_menu(groups),
+            }
+        )
         return
 
-    agents, agents_ok = load_agents(project_root)
-    collective, index, installed_codes = build_collective(agents, workflow.get("party_members", []))
-
-    if args.list_codes:
-        _emit({"installed_agents_resolved": agents_ok, "codes": code_map(collective, index)})
-        return
+    collective, index, installed_codes = build_collective(agents, workflow.get("party_members", []), guests)
 
     if args.party:
         g = find_group(groups, args.party)
         if g is None:
-            _emit({"error": "unknown_group", "requested": args.party,
-                   "available": group_menu(groups)})
+            _emit({"error": "unknown_group", "requested": args.party, "available": group_menu(groups)})
             return
-        _emit({**group_detail(g, collective, index), "party_mode": party_mode})
+        detail = {**group_detail(g, collective, index), "party_mode": party_mode}
+        if roster_problems:
+            detail["roster_problems"] = roster_problems
+        _emit(detail)
         return
 
     # Default: the active roster to load on entry.
-    result = {"party_mode": party_mode, "groups": group_menu(groups),
-              "installed_agents_resolved": agents_ok}
+    result = {"party_mode": party_mode, "groups": group_menu(groups), "installed_agents_resolved": agents_ok}
+    if roster_problems:
+        result["roster_problems"] = roster_problems
     g = find_group(groups, default_party) if default_party else None
     if g is not None:
         result.update(group_detail(g, collective, index))
     else:
         # No default group: the installed agents (custom additions stay in the
         # pool but don't crowd the default room), exactly like a plain install.
-        result.update({"active": "installed",
-                       "members": [collective[c] for c in installed_codes],
-                       "memory_enabled": party_memory})
+        result.update(
+            {"active": "installed", "members": [collective[c] for c in installed_codes], "memory_enabled": party_memory}
+        )
     _emit(result)
 
 
@@ -297,4 +382,8 @@ def _emit(obj):
 
 
 if __name__ == "__main__":
+    if sys.platform == "win32":
+        # Piped output on Windows defaults to a legacy code page, not UTF-8.
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
     main()

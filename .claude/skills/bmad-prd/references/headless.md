@@ -19,8 +19,8 @@ The caller passes inputs in their first message (free-form structured payload; n
 
 - `intent` — `"create"`, `"update"`, or `"validate"`. If absent, infer from the artifact set.
 - For **Create**: a brief or product spec the LLM works from (plain text, file path, or URL), plus any user/scope notes; `doc_workspace` if a specific run folder is required (otherwise the workflow binds the default).
-- For **Update**: the existing `prd.md` path (or a workspace path that contains one), and a change signal (the request: what to change and why).
-- For **Validate**: the existing `prd.md` path (or workspace path), and optionally a checklist override path. Workspace defaults to the PRD's containing directory.
+- For **Update**: the existing PRD path (`prd-<slug>.md`, or a workspace path that contains one), and a change signal (the request: what to change and why).
+- For **Validate**: the existing PRD path (or workspace path), and optionally a checklist override path. Workspace defaults to the PRD's containing directory.
 
 Anything the caller does not provide is either inferred from inputs/workspace or recorded as `assumptions[]` / `open_questions[]` in the JSON status. Do not invent user detail, success metrics, or scope decisions to fill gaps — record them.
 
@@ -30,7 +30,7 @@ Do not ask. Complete the intent using what is provided, what exists in `{doc_wor
 
 Populate `assumptions[]` with every value you inferred without direct caller confirmation; populate `open_questions[]` with every gap that needs a human decision. Use `status: "partial"` when the artifact was produced but `open_questions[]` is non-empty or critical inputs were inferred (Create with no brief; Update with a vague signal acted on best-effort; Validate that could not load the checklist). `complete` = stands on its own; `partial` = caller should review before downstream use; `blocked` = no artifact produced.
 
-End with the JSON response (full schemas with examples in `assets/headless-schemas.md`). The `intent` field must match the detected intent. Omit keys for artifacts not produced.
+End with the JSON response (an example of each payload is in `assets/headless-schemas.md`). The `intent` field must match the detected intent. Omit keys for artifacts not produced.
 
 ## Mode-specific overrides
 

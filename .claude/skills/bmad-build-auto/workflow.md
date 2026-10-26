@@ -1,3 +1,5 @@
+{% if workflow.route not in ("oneshot", "full", "auto") %}{{ halt("workflow.route must be oneshot, full, or auto, not " ~ workflow.route) }}{% endif %}
+{% if workflow.review not in ("none", "quick", "thorough", "auto") %}{{ halt("workflow.review must be none, quick, thorough, or auto, not " ~ workflow.review) }}{% endif %}
 # Build Auto Workflow
 
 **Goal:** Turn intent into a hardened, reviewable artifact, without human interaction.
@@ -6,30 +8,12 @@
 
 ## HALT
 
-To HALT with a final status and optional blocking condition:
+To HALT with a final status and optional blocking condition. The halts `blocked plan supplied` and `dropped plan supplied` write nothing, so the plan keeps its first reason or its `dropped` status: go straight to 3.
 
-1. **Folder+id dispatch** (`{spec_folder}` and `{story_id}` are set): the write-back always lands at the id-keyed story spec. The `{{.implementation_artifacts}}` fallback in step 2 below is never used in this mode, even for halts before planning starts.
-   - If `{spec_file}` is still empty, resolve it now:
-     - **Entry not resolved** (`stories.yaml` is missing/unparseable, or `{story_id}` has no matching entry): use the fixed slug segment `unresolved`: `{spec_file}` = `{spec_folder}/stories/{story_id}-unresolved.md`.
-     - **Ambiguous on-disk match** (the halt is `ambiguous story file match` — more than one file already matches `{spec_folder}/stories/{story_id}-*.md`): use the fixed slug segment `ambiguous` instead of deriving from the title, so the write-back neither creates a third title-derived candidate nor risks silently landing on one of the existing ambiguous files: `{spec_file}` = `{spec_folder}/stories/{story_id}-ambiguous.md`.
-     - **Otherwise** (the entry was resolved and no ambiguous on-disk match exists): derive `{spec_file}` = `{spec_folder}/stories/{story_id}-{slug}.md`, where `{slug}` is a kebab-case slug from `title` (and `description` if needed) with no `{story_id}` prefix — the same derivation step-01's Route uses.
-   - If `{spec_file}` exists on disk, update `status` in frontmatter and append missing result details under `## Auto Run Result`.
-   - If it does not exist, create it as a skeletal story spec:
-     ```markdown
-     ---
-     status: <final status>
-     ---
-
-     # <entry title, or "Story {story_id}" if the entry could not be resolved or the on-disk match was ambiguous>
-
-     ## Auto Run Result
-
-     Status: <final status>
-     Blocking condition: <blocking condition, if any>
-     ```
+1. **A ticket from the tree** (`{ticket_args}` is set) with final status `blocked`: run `uv run {project-root}/_bmad/method/scripts/tickets.py --project-root {project-root} mark {ticket_args} blocked --blocked <blocking condition>`, with each argument quoted for the shell, which writes `status`, `blocked_at`, and `blocked_reason` to `{plan_file}` and creates it when there is none. Then append missing result details under `## Auto Run Result` in `{plan_file}`. If `mark` fails, follow 2 instead.
 2. **Otherwise:**
-   - If `{spec_file}` is known and exists, update `status` in frontmatter and append missing result details under `## Auto Run Result`.
-   - If `{spec_file}` is unknown or missing, create `{{.implementation_artifacts}}/bmad-build-auto-result-<slug-or-timestamp>.md` with:
+   - If `{plan_file}` is known and exists, update `status` in frontmatter and append missing result details under `## Auto Run Result`.
+   - If `{plan_file}` is unknown or missing, create `{{ config.output_folder }}/{active_initiative}/bmad-build-auto-result-<slug-or-timestamp>.md` with:
      ```markdown
      ---
      status: <final status>
@@ -46,7 +30,7 @@ To HALT with a final status and optional blocking condition:
 
 If anything appears below, follow it as the final terminal instruction before exiting; otherwise exit normally.
 
-{workflow.on_complete}
+{{ workflow.on_complete }}
 
 ## Subagents
 
@@ -56,11 +40,13 @@ Launch all the subagents a step calls for in **one message** — several **block
 
 ## READY FOR DEVELOPMENT STANDARD
 
-A specification is "Ready for Development" when:
+A oneshot plan is "Ready for Development" when its intent is clear, complete, coherent, and sufficient to implement and verify, its route choice and reason are recorded, and all template frontmatter fields are preserved.
+
+A full plan is "Ready for Development" when:
 
 - **Actionable**: Every task has a file path and specific action.
 - **Logical**: Tasks ordered by dependency.
-- **Testable**: All ACs use Given/When/Then.
+- **Testable**: All ACs use Given/When/Then, and each is a check the implementer can prove it met without pointing at code.
 - **Surface-anchored**: ACs observe the outermost surface the intent references — never a more internal proxy for it.
 - **Complete**: No placeholders or TBDs.
 - **Sufficient**: No known requirement, acceptance, dependency, or implementation gaps remain unresolved.
@@ -69,8 +55,8 @@ A specification is "Ready for Development" when:
 ## Conventions
 
 - Every operational cross-file reference in this workflow is an absolute snapshot path. Open it directly; do not resolve it relative to a skill directory.
-- `{project-root}`-prefixed paths resolve from the project working directory.
-- Speak in `{{.communication_language}}`, tailor communication to `{{.user_skill_level}}`, and write documents in `{{.document_output_language}}`.
+- `{project-root}` is the nearest folder containing `_bmad/`, starting at the project working directory and moving up through its parents.
+- `{active_initiative}` is the value printed by `uv run {project-root}/_bmad/scripts/resolve_config.py --project-root {project-root} --key core.active_initiative`, read once before step 1. When it is unset, drop `/{active_initiative}` from every path.
 - Whenever this workflow captures or records a version-control revision, obtain the full canonical identifier directly from version control and preserve it verbatim.
 
 ## On Activation
@@ -79,19 +65,19 @@ A specification is "Ready for Development" when:
 
 Execute each of these steps in order before proceeding (`_None._` means skip):
 
-{workflow.activation_steps_prepend}
+{{ workflow.activation_steps_prepend }}
 
 ### Step 2: Load Persistent Facts
 
 Treat every entry below as foundational context you carry for the rest of the workflow run. Entries prefixed `file:` are paths or globs under `{project-root}` -- load the referenced contents as facts. All other entries are facts verbatim (`_None._` means none):
 
-{workflow.persistent_facts}
+{{ workflow.persistent_facts }}
 
 ### Step 3: Execute Append Steps
 
 Execute each of these steps in order (`_None._` means skip):
 
-{workflow.activation_steps_append}
+{{ workflow.activation_steps_append }}
 
 Activation is complete after all activation steps have run.
 
@@ -101,4 +87,4 @@ Follow the step files in order. Read one step fully, execute it, then load the n
 
 ## First Workflow Step
 
-Read fully and follow: `[[bmad-snapshot:step-01-clarify-and-route.md]]`.
+Read fully and follow: `{{ rendered("step-01-clarify-and-route.md") }}`.

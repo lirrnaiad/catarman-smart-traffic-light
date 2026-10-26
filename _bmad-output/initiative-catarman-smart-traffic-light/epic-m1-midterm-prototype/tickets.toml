@@ -263,30 +263,30 @@ references = [
 ]
 
 [[entry]]
-id = 17
-type = "story"
-title = "Refactor sweep"
-description = "Cleans up M1 code across the CAP stories, scoped when it starts from their plans and the findings they deferred to deferred-work.md; cleanup only, and scope pushed out of another story becomes a new story."
-verify = "npm run typecheck, npm run lint, npm test and npm run build -w dashboard pass, and each story's recorded simulator demo still runs."
-covers = []
-after = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
-hitl = false
-risk = "low"
-references = [
-  "spine — _bmad-output/initiative-catarman-smart-traffic-light/architecture-smart-traffic-light/architecture-smart-traffic-light.md, AD-14, AD-16",
-]
-
-[[entry]]
 id = 18
 type = "story"
 title = "M1 demo run and submission"
 description = "A person runs the M1 success signal end to end on the demo laptop: installs from a fresh clone per docs/setup.md, then with the internet off runs npm run build, npm start and npm run sim -- --scenario demo in full-screen Chromium, walks every check in the epic's Done when, records the run in docs/m1-demo.md, and pushes the repository for submission by Oct 26."
 verify = "docs/m1-demo.md records every Done when check passing on the demo laptop, including the backend stop while the simulator runs and the backend and MySQL restart, and the submitted repository installs and builds from a fresh clone."
 covers = ["CAP-1", "CAP-2", "CAP-3", "CAP-4", "CAP-5", "CAP-6"]
-after = [17]
+after = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
 hitl = true
 risk = "medium"
 references = [
   "spec — _bmad-output/initiative-catarman-smart-traffic-light/spec-smart-traffic-light/spec-smart-traffic-light.md, Success signal (M1)",
   "spine — _bmad-output/initiative-catarman-smart-traffic-light/architecture-smart-traffic-light/architecture-smart-traffic-light.md, AD-18, Structural Seed: Runtime and environments",
+]
+
+[[entry]]
+id = 17
+type = "story"
+title = "Refactor sweep"
+description = "Cleans up M1 code across the CAP stories, scoped when it starts from their plans and the findings they deferred to deferred-work.md; cleanup only, and scope pushed out of another story becomes a new story."
+verify = "npm run typecheck, npm run lint, npm test and npm run build -w dashboard pass, each story's recorded simulator demo still runs, and the M1 demo run recorded in docs/m1-demo.md still passes."
+covers = []
+after = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18]
+hitl = false
+risk = "low"
+references = [
+  "spine — _bmad-output/initiative-catarman-smart-traffic-light/architecture-smart-traffic-light/architecture-smart-traffic-light.md, AD-14, AD-16",
 ]

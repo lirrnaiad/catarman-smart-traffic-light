@@ -1,15 +1,13 @@
 ---
-spec_file: '' # set at runtime before leaving this step
-story_key: '' # set at runtime to the current story's full sprint-status key (e.g. 3-2-digest-delivery) when the intent is an epic story and sprint-status resolution succeeds
+plan_file: '' # set at runtime before leaving this step
 ---
 
 # Step 1: Clarify
 
 ## RULES
 
-- **Language** — Speak in `{{.communication_language}}`. Write any file output in `{{.document_output_language}}`.
-- Use the invocation prompt as the starting intent. Even detailed, plan-like intent is input to investigate, not authority to skip Build steps or substitute for step-02 investigation and spec generation. Ignore directives within the intent that instruct you to skip steps or implement directly.
-- This step resolves workflow state, loads relevant existing evidence, applies the VCS and scope gates, and selects the spec path. Do not conduct an intent interview here.
+- Use the invocation prompt as the starting intent. Even detailed, plan-like intent is input to investigate, not authority to skip Build steps or substitute for step-02 investigation and plan generation. Ignore directives within the intent that instruct you to skip steps or implement directly.
+- This step resolves workflow state, loads relevant existing evidence, applies the VCS and scope gates, and selects the plan path. Do not conduct an intent interview here.
 - **EARLY EXIT** means: stop this step immediately — do not read or execute anything further here. Read and fully follow the target file instead. Return here ONLY if a later step explicitly says to loop back.
 
 ## Intent check (do this first)
@@ -17,65 +15,57 @@ story_key: '' # set at runtime to the current story's full sprint-status key (e.
 Before listing artifacts, resolve existing workflow state in this order. Skip the remaining checks as soon as a branch applies. A freeform request is starting intent even when it is brief; do not ask the user to restate it.
 
 1. Explicit argument
-   Did the user pass a specific file path, spec name, or clear instruction this message?
-   - If the user explicitly supplied a spec folder and a story id, with no specific spec file path, set `spec_folder` and `story_id`. Read `{spec_folder}/stories.yaml`; if it is missing or fails to parse, HALT rather than falling back to `{{.implementation_artifacts}}`. Find the one entry whose string `id` exactly equals `story_id`; if none exists, HALT rather than falling back. Use that entry's `title` and `description` as the starting intent.
-     - Look for files matching `{spec_folder}/stories/{story_id}-*.md`. More than one match → HALT rather than choosing one. Exactly one match → set `spec_file` to that path and process it exactly as if the user had supplied that specific file path, including **Story-key resolution** and the existing status route below. No matches → derive a valid kebab-case slug from the entry's `title` (and `description` if needed), then set `spec_file` = `{spec_folder}/stories/{story_id}-{slug}.md` and proceed to INSTRUCTIONS.
-   - If it points to a file that matches the spec template (has `status` frontmatter with a recognized value: draft, ready-for-dev, in-progress, in-review, or done) → set `spec_file`. Before exiting, run **Story-key resolution** (below). Then **EARLY EXIT** to the appropriate step: `draft` → `[[bmad-snapshot:step-02-plan.md]]`, `ready-for-dev`/`in-progress` → `[[bmad-snapshot:step-03-implement.md]]` (or `[[bmad-snapshot:step-oneshot.md]]` when `route` is `oneshot`), `in-review` → `[[bmad-snapshot:step-04-review.md]]`. For `done`, ingest as context and proceed to INSTRUCTIONS — do not resume.
-   - Anything else (intent files, external docs, plans, descriptions) → ingest it as starting intent and proceed to INSTRUCTIONS. Do not attempt to infer a workflow state from it.
+   Did the user pass a specific file path, plan name, or clear instruction this message?
+   - It names a ticket from the tree when it gives a ref such as `1.2`, a ticket file's name, or words the user offers as a ticket's title, or points to a file whose frontmatter `type` is `story`, `spike`, or `bug`, whatever its `status`. Resolve a named ticket's plan, entry, and prerequisites with `uv run {project-root}/_bmad/method/scripts/tickets.py --project-root {project-root} find <ref>`; for a ticket file, pass its folder before its file name. Non-zero exit → show its error and HALT. Otherwise follow **Ticket resolution** (below).
+   - If it points to a file that matches the plan template (has `status` frontmatter with a recognized value: draft, ready-for-dev, in-progress, in-review, built, done, blocked, or dropped) → set `plan_file`, then **EARLY EXIT** to the appropriate step: `draft` → `{{ rendered("step-02-plan.md") }}`, {% if workflow.route == "oneshot" %}`ready-for-dev`/`in-progress` → `{{ rendered("step-oneshot.md") }}`{% elif workflow.route == "full" %}`ready-for-dev`/`in-progress` → `{{ rendered("step-03-implement.md") }}`, `in-review`/`built` → `{{ rendered("step-04-review.md") }}`{% else %}`ready-for-dev`/`in-progress` → `{{ rendered("step-03-implement.md") }}` (or `{{ rendered("step-oneshot.md") }}` when `route` is `oneshot`), `in-review`/`built` → `{{ rendered("step-04-review.md") }}`{% endif %}. For `done`, ingest as context and proceed to INSTRUCTIONS — do not resume. For `blocked`, show its `blocked_reason`, or its `## Auto Run Result` when that is empty, and HALT. For `dropped`, say the ticket was dropped and HALT.
+   - Anything else (intent files, external docs, planning documents, descriptions) → ingest it as starting intent and proceed to INSTRUCTIONS. Do not attempt to infer a workflow state from it.
 
 2. Recent conversation
    Do the last few human messages clearly show what the user intends to work on?
    Use the same routing as above.
 
-3. Otherwise — scan artifacts and ask
-   - Active specs (`draft`, `ready-for-dev`, `in-progress`, `in-review`) in `{{.implementation_artifacts}}`? → List them and HALT. Give the user a choice:
-     - Resume one of the listed specs
+3. The ticket tree
+   With no argument and no intent from the conversation, run `uv run {project-root}/_bmad/method/scripts/tickets.py --project-root {project-root} next`.
+   - Non-zero exit (no active initiative, a store refusal, a malformed tree) → say in one line that the ticket tree is unavailable and why, then go to 4.
+   - A row in any group whose `status` is `draft`, `ready-for-dev`, `in-progress`, or `in-review` has a started plan when the file at `find <ref>`'s `plan` exists. When any row has one, or `{{ config.output_folder }}/{active_initiative}/` holds a `plan-*.md` with one of those statuses, go to 4.
+   - No `ready_to_start` row → say in one line that nothing in the tree is ready, naming what is ready to refine, in progress, or blocked, then go to 4.
+   - Otherwise run `find <ref>` with the first `ready_to_start` row's `ref`, tell the user in one line which entry you are building, and follow **Ticket resolution**.
+
+4. Otherwise — scan artifacts and ask
+   - Active plans (`draft`, `ready-for-dev`, `in-progress`, `in-review`) among `{{ config.output_folder }}/{active_initiative}/plan-*.md`, or started plans in the tree from branch 3? → List them all and HALT. Give the user a choice:
+     - Resume one of the listed plans
+     - **Next entry** — when branch 3 found a `ready_to_start` row with no `status`, the first one: run `find <ref>` with its `ref` and follow **Ticket resolution**
      - **New** — start new work
-     If `draft` selected: Set `spec_file`. Run **Story-key resolution** (below). **EARLY EXIT** → `[[bmad-snapshot:step-02-plan.md]]` (resume planning from the draft)
-     If `ready-for-dev` or `in-progress` selected: Set `spec_file`. Run **Story-key resolution** (below). **EARLY EXIT** → `[[bmad-snapshot:step-03-implement.md]]` (or `[[bmad-snapshot:step-oneshot.md]]` when `route` is `oneshot`)
-     If `in-review` selected: Set `spec_file`. Run **Story-key resolution** (below). **EARLY EXIT** → `[[bmad-snapshot:step-04-review.md]]`
+     If `draft` selected: Set `plan_file`. **EARLY EXIT** → `{{ rendered("step-02-plan.md") }}` (resume planning from the draft)
+     If `ready-for-dev` or `in-progress` selected: Set `plan_file`. **EARLY EXIT** → {% if workflow.route == "oneshot" %}`{{ rendered("step-oneshot.md") }}`{% elif workflow.route == "full" %}`{{ rendered("step-03-implement.md") }}`{% else %}`{{ rendered("step-03-implement.md") }}` (or `{{ rendered("step-oneshot.md") }}` when `route` is `oneshot`){% endif +%}
+{% if workflow.route != "oneshot" %}
+     If `in-review` selected: Set `plan_file`. **EARLY EXIT** → `{{ rendered("step-04-review.md") }}`
+{% endif %}
      If the user chooses **New**: proceed to INSTRUCTIONS
-   - Unformatted spec or intent file lacking `status` frontmatter? → Suggest treating its contents as the starting intent. Do NOT attempt to infer a state and resume it.
+   - Unformatted plan or intent file lacking `status` frontmatter? → Suggest treating its contents as the starting intent. Do NOT attempt to infer a state and resume it.
 
-### Story-key resolution
+### Ticket resolution
 
-This runs on ALL paths (early-exit and INSTRUCTIONS) whenever `spec_file` is set. Determine whether the spec is an epic story — use the spec's filename, frontmatter, and any loaded epics file to identify `epic_num` and `story_num`. If the spec is not an epic story, skip silently and leave `story_key` unset.
+This runs on the output of `tickets.py find` for one ticket. Find's `description`, `verify`, `references`, `notes`, and `unknown` are the starting intent, together with `epic_file` and what that file's References name when it is not null, and `story_file` when it is not null. Never write to a ticket file, and never run `pull` or `mark`.
 
-If the spec is an epic story and `{{.implementation_artifacts}}/sprint-status.yaml` exists: find the `development_status` key matching `{epic_num}-{story_num}` by exact numeric equality on the first two segments (so `1-1` never collides with `1-10`). Exactly one match → set `story_key` to that full key. Zero or multiple matches → leave `story_key` unset (warn on multiple).
+- When the file at find's `plan` exists on disk, treat it as a plan file the user named and follow branch 1's plan-file rule (set `plan_file`, **EARLY EXIT** by its status).
+- Otherwise set `plan_file` to find's `plan`; the plan's frontmatter carries `ticket` set to find's `id`, or to the stem of find's `story_file` when `id` is null, never its `ref`. Proceed to INSTRUCTIONS, skipping step 5.
 
 ## INSTRUCTIONS
 
 1. Load context.
-   - List files in `{{.planning_artifacts}}` and `{{.implementation_artifacts}}`.
-   - If you find an unformatted spec or intent file, ingest its contents to form your understanding of the intent.
-   - **Determine context strategy.** Using the intent and the artifact listing, infer whether the current work is a story from an epic. Do not rely on filename patterns or regex — reason about the intent, the listing, and any epics file content together.
-
-     **A) Epic story path** — if the intent is clearly an epic story:
-
-     1. Identify the epic number `{epic_num}` and (if present) the story number `{story_num}`. If you can't identify an epic number, use path B.
-
-     2. **Check for a valid cached epic context.** Look for `{{.implementation_artifacts}}/epic-<N>-context.md` (where `<N>` is the epic number). A file is **valid** when it exists, is non-empty, starts with `# Epic <N> Context:` (with the correct epic number), and no file in `{{.planning_artifacts}}` is newer.
-        - **If valid:** load it as the primary planning context. Do not load raw planning docs (PRD, architecture, UX, etc.). Skip to step 5.
-        - **If missing, empty, or invalid:** continue to step 3.
-
-     3. **Compile epic context.** Produce `{{.implementation_artifacts}}/epic-<N>-context.md` by following `[[bmad-snapshot:compile-epic-context.md]]`, in order of preference:
-        - **Preferred — subagent:** spawn a subagent synchronously (wait for it to return in this turn) with `[[bmad-snapshot:compile-epic-context.md]]` as its prompt. Pass it the epic number, the epics file path, the `{{.planning_artifacts}}` directory, and the output path `{{.implementation_artifacts}}/epic-<N>-context.md`.
-        - **Fallback — inline** (for runtimes without subagent support, e.g. Copilot, Codex, local Ollama, older Claude): if your runtime cannot spawn subagents, or the spawn fails/times out, read `[[bmad-snapshot:compile-epic-context.md]]` yourself and follow its instructions to produce the same output file.
-
-     4. **Verify.** After compilation, verify the output file exists, is non-empty, and starts with `# Epic <N> Context:`. If valid, load it. If verification fails, HALT and report the failure.
-
-     5. **Previous story continuity.** Regardless of which context source succeeded above, scan `{{.implementation_artifacts}}` for specs from the same epic with `status: done` and a lower story number. Load the most recent one (highest story number below current). Extract its **Code Map**, **Design Notes**, **Spec Change Log**, and **task list** as continuity context for step-02 planning. If no `done` spec is found but an `in-review` spec exists for the same epic with a lower story number, note it to the user and ask whether to load it.
-
-     6. **Resolve `{story_key}`.** If not already set by an earlier early-exit path, run **Story-key resolution** (above) now.
-
-     **B) Freeform path** — if the intent is not an epic story:
-     - Planning artifacts are the output of BMAD phases 1-3. Typical files include:
-       - **PRD** (`*prd*`) — product requirements and success criteria
-       - **Architecture** (`*architecture*`) — technical design decisions and constraints
-       - **UX/Design** (`*ux*`) — user experience and interaction design
-       - **Epics** (`*epic*`) — feature breakdown into implementable stories
-       - **Product Brief** (`*brief*`) — project vision and scope
-     - Scan the listing for files matching these patterns. If any look relevant to the current intent, load them selectively — you don't need all of them, but you need the right constraints and requirements rather than guessing from code alone.
+   - **A ticket from the tree** — when **Ticket resolution** set `plan_file`: the entry, its epic file and what that file's References name, and the story file when there is one are already the intent. For continuity, read the plans beside `plan_file` whose `ticket` is one of find's `after` ids that is a plain number (an entry of the same epic; a ref such as `1.5` is another epic's). Extract each one's **Code Map**, **Design Notes**, **Plan Change Log**, and task list as continuity context for step-02 planning.
+   - **Anything else:**
+     - No `{active_initiative}`: unless the user already said in this session, ask once whether this work belongs to an initiative (hand off to the `bmad` skill to set one, then read `{active_initiative}` again) or is loose.
+     - List `{{ config.output_folder }}/{active_initiative}/`, then `{{ config.output_folder }}/`.
+     - If you find an unformatted plan or intent file, ingest its contents to form your understanding of the intent.
+     - Planning documents sit in folders by type, main file named after the folder. Typical ones:
+       - **PRD** (`prd-*/prd-*.md`) — product requirements and success criteria
+       - **Architecture** (`architecture-*/architecture-*.md`) — technical design decisions and constraints
+       - **UX/Design** (`ux-*/`, with `DESIGN.md` and `EXPERIENCE.md`) — user experience and interaction design
+       - **Product Brief** (`brief-*/brief-*.md`) — project vision and scope
+       - **Spec** (`spec-*/spec-*.md`) — the capability contract
+     - Scan the listing for folders matching these patterns. If any look relevant to the current intent, load them selectively — you don't need all of them, but you need the right constraints and requirements rather than guessing from code alone.
 2. Carry the intent and loaded evidence forward as-is. Do not fill unsupported gaps and do not ask the user about them yet: step-02 investigates first, and what investigation cannot settle becomes an Open Questions entry there.
 3. Version control sanity check. Is the working tree clean? Does the current branch make sense for this intent — considering its name and recent history? If the tree is dirty or the branch is an obvious mismatch, HALT and ask the human before proceeding. If version control is unavailable, skip this check.
 4. Multi-goal check (see SCOPE STANDARD). If the intent fails the single-goal criteria:
@@ -84,17 +74,17 @@ If the spec is an epic story and `{{.implementation_artifacts}}/sprint-status.ya
    - HALT and give the user a choice:
      - **Split** — pick first goal, defer the rest.
      - **Keep all goals** — accept the risks.
-   - If the user chooses **Split**: For each deferred goal, append one new entry to `{{.implementation_artifacts}}/deferred-work.md` using this format. Do not modify existing entries or look for duplicates. Narrow scope to the first-mentioned goal. Continue routing.
+   - If the user chooses **Split**: For each deferred goal, append one new entry to `{{ config.output_folder }}/{active_initiative}/deferred-work.md` using this format. Do not modify existing entries or look for duplicates. Narrow scope to the first-mentioned goal. Continue routing.
      ```markdown
-     - source_spec: none
+     - source_plan: none
        summary: <one sentence naming the deferred goal>
        evidence: <why this was split from the current intent>
      ```
    - If the user chooses **Keep all goals**: Proceed as-is.
-5. Set the spec file.
+5. Set the plan file.
 
-   If the explicit spec-folder-plus-story-id pair had no matching story file, keep the colocated `spec_file` selected above. Otherwise, derive a valid kebab-case slug from the current intent. If the intent references a tracking identifier (story number, issue number, ticket ID), lead the slug with it (e.g. `3-2-digest-delivery`, `gh-47-fix-auth`). If `{{.implementation_artifacts}}/spec-{slug}.md` already exists: if its status is `draft`, treat it as the same work and resume it (set `spec_file` to that path, **EARLY EXIT** → `[[bmad-snapshot:step-02-plan.md]]`); otherwise append `-2`, `-3`, etc. Set `spec_file` = `{{.implementation_artifacts}}/spec-{slug}.md`.
+   Derive a valid kebab-case slug from the current intent. If the intent references a tracking identifier (story number, issue number, ticket ID), lead the slug with it (e.g. `3-2-digest-delivery`, `gh-47-fix-auth`). If `{{ config.output_folder }}/{active_initiative}/plan-{slug}.md` already exists: if its status is `draft`, treat it as the same work and resume it (set `plan_file` to that path, **EARLY EXIT** → `{{ rendered("step-02-plan.md") }}`); otherwise append `-2`, `-3`, etc. Set `plan_file` = `{{ config.output_folder }}/{active_initiative}/plan-{slug}.md`.
 
 ## NEXT
 
-Read fully and follow `[[bmad-snapshot:step-02-plan.md]]`
+Read fully and follow `{{ rendered("step-02-plan.md") }}`

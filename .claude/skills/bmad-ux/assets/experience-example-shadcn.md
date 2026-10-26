@@ -2,7 +2,7 @@
 name: Drift
 status: final
 sources:
-  - {planning_artifacts}/prds/drift-2026-03-12/prd.md
+  - ../prd-drift/prd-drift.md
 updated: 2026-04-02
 ---
 
@@ -62,7 +62,7 @@ Behavioral. Visual specs live in `DESIGN.md.Components` (or in shadcn defaults, 
 | Command palette no matches | ⌘K | "No matches. Start typing a task or project name, or pick an action below." Followed by 4-5 common commands. |
 | Offline | Global (status bar) | shadcn `Toast` once: "You're offline. Changes will sync when you reconnect." Local writes continue. |
 | Permission denied | Projects (others' private) | Surface hidden from sidebar. No "blocked" screen. |
-| Stale data | Project detail | If background refresh detects changes, shadcn `Toast`: "Updated by {user_name}. Refresh." Manual refresh, no auto. |
+| Stale data | Project detail | If background refresh detects changes, shadcn `Toast`: "Updated by {collaborator_name}. Refresh." Manual refresh, no auto. |
 
 ## Interaction Primitives
 

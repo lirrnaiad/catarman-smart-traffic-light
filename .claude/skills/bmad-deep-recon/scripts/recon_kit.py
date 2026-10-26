@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # /// script
-# requires-python = ">=3.10"
+# requires-python = ">=3.11"
 # ///
 """recon_kit — deterministic helpers for bmad-deep-recon.
 
@@ -28,6 +28,7 @@ Subcommands:
       Emit the source-appendix table as HTML with every cell escaped and
       only validated http(s) URLs turned into links, for the briefing.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -42,8 +43,11 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 MARKER_RE = re.compile(r"\[(\d+)\](?!\()")  # [3] but not a [3](url) link
-MD_LINK_RE = re.compile(r"\[([^\]]*)\]\((\S+?)\)")
-BARE_URL_RE = re.compile(r"https?://[^\s|)\]]+")
+# URLs may hold one level of balanced parentheses, as Wikipedia's often do.
+MD_LINK_RE = re.compile(r"\[([^\]]*)\]\(((?:[^\s()]|\([^\s()]*\))+)\)")
+BARE_URL_RE = re.compile(r"https?://(?:[^\s()|\]]|\([^\s()]*\))+")
+ROW_ID_RE = re.compile(r"\[(\d+)\]")  # appendix row id: [n], never a bare number
+FENCE_RE = re.compile(r"^\s*(`{3,}|~{3,})")  # any indent: fences nest in list items
 
 
 def out(payload: dict, exit_code: int) -> int:
@@ -53,19 +57,30 @@ def out(payload: dict, exit_code: int) -> int:
 
 def read_text(path_arg: str) -> str:
     if path_arg == "-":
-        return sys.stdin.read()
+        # Decode the bytes ourselves: the locale's encoding may not be UTF-8.
+        buffer = getattr(sys.stdin, "buffer", None)
+        return buffer.read().decode("utf-8") if buffer is not None else sys.stdin.read()
     return Path(path_arg).read_text(encoding="utf-8")
 
 
 def strip_fences(text: str) -> str:
-    """Blank out fenced code blocks so their contents never count as markers or rows."""
-    lines, fenced = [], False
+    """Blank out fenced code blocks so their contents never count as markers or rows.
+
+    Fences pair CommonMark-style: a block closes only on a line of the opener's
+    character, at least as long, with nothing after it.
+    """
+    lines, open_fence = [], None  # (char, length) while inside a fenced block
     for ln in text.splitlines():
-        if ln.lstrip().startswith("```"):
-            fenced = not fenced
-            lines.append("")
+        fence = FENCE_RE.match(ln)
+        if open_fence is None:
+            if fence:
+                open_fence = (fence.group(1)[0], len(fence.group(1)))
+            lines.append("" if fence else ln)
             continue
-        lines.append("" if fenced else ln)
+        marker = fence.group(1) if fence else ""
+        if marker[:1] == open_fence[0] and len(marker) >= open_fence[1] and ln.strip() == marker:
+            open_fence = None
+        lines.append("")
     return "\n".join(lines)
 
 
@@ -74,7 +89,7 @@ def table_cells(line: str) -> list[str]:
 
 
 def appendix_rows(text: str) -> dict[int, list[str]]:
-    """Source-appendix rows: markdown table rows whose first cell is a bare [n] / n."""
+    """Source-appendix rows: markdown table rows whose first cell is [n]."""
     rows: dict[int, list[str]] = {}
     for ln in text.splitlines():
         stripped = ln.strip()
@@ -83,13 +98,14 @@ def appendix_rows(text: str) -> dict[int, list[str]]:
         cells = table_cells(stripped)
         if not cells or len(cells) < 2:
             continue
-        m = re.fullmatch(r"\[?(\d+)\]?", cells[0])
+        m = ROW_ID_RE.fullmatch(cells[0])
         if m:
             rows[int(m.group(1))] = cells
     return rows
 
 
 # --- citations ---------------------------------------------------------------
+
 
 def cmd_citations(args) -> int:
     text = strip_fences(read_text(args.file))
@@ -99,19 +115,22 @@ def cmd_citations(args) -> int:
         stripped = ln.strip()
         if stripped.startswith("|"):
             cells = table_cells(stripped)
-            if cells and re.fullmatch(r"\[?(\d+)\]?", cells[0]):
+            if cells and ROW_ID_RE.fullmatch(cells[0]):
                 continue  # an appendix row is not a citation of itself
         markers.update(int(n) for n in MARKER_RE.findall(ln))
     dangling = sorted(markers - set(rows))
     orphaned = sorted(set(rows) - markers)
     ok = not dangling and not orphaned
-    return out({
-        "markers": sorted(markers),
-        "appendix_rows": sorted(rows),
-        "dangling_markers": dangling,
-        "orphaned_rows": orphaned,
-        "ok": ok,
-    }, 0 if ok else 1)
+    return out(
+        {
+            "markers": sorted(markers),
+            "appendix_rows": sorted(rows),
+            "dangling_markers": dangling,
+            "orphaned_rows": orphaned,
+            "ok": ok,
+        },
+        0 if ok else 1,
+    )
 
 
 # --- tally -------------------------------------------------------------------
@@ -144,15 +163,19 @@ def cmd_tally(args) -> int:
     claims: dict[str, int] = dict(unref_status)
     for status in by_ref.values():
         claims[status] = claims.get(status, 0) + 1
-    return out({
-        "entries": entries,
-        "by_type": dict(sorted(by_type.items())),
-        "claims": dict(sorted(claims.items())),
-        "claims_total": sum(claims.values()),
-    }, 0)
+    return out(
+        {
+            "entries": entries,
+            "by_type": dict(sorted(by_type.items())),
+            "claims": dict(sorted(claims.items())),
+            "claims_total": sum(claims.values()),
+        },
+        0,
+    )
 
 
 # --- staleness ---------------------------------------------------------------
+
 
 def parse_date(raw: str) -> date:
     raw = raw.strip()
@@ -173,12 +196,18 @@ def add_months(d: date, months: int) -> date:
 def cmd_staleness(args) -> int:
     try:
         payload = json.loads(read_text(args.file))
-        windows = {k.lower(): int(v) for k, v in json.loads(args.windows).items()}
+        raw_windows = json.loads(args.windows)
+        if not isinstance(raw_windows, dict):
+            raise ValueError("--windows must be a JSON object of class -> months")
+        windows = {k.lower(): int(v) for k, v in raw_windows.items()}
         today = parse_date(args.today) if args.today else date.today()
-    except (ValueError, json.JSONDecodeError) as e:
+    except (TypeError, ValueError) as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
-    claims = payload["claims"] if isinstance(payload, dict) else payload
+    claims = payload.get("claims") if isinstance(payload, dict) else payload
+    if not isinstance(claims, list) or not all(isinstance(c, dict) for c in claims):
+        print('error: claims must be a JSON array of objects, or {"claims": [...]}', file=sys.stderr)
+        return 2
     results, no_window, stale_count = [], set(), 0
     earliest: date | None = None
     for c in claims:
@@ -198,16 +227,20 @@ def cmd_staleness(args) -> int:
         stale_count += stale
         earliest = recheck if earliest is None or recheck < earliest else earliest
         results.append({**c, "recheck": recheck.isoformat(), "stale": stale})
-    return out({
-        "today": today.isoformat(),
-        "claims": results,
-        "stale_count": stale_count,
-        "earliest_recheck": earliest.isoformat() if earliest else None,
-        "no_window_classes": sorted(no_window),
-    }, 1 if stale_count else 0)
+    return out(
+        {
+            "today": today.isoformat(),
+            "claims": results,
+            "stale_count": stale_count,
+            "earliest_recheck": earliest.isoformat() if earliest else None,
+            "no_window_classes": sorted(no_window),
+        },
+        1 if stale_count else 0,
+    )
 
 
 # --- slug --------------------------------------------------------------------
+
 
 def slugify(text: str, max_len: int = 40) -> str:
     text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
@@ -220,14 +253,16 @@ def cmd_slug(args) -> int:
     if not slug:
         print("error: topic slugified to an empty string", file=sys.stderr)
         return 2
-    folder = (args.pattern
-              .replace("{research_type}", args.type)
-              .replace("{topic_slug}", slug)
-              .replace("{date}", args.date or date.today().isoformat()))
+    folder = (
+        args.pattern.replace("{research_type}", args.type)
+        .replace("{topic_slug}", slug)
+        .replace("{date}", args.date or date.today().isoformat())
+    )
     return out({"topic_slug": slug, "folder": folder}, 0)
 
 
 # --- escape-sources ----------------------------------------------------------
+
 
 def safe_url(raw: str) -> str | None:
     parsed = urlparse(raw)
@@ -241,9 +276,11 @@ def cell_html(cell: str, invalid: list[str]) -> str:
         url = safe_url(link.group(2))
         label = html.escape(link.group(1) or link.group(2))
         if url:
-            return html.escape(cell[:link.start()]) + \
-                f'<a href="{html.escape(url, quote=True)}" target="_blank" rel="noopener">{label}</a>' + \
-                html.escape(cell[link.end():])
+            return (
+                html.escape(cell[: link.start()])
+                + f'<a href="{html.escape(url, quote=True)}" target="_blank" rel="noopener">{label}</a>'
+                + html.escape(cell[link.end() :])
+            )
         invalid.append(link.group(2))
         return html.escape(cell.replace(link.group(0), link.group(1) or link.group(2)))
     bare = BARE_URL_RE.search(cell)
@@ -251,9 +288,11 @@ def cell_html(cell: str, invalid: list[str]) -> str:
         url = safe_url(bare.group(0))
         if url:
             escaped = html.escape(url, quote=True)
-            return html.escape(cell[:bare.start()]) + \
-                f'<a href="{escaped}" target="_blank" rel="noopener">{escaped}</a>' + \
-                html.escape(cell[bare.end():])
+            return (
+                html.escape(cell[: bare.start()])
+                + f'<a href="{escaped}" target="_blank" rel="noopener">{escaped}</a>'
+                + html.escape(cell[bare.end() :])
+            )
         invalid.append(bare.group(0))
     return html.escape(cell)
 
@@ -270,20 +309,19 @@ def cmd_escape_sources(args) -> int:
         cells = rows[n]
         tds = "".join(f"<td>{cell_html(c, invalid)}</td>" for c in cells[1:])
         body_rows.append(f'<tr id="src-{n}"><td>[{n}]</td>{tds}</tr>')
-    table = ('<table class="sources"><tbody>' + "".join(body_rows) + "</tbody></table>")
-    return out({"rows": len(rows), "invalid_urls": invalid, "html": table},
-               1 if invalid else 0)
+    table = '<table class="sources"><tbody>' + "".join(body_rows) + "</tbody></table>"
+    return out({"rows": len(rows), "invalid_urls": invalid, "html": table}, 1 if invalid else 0)
 
 
 # --- entry point -------------------------------------------------------------
 
+
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(description=__doc__,
-                                formatter_class=argparse.RawDescriptionHelpFormatter)
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
 
     pc = sub.add_parser("citations", help="cross-check [n] markers vs the source appendix")
-    pc.add_argument("file", help="path to research.md (or - for stdin)")
+    pc.add_argument("file", help="path to the research report (or - for stdin)")
     pc.set_defaults(func=cmd_citations)
 
     pt = sub.add_parser("tally", help="count memlog entries by type and claims by status")
@@ -292,22 +330,23 @@ def main(argv: list[str] | None = None) -> int:
 
     ps = sub.add_parser("staleness", help="compute re-check dates from freshness windows")
     ps.add_argument("file", help="claims JSON: [{claim, class, pub_date}] (or - for stdin)")
-    ps.add_argument("--windows", required=True,
-                    help='JSON months-per-class map, e.g. \'{"pricing": 3}\'')
+    ps.add_argument("--windows", required=True, help="JSON months-per-class map, e.g. '{\"pricing\": 3}'")
     ps.add_argument("--today", help="override today's date (YYYY-MM-DD)")
     ps.set_defaults(func=cmd_staleness)
 
     pg = sub.add_parser("slug", help="expand the run-folder pattern deterministically")
     pg.add_argument("topic", help="research topic text")
     pg.add_argument("--type", required=True, help="research type code (e.g. market)")
-    pg.add_argument("--pattern", default="{research_type}-{topic_slug}-{date}",
-                    help="folder pattern (default: {research_type}-{topic_slug}-{date})")
+    pg.add_argument(
+        "--pattern",
+        default="research-{topic_slug}",
+        help="folder pattern (default: research-{topic_slug})",
+    )
     pg.add_argument("--date", help="override date (YYYY-MM-DD; default today)")
     pg.set_defaults(func=cmd_slug)
 
-    pe = sub.add_parser("escape-sources",
-                        help="source appendix as escaped HTML with validated links")
-    pe.add_argument("file", help="path to research.md (or - for stdin)")
+    pe = sub.add_parser("escape-sources", help="source appendix as escaped HTML with validated links")
+    pe.add_argument("file", help="path to the research report (or - for stdin)")
     pe.set_defaults(func=cmd_escape_sources)
 
     args = p.parse_args(argv)

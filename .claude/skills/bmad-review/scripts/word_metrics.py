@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # /// script
-# requires-python = ">=3.10"
+# requires-python = ">=3.11"
 # ///
 """Exact word counts for a document, as JSON.
 
@@ -10,8 +10,9 @@ percentages in real numbers instead of guessing. Sections are delimited by
 markdown headings (# through ######); heading markers inside fenced code
 blocks are ignored (fences pair CommonMark-style: a fence closes only on a
 run of the same character at least as long, so ```` fences may embed ```
-examples). A word is any whitespace-separated token, plus one word per CJK
-character since those scripts do not space-delimit words. For non-markdown
+examples). A word is any whitespace-separated token, plus one word per
+Chinese or Japanese character since those scripts do not space-delimit words.
+Korean spaces its words, so Hangul counts per token. For non-markdown
 input the result is a single section holding the full text.
 """
 
@@ -23,7 +24,7 @@ from pathlib import Path
 
 HEADING = re.compile(r"^(#{1,6})\s+(\S.*)$")
 FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
-CJK = re.compile(r"[぀-ヿ㐀-䶿一-鿿豈-﫿가-힯ｦ-ﾟ]")
+CJK = re.compile(r"[぀-ヿ㐀-䶿一-鿿豈-﫿ｦ-ﾟ]")
 
 
 def word_count(text: str) -> int:
@@ -62,9 +63,7 @@ def section_metrics(text: str) -> list[dict]:
         words = word_count("\n".join(section["body"]))
         if section["heading"] == "(preamble)" and words == 0:
             continue
-        out.append(
-            {"heading": section["heading"], "level": section["level"], "words": words}
-        )
+        out.append({"heading": section["heading"], "level": section["level"], "words": words})
     return out
 
 
@@ -99,4 +98,8 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    if sys.platform == "win32":
+        # Piped output on Windows defaults to a legacy code page, not UTF-8.
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
     sys.exit(main())

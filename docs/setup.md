@@ -165,6 +165,21 @@ npm run sim
 
 `npm run dev` starts the backend on `127.0.0.1:4000` and the dashboard on port 3000; open `http://localhost:3000`. `npm run sim` starts the simulator and its REPL (`npm run sim -- --roles controller` starts one role).
 
+### Demo mode
+
+The M1 demo runs the built dashboard instead, and needs no internet once installed. In separate terminals:
+
+```sh
+npm run build
+npm start
+```
+
+```sh
+npm run sim -- --scenario demo
+```
+
+`npm run build` exports the dashboard to `dashboard/out/`. `npm start` migrates the database, then serves that export and the API together on `http://127.0.0.1:4000/`; open it in Chromium, full screen (F11) at 1920×1080. The demo scenario walks L1 to L4 with breaches, and its REPL stays open for the checks in [`docs/m1-demo.md`](m1-demo.md), the record of the M1 demo run.
+
 ## Compose path (optional)
 
 `infra/compose.yaml` runs MySQL 9.7.4 and Mosquitto 2.1.2 in Docker, published on `127.0.0.1:3306` and `127.0.0.1:1883` only. It replaces the MySQL and Mosquitto installs, step 3 and step 5. Hotspot mode (M2) needs the native broker.

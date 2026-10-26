@@ -224,13 +224,15 @@ export function OverridePanel() {
   const open = dialog === null ? null : ACTIONS[dialog];
 
   return (
+    // Its content height, never less: the counts panel above flexes instead, so a button is never
+    // shorter than its label and a notice can't push the rows into each other (user, 2026-10-26).
     <section
       aria-labelledby="override-panel-title"
-      className={`flex min-h-0 flex-1 rounded-xl p-hazard-frame ${hazardStripes} shadow-[0_4px_0_var(--color-edge-dark),0_14px_30px_color-mix(in_srgb,var(--color-edge-dark)_55%,transparent)]`}
+      className={`flex shrink-0 rounded-xl p-hazard-frame ${hazardStripes} shadow-[0_4px_0_var(--color-edge-dark),0_14px_30px_color-mix(in_srgb,var(--color-edge-dark)_55%,transparent)]`}
     >
-      <div className="flex min-h-0 flex-1 flex-col rounded-[5px] bg-linear-to-b from-surface-housing-hi to-surface-housing-lo px-[16px] pb-[14px] shadow-[0_0_0_2px_var(--color-edge-dark)]">
+      <div className="flex flex-1 flex-col rounded-[5px] bg-linear-to-b from-surface-housing-hi to-surface-housing-lo px-[16px] pb-[12px] shadow-[0_0_0_2px_var(--color-edge-dark)]">
         <div
-          className={`${stencil} -mx-[16px] mb-[12px] flex h-panel-title-height shrink-0 items-center justify-between gap-[12px] rounded-t-[5px] border-b-2 border-edge-dark bg-linear-to-b from-surface-title-hi to-surface-title-lo px-[16px] text-text`}
+          className={`${stencil} -mx-[16px] mb-[8px] flex h-panel-title-height shrink-0 items-center justify-between gap-[12px] rounded-t-[5px] border-b-2 border-edge-dark bg-linear-to-b from-surface-title-hi to-surface-title-lo px-[16px] text-text`}
         >
           <h2 id="override-panel-title" className="text-label-panel">
             MDRRMO override
@@ -240,15 +242,16 @@ export function OverridePanel() {
 
         {/* Its own row: at 432px the title row can't hold the plate with "Flashing amber" or a StaleBadge (user, 2026-10-24). */}
         <p
-          className={`${well} ${stencil} mb-[12px] flex shrink-0 items-baseline gap-[12px] px-[14px] py-[8px] text-[14px] font-extrabold tracking-[0.14em] text-text-3`}
+          className={`${well} ${stencil} mb-[8px] flex shrink-0 items-baseline gap-[12px] px-[14px] py-[4px] text-[14px] font-extrabold tracking-[0.14em] text-text-3`}
         >
           Current
-          <b className="text-[21px] tracking-[0.06em] text-text">
+          <b className="text-[17px] tracking-[0.06em] text-text">
             {state ? currentLabel(state.override) : "No data yet"}
           </b>
         </p>
 
-        <div className="grid min-h-0 flex-1 auto-rows-fr grid-cols-2 gap-[10px]">
+        {/* Each row is as tall as its tallest label: three lines for the corridors. */}
+        <div className="grid grid-cols-2 gap-[10px]">
           {ACTIONS.map((a, i) => (
             <button
               key={a.label}
@@ -258,7 +261,7 @@ export function OverridePanel() {
               onClick={() => {
                 if (!busy) setDialog(i);
               }}
-              className={`${stencil} ${focusRing} flex items-center gap-[12px] rounded-md border border-edge-dark px-[12px] py-[10px] text-left text-label-control shadow-[inset_0_1px_0_color-mix(in_srgb,var(--color-text)_14%,transparent),0_4px_0_var(--color-edge-dark)] aria-disabled:opacity-55 ${
+              className={`${stencil} ${focusRing} flex items-center gap-[12px] rounded-md border border-edge-dark px-[12px] py-[4px] text-left text-label-control shadow-[inset_0_1px_0_color-mix(in_srgb,var(--color-text)_14%,transparent),0_4px_0_var(--color-edge-dark)] aria-disabled:opacity-55 ${
                 a.release
                   ? "bg-linear-to-b from-surface-housing-hi to-surface-housing text-text-2"
                   : "bg-linear-to-b from-surface-plate-hi to-surface-plate text-text"
@@ -271,10 +274,16 @@ export function OverridePanel() {
               >
                 {a.icon}
               </svg>
+              {/* The pressed button reads Pending in its label's place (EXPERIENCE), within the
+                  corridors' three lines, so a press never grows the panel. The label stays in its name. */}
               <span>
-                {a.label}
+                <span
+                  className={requested && pressed === i ? "sr-only" : undefined}
+                >
+                  {a.label}
+                </span>
                 {requested && pressed === i && (
-                  <span className="mt-[4px] block text-caption text-text-2">
+                  <span className="block text-text-2">
                     {commandStatusVisuals.REQUESTED.label}
                   </span>
                 )}
@@ -283,28 +292,29 @@ export function OverridePanel() {
           ))}
         </div>
 
-        {notice && (
+        {/* A notice takes the footer's slot, so it never changes the panel's height (user, 2026-10-26). */}
+        {notice ? (
           <p
-            className={`${well} ${stencil} mt-[12px] flex items-stretch overflow-hidden text-label-link text-text`}
+            className={`${well} ${stencil} mt-[8px] flex min-h-[28px] items-stretch overflow-hidden text-label-link leading-[1.1] text-text`}
           >
             <span aria-hidden="true" className={`${hazardStripes} w-[12px]`} />
-            <span className="px-[12px] py-[8px]">{notice}</span>
+            <span className="self-center px-[12px] py-[4px]">{notice}</span>
+          </p>
+        ) : (
+          <p
+            className={`${stencil} mt-[8px] flex min-h-[28px] items-center gap-[8px] text-caption font-extrabold text-text-2`}
+          >
+            <svg
+              viewBox="0 0 20 20"
+              aria-hidden="true"
+              className="size-[16px] fill-none stroke-current stroke-[1.8]"
+            >
+              <rect x="4" y="9" width="12" height="9" rx="1.5" />
+              <path d="M7 9V6.5a3 3 0 0 1 6 0V9" />
+            </svg>
+            Every override asks for confirmation first
           </p>
         )}
-
-        <p
-          className={`${stencil} mt-[12px] flex items-center gap-[8px] text-caption font-extrabold text-text-2`}
-        >
-          <svg
-            viewBox="0 0 20 20"
-            aria-hidden="true"
-            className="size-[16px] fill-none stroke-current stroke-[1.8]"
-          >
-            <rect x="4" y="9" width="12" height="9" rx="1.5" />
-            <path d="M7 9V6.5a3 3 0 0 1 6 0V9" />
-          </svg>
-          Every override asks for confirmation first
-        </p>
       </div>
 
       <ConfirmDialog

@@ -28,3 +28,18 @@
 - source_plan: `_bmad-output/initiative-catarman-smart-traffic-light/plan-live-layout-overflow.md`
   summary: DESIGN.md still says the right column's last panel (MDRRMO override) fills, and that count rows sit 5 px apart. Since 2026-10-26 the counts panel flexes, the override panel keeps its content height, and Pending shows in the button's label place.
   evidence: DESIGN.md Layout & Spacing ("the last panel in a side column flexes to fill", "MDRRMO override (fills…)") and Components (counts table, 5px spacing), against `counts-panel.tsx` and `override-panel.tsx` after the fix. Record the user's option-A decision through `bmad-ux`, so a later change built from DESIGN.md doesn't restore the old layout.
+- source_plan: `_bmad-output/initiative-catarman-smart-traffic-light/epic-m1-midterm-prototype/story-refactor-sweep-plan.md`
+  summary: A failed MQTT subscribe is only logged, so after a broker session loss the link bar can read Broker connected while no message arrives. Disposition: new robustness story (retry the subscribe, or surface the failure in the link slice).
+  evidence: `backend/src/mqtt/client.ts:83-85` logs `[mqtt] subscribe failed` and does nothing else. Retrospective F13. It changes behavior, so the 1.17 refactor sweep leaves it out.
+- source_plan: `_bmad-output/initiative-catarman-smart-traffic-light/epic-m1-midterm-prototype/story-refactor-sweep-plan.md`
+  summary: The override panel shows "Corridor ended — link loss or fault" for a release made while the stream was down, because it learns of releases only from frames it saw. Disposition: new robustness story (re-read the release on the new epoch before calling the end unexpected).
+  evidence: `dashboard/src/components/override/override-panel.tsx:203-220` keys the notice on `releases.current`, which holds only commands this page sent or saw. Retrospective F13. It changes behavior, so the 1.17 refactor sweep leaves it out.
+- source_plan: `_bmad-output/initiative-catarman-smart-traffic-light/epic-m1-midterm-prototype/story-refactor-sweep-plan.md`
+  summary: In the controller-offline branch of the override service, an insert failure surfaces as 500 INTERNAL instead of 409 CONTROLLER_OFFLINE. Disposition: new robustness story.
+  evidence: `backend/src/services/overrides.ts:58-71` awaits `insertOverride` for the REJECTED row before it throws `offline()`, so a DB error escapes first. Retrospective F13. It changes behavior, so the 1.17 refactor sweep leaves it out.
+- source_plan: `_bmad-output/initiative-catarman-smart-traffic-light/epic-m1-midterm-prototype/story-refactor-sweep-plan.md`
+  summary: The SSE hub ignores `res.write` backpressure. Disposition: accepted for M1, whose demo has one local tab; revisit for M2 if more viewers or remote clients connect.
+  evidence: `backend/src/sse/hub.ts:52-54` writes every frame to every client and never checks the return value or waits for `drain`. Retrospective F13. At M1's rates and one localhost client, the buffer never builds up.
+- source_plan: `_bmad-output/initiative-catarman-smart-traffic-light/epic-m1-midterm-prototype/story-refactor-sweep-plan.md`
+  summary: One live context holds every slice, so each slice frame re-renders every live consumer. Disposition: accepted, marked as a shortcut in the code; revisit for M2 (per-slice contexts or `useSyncExternalStore`) if renders show up in profiling.
+  evidence: `dashboard/src/lib/live/live-provider.tsx:79-85` sets one `LiveState` per frame. Retrospective F13. The M1 demo run showed changes reaching the stream in 6 to 54 ms with no visible lag on `/`.

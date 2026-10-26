@@ -1,15 +1,15 @@
 import {
   type LinkSlice,
+  type OccurrenceName,
+  type SliceName,
   type StreamData,
   type StreamName,
+  sliceNames,
   sseFrame,
   streamSchemas,
 } from "@stl/contracts";
 
-/** Slice names in connect order (AD-8). */
-const SLICES = ["link", "state", "counts", "demand"] as const;
-export type SliceName = (typeof SLICES)[number];
-export type OccurrenceName = Exclude<StreamName, SliceName>;
+export type { OccurrenceName, SliceName } from "@stl/contracts";
 
 export const PING_MS = 15_000;
 
@@ -76,7 +76,7 @@ export function createHub({ validate }: { validate: "throw" | "log" }) {
         return;
       }
       res.write("retry: 2000\n\n");
-      for (const name of SLICES) res.write(sseFrame(name, slices[name]));
+      for (const name of sliceNames) res.write(sseFrame(name, slices[name]));
       clients.set(
         res,
         setInterval(() => res.write(": ping\n\n"), PING_MS),

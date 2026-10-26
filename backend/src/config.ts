@@ -11,7 +11,8 @@ try {
   if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
 }
 
-const Env = z.object({
+/** Exported for config.test.ts only; everything else reads `config`. */
+export const Env = z.object({
   DATABASE_URL: z.url(),
   DASHBOARD_ORIGINS: z
     .string()

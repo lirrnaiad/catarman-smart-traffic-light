@@ -1,11 +1,28 @@
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join, sep } from "node:path";
 import vehicleClasses from "@stl/contracts/vehicle-classes.json" with {
   type: "json",
 };
 import express from "express";
 import request from "supertest";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { z } from "zod";
-import { type AppDeps, createApp } from "./app.ts";
+import { type AppDeps, createApp, dashboardOut } from "./app.ts";
 import type { Pool } from "./db/pool.ts";
 import { errorMiddleware } from "./http/error-middleware.ts";
 import type { Publisher } from "./mqtt/publisher.ts";
@@ -159,6 +176,45 @@ describe("errors", () => {
     });
     expect(error.mock.calls[0][0]).toMatch(/^\[http\]/);
     expect((error.mock.calls[0][1] as Error).stack).toContain("boom");
+  });
+});
+
+describe("static dashboard", () => {
+  const html = "<!doctype html><title>stl test</title>";
+  let dir: string;
+
+  // A file at api/nope proves the API 404 is mounted before the static files.
+  beforeAll(() => {
+    dir = mkdtempSync(join(tmpdir(), "stl-static-"));
+    writeFileSync(join(dir, "index.html"), html);
+    mkdirSync(join(dir, "api"));
+    writeFileSync(join(dir, "api", "nope"), "static file, not the API");
+  });
+  afterAll(() => rmSync(dir, { recursive: true, force: true }));
+
+  it("serves index.html at /", async () => {
+    const res = await request(createApp(deps(), dir)).get("/");
+    expect(res.status).toBe(200);
+    expect(res.headers["content-type"]).toMatch(/^text\/html/);
+    expect(res.text).toBe(html);
+  });
+
+  it("still answers /api/nope with the JSON 404, not the static file", async () => {
+    const res = await request(createApp(deps(), dir)).get("/api/nope");
+    expect(res.status).toBe(404);
+    expect(res.headers["content-type"]).toMatch(/^application\/json/);
+    expect(res.body.error.code).toBe("NOT_FOUND");
+  });
+
+  it("defaults to <repo>/dashboard/out/", () => {
+    expect(dashboardOut.endsWith(`${sep}dashboard${sep}out${sep}`)).toBe(true);
+    const pkg = (path: string) => JSON.parse(readFileSync(path, "utf8")).name;
+    expect(pkg(join(dashboardOut, "..", "package.json"))).toBe(
+      "@stl/dashboard",
+    );
+    expect(pkg(join(dashboardOut, "..", "..", "package.json"))).toBe(
+      "smart-traffic-light",
+    );
   });
 });
 

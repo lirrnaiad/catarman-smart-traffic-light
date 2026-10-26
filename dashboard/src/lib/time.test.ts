@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { formatManila, manilaHourLabel } from "./time.ts";
+import { formatManila, manilaDayLabel, manilaHourLabel } from "./time.ts";
 
 it("formats Asia/Manila time and date", () => {
   expect(formatManila("2026-10-23T06:32:08.000Z")).toBe("14:32:08");
@@ -9,4 +9,9 @@ it("formats Asia/Manila time and date", () => {
 it("labels the Manila hour, 24-hour, across the UTC date line", () => {
   expect(manilaHourLabel("2026-10-23T16:00:00.000Z")).toBe("00:00");
   expect(formatManila("2026-10-23T16:00:00.000Z", "date")).toBe("2026-10-24");
+});
+
+it("labels an Asia/Manila calendar day as weekday, day, month and year", () => {
+  expect(manilaDayLabel("2026-10-22")).toBe("Thu 22 Oct 2026");
+  expect(manilaDayLabel("2026-01-01")).toBe("Thu 1 Jan 2026");
 });

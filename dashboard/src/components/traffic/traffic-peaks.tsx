@@ -13,7 +13,11 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import type { ApiRequestError } from "../../lib/api/client.ts";
 import { getHourlyCounts } from "../../lib/api/counts.ts";
 import { useLive, useStreamEpoch } from "../../lib/live/hooks.ts";
-import { formatManila, manilaHourLabel } from "../../lib/time.ts";
+import {
+  formatManila,
+  manilaDayLabel,
+  manilaHourLabel,
+} from "../../lib/time.ts";
 import { useVehicleClasses } from "../../lib/use-vehicle-classes.ts";
 import { classColor, colorVar } from "../../lib/visuals.ts";
 import { ClassLabel } from "../ui/class-label.tsx";
@@ -30,19 +34,6 @@ const PLOT_W = W - PLOT_X - M.right;
 const PLOT_H = H - M.top - M.bottom - X_AXIS_H;
 const BAND = PLOT_W / 24;
 const BAR_W = BAND * 0.8; // Recharts' default 10% category gap on each side.
-
-const plateDate = new Intl.DateTimeFormat("en-GB", {
-  timeZone: "Asia/Manila",
-  weekday: "short",
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-});
-
-/** "Thu 22 Oct 2026" for an Asia/Manila `YYYY-MM-DD`. */
-function dayLabel(date: string): string {
-  return plateDate.format(new Date(`${date}T12:00:00+08:00`)).replace(",", "");
-}
 
 /** The calendar day `delta` days from `date` (pure date arithmetic, no time zone involved). */
 function shiftDay(date: string, delta: number): string {
@@ -158,7 +149,7 @@ export function TrafficPeaks() {
                 Date · Asia/Manila
               </span>
               <span className="block text-display-time tabular-nums">
-                {dayLabel(date)}
+                {manilaDayLabel(date)}
               </span>
             </div>
             {isToday && (
@@ -345,7 +336,7 @@ function Chart({
       <div className="sr-only">
         <table>
           <caption>
-            Vehicles per hour by class, {dayLabel(date)}, Asia/Manila
+            Vehicles per hour by class, {manilaDayLabel(date)}, Asia/Manila
           </caption>
           <thead>
             <tr>

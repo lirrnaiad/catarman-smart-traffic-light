@@ -31,3 +31,16 @@ export function formatManila(
 export function manilaHourLabel(hourStartIso: string): string {
   return `${parts(hourStartIso).hour}:00`;
 }
+
+const manilaDay = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Manila",
+  weekday: "short",
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+});
+
+/** `Thu 22 Oct 2026` for an Asia/Manila `YYYY-MM-DD`, read at Manila noon. */
+export function manilaDayLabel(date: string): string {
+  return manilaDay.format(new Date(`${date}T12:00:00+08:00`)).replace(",", "");
+}

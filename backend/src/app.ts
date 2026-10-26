@@ -17,7 +17,8 @@ export type AppDeps = {
   getLink: () => LinkSlice;
 };
 
-const dashboardOut = fileURLToPath(
+/** `<repo>/dashboard/out/`, the static export `npm run build` writes. */
+export const dashboardOut = fileURLToPath(
   new URL("../../dashboard/out/", import.meta.url),
 );
 
@@ -37,8 +38,11 @@ function cors(origins: readonly string[]): RequestHandler {
   };
 }
 
-/** Builds the Express app only; never starts jobs or connects MQTT (AD-14). */
-export function createApp(deps: AppDeps): Express {
+/**
+ * Builds the Express app only; never starts jobs or connects MQTT (AD-14).
+ * `staticDir` is configuration, not a dependency: tests point it at a temp dir.
+ */
+export function createApp(deps: AppDeps, staticDir = dashboardOut): Express {
   const app = express();
   app.use(cors(config.DASHBOARD_ORIGINS));
   app.use(express.json());
@@ -47,7 +51,7 @@ export function createApp(deps: AppDeps): Express {
     next(new AppError("NOT_FOUND", "No such API route")),
   );
   // Falls through when dashboard/out/ doesn't exist (yet).
-  app.use(express.static(dashboardOut));
+  app.use(express.static(staticDir));
   app.use(errorMiddleware);
   return app;
 }

@@ -1,16 +1,18 @@
 "use client";
 
-import type { Liveness, StreamData, StreamName } from "@stl/contracts";
+import type {
+  Liveness,
+  OccurrenceName,
+  SliceName,
+  StreamData,
+} from "@stl/contracts";
 import { createContext, useContext, useEffect, useRef } from "react";
 
-export const SLICE_NAMES = [
-  "link",
-  "state",
-  "counts",
-  "demand",
-] as const satisfies readonly StreamName[];
-export type SliceName = (typeof SLICE_NAMES)[number];
-export type OccurrenceName = Exclude<StreamName, SliceName>;
+export {
+  type OccurrenceName,
+  type SliceName,
+  sliceNames as SLICE_NAMES,
+} from "@stl/contracts";
 
 /** A slice is absent until its first frame; `null` is a frame meaning "no value yet". */
 export type Slices = { [K in SliceName]?: StreamData<K> };

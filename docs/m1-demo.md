@@ -5,19 +5,19 @@ This is the record of the M1 success signal, run end to end on the demo laptop (
 | | |
 | --- | --- |
 | Date | 2026-10-26, 13:50 to 14:10 (Asia/Manila) |
-| Run by | Claude Code, driving Chrome through Claude in Chrome, for Sean. The offline pass on the demo laptop is still to do (see [About this run](#about-this-run)). |
+| Run by | Claude Code, driving Chrome through Claude in Chrome, for Sean. Sean did the offline pass on the demo laptop (see [About this run](#about-this-run)). |
 | Laptop and OS | Sean's laptop, Fedora Linux 44 (kernel 7.2.11) |
 | Node, MySQL, Mosquitto | `node -v`: v24.22.1 · MySQL: 9.7.4 · Mosquitto: 2.1.2 · native or compose: compose (Docker 29.9.2, rootless) |
 | Commit | `git log --oneline -1`: `90138d1 Merge pull request #23 from lirrnaiad/docs/m1-demo-checklist` |
-| Browser | Google Chrome 156.0.8078.47 on a 1920×1080 screen. Not F11: the window gave the page 1920×937, so the layout was measured (see check 3) |
+| Browser | Google Chrome 156.0.8078.47 on a 1920×1080 screen. Not F11 for the run: the window gave the page 1920×937, so the layout was measured (see check 3). F11 in the offline pass |
 
 ## Results
 
 | # | Done when | Pass? | Notes |
 | --- | --- | --- | --- |
-| 1 | A fresh clone installs, then starts offline, and the gates pass | Pass, offline simulated | Install, seed and gates pass. `npm run build` passes in a sandbox with no network. The run itself had the internet on, but every socket stayed on loopback |
+| 1 | A fresh clone installs, then starts offline, and the gates pass | Pass | Install, seed and gates pass. `npm run build` passes in a sandbox with no network, every socket stayed on loopback, and the dashboard ran with the Wi-Fi off in the offline pass |
 | 2 | CAP-1: simulated telemetry fills every view, and the backend can stop and return | Pass | Every REPL command showed on `/`. Backend stop: all 7 panels STALE, Broker disconnected; back live with no reload |
-| 3 | CAP-3: live status on `/` | Pass, measured | Document 1080 px tall and `main` 948/948 in every state. Commands reach the stream in 6 to 54 ms |
+| 3 | CAP-3: live status on `/` | Pass | Document 1080 px tall and `main` 948/948 in every state. Commands reach the stream in 6 to 54 ms. At F11 in the offline pass: no scroll bar at L4 |
 | 4 | CAP-5: override Flow 1 and its failure paths | Pass | Ack in 57 ms, 2 s all-red, then NS green. Conflict fault, controller offline and the 5 s timeout notices all show |
 | 5 | CAP-4 and CAP-6: traffic peaks and the breach log | Pass | 24/24 hours equal the SQL sums, peak 07:00 = 3012. Crop is a 64×48 JPEG |
 | 6 | CAP-2: history survives a restart | Pass | Nothing lost. The 2 breaches and 39 count rows sent while the backend was down are stored |
@@ -27,14 +27,14 @@ This is the record of the M1 success signal, run end to end on the demo laptop (
 This run was made with the internet on, because Claude in Chrome needs it. Instead of cutting the internet, it showed the system needs none:
 
 - `npm run build` ran inside `unshare -rn`, a sandbox with no network (a probe to github.com failed), and passed.
-- While the backend and simulator ran, `ss -tanp` listed every TCP socket they held. All were on `127.0.0.1`: the API listening on port 4000, MySQL on 3306, the broker on 1883 and the browser on loopback.
+- While the backend and simulator ran, `ss -tanp` listed every TCP socket they held. All were on `127.0.0.1`: the API listening on port 4000, MySQL on 3306, the broker on 1883 and the browser on loopback. `ss -ltn` does list MySQL and the broker listening on `0.0.0.0`: that is rootless Docker's port forwarder, which relays only connections to `127.0.0.1`. On the Wi-Fi and Tailscale addresses both accept a connection and never reply.
 - Chrome's request log for every view lists only `http://127.0.0.1:4000` and `data:` URLs. It also shows Next.js's `HEAD` prefetch probes as 503, but the same `HEAD` requests return 200 from the page and from `curl`, so these are prefetches the log caught, not errors.
 
 The Chrome window could not go full screen at 1920×1080 (the page asked, but the viewport stayed 1920×937). The dashboard is a fixed 1080 px layout, so check 3 measured it in each state: the document's height, `main`'s scroll and client height, whether each override button's center hits that button, whether buttons overlap or overflow, and whether the fault row stays inside its panel.
 
-Still to do by a person on the demo laptop, about five minutes: turn the internet off, run `npm run build`, `npm start` and `npm run sim -- --scenario demo`, press F11, and check that `/` has no scroll bar and updates live, including at L4. Then fill in this line:
+Sean then did the offline pass on the demo laptop, with this run's backend and simulator still up: Wi-Fi off, the tab reloaded, F11, and the simulator forced to L4 with `level L4`. That command sets the reported level directly, so the flood sensor read Dry; in the demo scenario, L4 comes from the sensor. `npm run build` was not run again offline: the sandboxed build above covers it.
 
-- [ ] Offline pass on the demo laptop: date, by, laptop, result:
+- [x] Offline pass on the demo laptop: 2026-10-26 15:45, Sean, Sean's laptop (Fedora Linux 44). With the Wi-Fi off, `/` loaded, had no scroll bar at F11, read Flashing amber on both phase cards with the conflict-fault row fully visible, and stayed live.
 
 ## 1. Fresh clone, offline start, gates
 

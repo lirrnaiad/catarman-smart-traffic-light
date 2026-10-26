@@ -3,6 +3,7 @@ import { ZodError } from "zod";
 import {
   LinkSlice,
   type StreamName,
+  sliceNames,
   sseFrame,
   streamSchemas,
 } from "../src/index.ts";
@@ -23,9 +24,19 @@ describe("streamSchemas", () => {
     ]);
   });
 
-  it.each(["state", "counts", "demand"] as const)("%s is nullable", (name) => {
-    expect(streamSchemas[name].parse(null)).toBeNull();
+  it("sliceNames are the leading keys of streamSchemas", () => {
+    expect(sliceNames).toEqual(["link", "state", "counts", "demand"]);
+    expect(Object.keys(streamSchemas).slice(0, sliceNames.length)).toEqual(
+      sliceNames,
+    );
   });
+
+  it.each(sliceNames.filter((name) => name !== "link"))(
+    "slice %s is nullable",
+    (name) => {
+      expect(streamSchemas[name].parse(null)).toBeNull();
+    },
+  );
 
   it.each(["link", "breach", "override", "speedAlert"] as const)(
     "%s is not nullable",

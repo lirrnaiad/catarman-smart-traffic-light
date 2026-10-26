@@ -16,9 +16,9 @@ export * from "./speed-alert.ts";
 export * from "./state.ts";
 
 /**
- * Every SSE event name and its data schema (AD-8). Slices (link, state, counts,
- * demand) come first, in the order the hub writes them on connect; then the
- * occurrences (breach, override, speedAlert).
+ * Every SSE event name and its data schema (AD-8). Slices (`sliceNames`) come
+ * first, in the order the hub writes them on connect; then the occurrences
+ * (breach, override, speedAlert).
  */
 export const streamSchemas = {
   link: LinkSlice,
@@ -33,6 +33,19 @@ export const streamSchemas = {
 export type StreamSchemas = typeof streamSchemas;
 export type StreamName = keyof StreamSchemas;
 export type StreamData<N extends StreamName> = z.infer<StreamSchemas[N]>;
+
+/**
+ * The slices, in connect order (AD-8): the hub keeps and replays each one, and
+ * the dashboard holds each in state. Every other stream name is an occurrence.
+ */
+export const sliceNames = [
+  "link",
+  "state",
+  "counts",
+  "demand",
+] as const satisfies readonly StreamName[];
+export type SliceName = (typeof sliceNames)[number];
+export type OccurrenceName = Exclude<StreamName, SliceName>;
 
 /** The one SSE wire format: `event: <name>\ndata: <JSON>\n\n`, with the bare value as JSON. */
 export function sseFrame<N extends StreamName>(

@@ -1,9 +1,9 @@
 ---
 title: '`/` fits the 1920×1080 artboard in every state'
 type: 'bugfix'
-ticket: ''
+ticket: '2'
 created: '2026-10-26'
-status: 'built'
+status: 'done'
 baseline_revision: 'd3af9de8a3c3fdf5a8d9a8dc161650cdc517f993'
 route: 'oneshot'
 route_source: 'auto'

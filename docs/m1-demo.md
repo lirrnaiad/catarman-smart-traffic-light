@@ -36,6 +36,17 @@ Sean then did the offline pass on the demo laptop, with this run's backend and s
 
 - [x] Offline pass on the demo laptop: 2026-10-26 15:45, Sean, Sean's laptop (Fedora Linux 44). With the Wi-Fi off, `/` loaded, had no scroll bar at F11, read Flashing amber on both phase cards with the conflict-fault row fully visible, and stayed live.
 
+### After the submission
+
+The submitted code is tagged `m1-submission` (`942d8c3`). Later the same day, the 1.17 refactor sweep (#29, #30) changed no behavior, and it re-ran checks 2 and 3 on the new `main` (`7201c4d`) in headless Chrome at a true 1920×1080:
+- **Layout:** in all 20 states, the page is 1920×1080 and `main` is 948/948. Every override button's centre hits that button, the fault row is visible, and nothing is clipped.
+- **The stream:** changes arrived in 21 to 81 ms.
+- **The backend stop:** 7 panels went STALE and the bar read Broker disconnected, while the simulator kept cycling. The page was live again 2.5 s after the restart, with no reload.
+- **`/traffic/`:** it matches the API.
+- **Flashing amber override:** it also ran end to end from the panel. Both phases flashed, the banner read "OVERRIDE · FLASHING AMBER" and the layout passed. On release, the signals went all-red, then back to automatic, and `/log/overrides/` listed both.
+
+The same layout check is now `node infra/scripts/check-live-layout.mjs [url]`. Drive a state from the simulator's REPL, then run it. It exits 1 when `main` scrolls, a button's centre misses that button, buttons overlap or overflow, the fault row is cut off, or a panel is clipped. See the sweep's plan for the full results.
+
 ## 1. Fresh clone, offline start, gates
 
 With the internet on:

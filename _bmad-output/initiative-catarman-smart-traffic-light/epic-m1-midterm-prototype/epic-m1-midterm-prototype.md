@@ -6,7 +6,7 @@ covers: [CAP-1, CAP-2, CAP-3, CAP-4, CAP-5, CAP-6]
 after: []
 assignee: ""
 risk: high
-status: in-progress
+status: done
 ---
 
 # M1 Midterm prototype
@@ -134,3 +134,18 @@ Rounds are a suggestion; `after` in `tickets.toml` holds the real prerequisites.
 - Open question (entry 7): does the demo laptop have a condensed system font (Bahnschrift, Liberation Sans Narrow, Nimbus Sans Narrow, DejaVu Sans Condensed)? If not, the shell bundles one through `next/font/local` (DESIGN, Typography).
 - Decision (entry 18): the M1 repository is `git@github.com:lirrnaiad/catarman-smart-traffic-light.git`, private on GitHub. `main` is protected by a ruleset (pull request required, no force push, no deletion), so every story and chore merges through a PR (spine, Branching convention) (user, 2026-10-23).
 - Decision: 18 now runs before 17, because the M1 submission is due 2026-10-26 and 17's deferred items are test gaps and rare robustness cases, not demo blockers. 17 waits on 18 so the submitted code is the code the demo run checked, and its check re-runs the demo that docs/m1-demo.md records. This replaces the earlier decision that 17 comes before 18 (user, 2026-10-26).
+- Resolved (entry 7's open question): fonts are the DESIGN system stack only, with nothing bundled (story 7's plan, user, 2026-10-23). That answer assumed a Windows demo laptop. The M1 demo laptop is Sean's Fedora laptop (user, 2026-10-26), where the offline pass at F11 passed (docs/m1-demo.md) and the 1.17 sweep measured `/` at 1920×1080 in 20 states with nothing clipped.
+- Resolved (entry 9's high-risk check): PR #12 merged before a second developer ran Flow 1's failure paths (story 9's plan). The M1 demo run's check 4 later ran them against the simulator: conflict fault, controller offline and timeout (docs/m1-demo.md). The retrospective accepted that as the check (finding F4).
+- Resolved (entry 1's high-risk check): done, per Sean (2026-10-26). The reviewer's and the leads' names weren't recorded.
+- Decision (closure): the evidence for Done when is accepted as it stands (user, 2026-10-26).
+  - **Internet off (Done when 1 and 6):** this rests on a no-network build, loopback-only sockets, and Sean's Wi-Fi-off pass on the demo laptop (docs/m1-demo.md, About this run).
+  - **After 1.17:** the gates and checks 2 and 3 were re-run on `main`, plus a Flashing amber override end to end. Checks 4–6 were not, because the sweep touched no override, breach or persistence code.
+- Decision (closure): open items after M1 (user, 2026-10-26).
+  - **Filed in backlog:** the robustness work as backlog story 1 (retrospective F11, F12 and F13's three behavior items), and the #22 layout fix as backlog bug 2, done.
+  - **Carried into M2 planning:**
+    - AD-5's redelivery wording (F9) and DESIGN.md's `/` layout (F10);
+    - the retrospective's process lessons (action items 8–11);
+    - re-checking `/` on Windows with Bahnschrift;
+    - SSE backpressure and the single live context;
+    - the parked scope: CAP-7 to CAP-20, AD-19's retention purge and backups, the hotspot broker ACL, the CSV export, the countdown, power source, boot count and speed alert.
+- Closed: all 18 entries are done. Done when 1–6 are met: `docs/m1-demo.md`, re-checked on the post-sweep `main`, and the closure check (user, 2026-10-26).

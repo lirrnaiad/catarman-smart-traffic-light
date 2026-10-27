@@ -15,6 +15,16 @@ it("shows the file's label with its class chip", () => {
   ).toBe("class-tricycle");
 });
 
+it("a label override replaces the text and keeps the chip", () => {
+  const { container } = render(
+    <ClassLabel id="tricycle" classes={[car, tricycle]} label="Tri*" />,
+  );
+  expect(container.textContent).toBe("Tri*");
+  expect(
+    container.querySelector("[data-token]")?.getAttribute("data-token"),
+  ).toBe("class-tricycle");
+});
+
 it("an unknown id shows raw with the class-unknown chip", () => {
   const { container } = render(<ClassLabel id="bus" classes={[car]} />);
   expect(container.textContent).toBe("bus");

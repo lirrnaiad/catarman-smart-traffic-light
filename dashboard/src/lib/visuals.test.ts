@@ -21,6 +21,7 @@ import {
   brokerStatusVisuals,
   COLOR_TOKENS,
   classColor,
+  classLabelParts,
   colorVar,
   commandStatusVisuals,
   faultVisual,
@@ -32,6 +33,7 @@ import {
   phaseVisuals,
   powerVisuals,
   rejectionReasonVisual,
+  softHyphenate,
   sourceVisuals,
   type Visual,
 } from "./visuals.ts";
@@ -102,6 +104,27 @@ it("colors classes by position, unknown ids neutral", () => {
   expect(classColor("tricycle", classes)).toBe("class-tricycle");
   expect(classColor("bus", classes)).toBe("class-unknown");
   expect(colorVar("class-car")).toBe("var(--color-class-car)");
+});
+
+it("splits a class label's aside into a footnote", () => {
+  expect(classLabelParts("Motorcycle (incl. habal-habal)")).toEqual({
+    short: "Motorcycle",
+    note: "Motorcycle includes habal-habal",
+  });
+  expect(classLabelParts("Bus (public)")).toEqual({
+    short: "Bus",
+    note: "Bus (public)",
+  });
+  expect(classLabelParts("Utility van")).toEqual({
+    short: "Utility van",
+    note: null,
+  });
+});
+
+it("soft-hyphenates the known class words, keeping their case", () => {
+  expect(softHyphenate("Motorcycle*")).toBe("Motor­cycle*");
+  expect(softHyphenate("TRICYCLE")).toBe("TRI­CYCLE");
+  expect(softHyphenate("Utility van")).toBe("Utility van");
 });
 
 it("defines every token in globals.css", () => {

@@ -4,6 +4,7 @@ import { Approach } from "@stl/contracts";
 import { useLive } from "../../lib/live/hooks.ts";
 import { manilaHourLabel } from "../../lib/time.ts";
 import { useVehicleClasses } from "../../lib/use-vehicle-classes.ts";
+import { classLabelParts, softHyphenate } from "../../lib/visuals.ts";
 import { ClassLabel } from "../ui/class-label.tsx";
 import { stencil } from "../ui/styles.ts";
 import { NoData, Panel } from "./panel.tsx";
@@ -20,6 +21,19 @@ export function CountsPanel() {
         ]),
       ]
     : [];
+  // A label's aside ("(incl. habal-habal)") moves to a footnote, so each header fits its column.
+  let marks = 0;
+  const columns = ids.map((id) => {
+    const full = classes.find((c) => c.id === id)?.label ?? id;
+    const { short, note } = classLabelParts(full);
+    const mark = note ? "*".repeat(++marks) : "";
+    return {
+      id,
+      full,
+      head: softHyphenate(short) + mark,
+      foot: note && `${mark} ${note}`,
+    };
+  });
   return (
     // The right column's flexible panel: its rows give up height so the override panel below
     // can keep its content height (user, 2026-10-26).
@@ -40,12 +54,14 @@ export function CountsPanel() {
                   <th className="w-[36px] pb-[2px] pl-[8px] text-left align-bottom">
                     Appr.
                   </th>
-                  {ids.map((id) => (
+                  {/* The chip sits under its label, so the chips line up in one row above the numbers. */}
+                  {columns.map(({ id, full, head }) => (
                     <th
                       key={id}
-                      className="px-[2px] pb-[2px] text-right align-bottom hyphens-auto [&>span]:flex-wrap [&>span]:justify-end"
+                      aria-label={full}
+                      className="px-[2px] pb-[2px] text-right align-bottom hyphens-auto [&>span]:flex-col-reverse [&>span]:items-end [&>span]:gap-[3px]"
                     >
-                      <ClassLabel id={id} classes={classes} />
+                      <ClassLabel id={id} classes={classes} label={head} />
                     </th>
                   ))}
                 </tr>
@@ -88,6 +104,17 @@ export function CountsPanel() {
               {counts.total}
             </span>
           </div>
+          {columns.map(
+            ({ id, foot }) =>
+              foot && (
+                <p
+                  key={id}
+                  className={`${stencil} mx-[2px] mt-[4px] text-micro leading-none text-text-3`}
+                >
+                  {foot}
+                </p>
+              ),
+          )}
         </>
       ) : (
         <NoData />

@@ -19,7 +19,7 @@ The project is implemented exclusively from existing student hardware kits with 
   * Semiconductors & Passives: 100 mixed resistors, 74HC595 8-bit shift register, L293D dual H-bridge motor driver, PN2222 NPN transistors (2 pcs), 1N4007 rectifier diodes (2 pcs), 10K potentiometers
   * Indicators & Inputs: 5mm LEDs (Red 5, Yellow 5, Green 5, Blue 5, White 5, RGB 1), active buzzer, passive buzzer, push buttons (5 pcs), membrane keypad matrix, IR receiver & remote
 * **ESP32 Basic Starter Kit (1 Kit):**
-  * Microcontroller: ESP32 Development Board (30-pin, Dual-Core Xtensa LX6, onboard Wi-Fi/Bluetooth) with Micro-USB cable
+  * Microcontroller: ESP32 Development Board (38-pin, Dual-Core Xtensa LX6, onboard Wi-Fi/Bluetooth) with Micro-USB cable
   * Prototyping: 830 tie-point breadboard, 10 M-M Dupont cables, 10 F-F Dupont cables, 10 F-M Dupont cables
   * Display: 0.96-inch monochrome I2C OLED display (SSD1306, 128x64)
   * Actuation & Power: 5V 2-channel optical relay module

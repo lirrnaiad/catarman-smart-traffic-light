@@ -4,7 +4,7 @@ Squad A's materials list, prototype design (Fig. 1 diorama top view, Fig. 2 bloc
 
 ## MCU roles
 
-- **ESP32 Dev Board (DevKit V1, 30-pin, dual-core Xtensa LX6, Wi-Fi/BT):** the sole runtime master. It runs the signal state machine and Level 1–4 fail-safe logic, reads every sensor, drives the 12 signal LEDs and the OLED, and talks MQTT over Wi-Fi. The firmware runs a non-blocking loop with the watchdog on and keeps a boot counter in NVS.
+- **ESP32 Dev Board (38-pin DevKit, dual-core Xtensa LX6, Wi-Fi/BT):** the sole runtime master. It runs the signal state machine and Level 1–4 fail-safe logic, reads every sensor, drives the 12 signal LEDs and the OLED, and talks MQTT over Wi-Fi. The firmware runs a non-blocking loop with the watchdog on and keeps a boot counter in NVS.
 - **Arduino UNO R3:** an offline benchtop harness only, used to develop water-sensor and HC-SR04 debouncing and to verify state-machine logic before porting to the ESP32. It is kept out of the runtime path, which removes I2C/UART inter-MCU sync failures.
 
 ## ESP32 pin map
@@ -41,7 +41,7 @@ All grounds (ESP32, sensors, MB102) tied together.
 - **No external D1.** The ESP32's onboard USB diode is the USB leg of the Diode-OR. D2 (1N4007) passes MB102 5 V onto the bus and blocks the bus from back-feeding the MB102. This supersedes the brief's two-1N4007 circuit.
 - The MB102's top jumper sits on 5 V and its bottom jumper on OFF; on 5 V the battery would feed the bus directly and bypass D2.
 - The MB102's 100 µF capacitors absorb transient current spikes.
-- **Pre-wiring check:** USB only gives VIN ≈4.6–4.8 V; battery only gives ≈0 V at the USB connector.
+- **Pre-wiring check:** USB only gives VIN (the 38-pin board's `5V` pin) ≈4.6–4.8 V; battery only gives ≈0 V at the USB connector. If the USB connector reads the battery voltage, the board has no onboard diode: add D1 (1N4007) on the USB leg.
 - **Optional upgrade** (bought only if needed): if the bus reads under 4.4 V on battery with Wi-Fi on, swap D2 for a 1N5819 Schottky (≈0.3 V drop) and add a 1000 µF capacitor (≥10 V) on the bus, then re-check the GPIO 35 threshold.
 - Use a fresh 9 V battery for each demo run, and keep spares for the soak test.
 - The ESP32's Micro-USB cable carries both main power and the laptop's serial and flashing link (the CAP-15 fallback).

@@ -413,16 +413,16 @@ const EW_PINS = [['Green','GPIO 14'],['Yellow','GPIO 12','must be low at boot'],
 const headBase = { src:'mix', item:'Three 5 mm LEDs (red, yellow, green) in a black card housing on a barbecue stick', size:'Pole ≈12 cm, housing ≈1.7 × 4.6 cm (suggested)', owner:OWN.pwr };
 head('head-nw', -9.5, -9.5, Math.PI, 'ns', Object.assign({}, headBase, { name:'Signal head NW', short:'Head NW · N–S',
   role:'Shows the N–S phase to traffic on the North approach.', pins:NS_PINS,
-  notes:['Its three 220 Ω resistors sit in the box at columns 46, 49 and 52.','Set the stick in a snug hole with hot glue so it cannot lean.'] }));
+  notes:['Its three 220 Ω resistors sit in the box at columns 50, 52 and 54.','Set the stick in a snug hole with hot glue so it cannot lean.'] }));
 head('head-se', 9.5, 9.5, 0, 'ns', Object.assign({}, headBase, { name:'Signal head SE', short:'Head SE · N–S',
   role:'Shows the N–S phase to traffic on the South approach.', pins:NS_PINS,
-  notes:['Shares GPIO 25 / 26 / 27 with the NW head; its resistors are at columns 47, 50 and 53.'] }));
+  notes:['Shares GPIO 25 / 26 / 27 with the NW head; its resistors are at columns 51, 53 and 55.'] }));
 head('head-ne', 9.5, -9.5, Math.PI/2, 'ew', Object.assign({}, headBase, { name:'Signal head NE', short:'Head NE · E–W',
   role:'Shows the E–W phase to traffic on the East approach.', pins:EW_PINS,
-  notes:['Its resistors sit at columns 55, 58 and 61.','GPIO 12 must stay low at boot. The LED and resistor to GND keep it low; never add a pull-up on GPIO 12.'] }));
+  notes:['Its resistors sit at columns 57, 59 and 61.','GPIO 12 must stay low at boot. The LED and resistor to GND keep it low; never add a pull-up on GPIO 12.'] }));
 head('head-sw', -9.5, 9.5, -Math.PI/2, 'ew', Object.assign({}, headBase, { name:'Signal head SW', short:'Head SW · E–W',
   role:'Shows the E–W phase to traffic on the West approach.', pins:EW_PINS,
-  notes:['Shares GPIO 14 / 12 / 13 with the NE head; its resistors are at columns 56, 59 and 62.'] }));
+  notes:['Shares GPIO 14 / 12 / 13 with the NE head; its resistors are at columns 58, 60 and 62.'] }));
 
 /* ---------- sensors ---------- */
 const beamMat = GLASS(0x8A5CF0, 0.15);
@@ -440,7 +440,7 @@ const gold = M(0xD4AF37, { metalness:0.7, roughness:0.3 });
   part('hcsr04','sensors', g, { name:'HC-SR04 ultrasonic sensor', src:'mix',
     role:'Detects a car waiting at the North stop line (Level 2 presence with 3 s gap-out).',
     item:'HC-SR04 from the UNO kit (the only one we have)', size:'4.5 × 2 cm board, ≈2 cm above the road (suggested)', owner:OWN.sens,
-    pins:[['VCC','B+26','5 V bus'],['TRIG','a37','GPIO 5'],['ECHO','j16','1 kΩ / 2 kΩ divider → GPIO 18'],['GND','B−27','']],
+    pins:[['VCC','B+26','5 V bus'],['TRIG','a48','GPIO 5'],['ECHO','j16','1 kΩ / 2 kΩ divider → GPIO 18'],['GND','B−27','']],
     notes:['Mounted at the west curb just behind the stop line, aimed across the southbound lane.','Firmware read timeout ≈25 ms so a missing echo never blocks the loop.'] });
   tag('HC-SR04', V3(-8.6, Y0+4.6, -11.5), 'sensors', { pid:'hcsr04' });
 }
@@ -457,7 +457,7 @@ const gold = M(0xD4AF37, { metalness:0.7, roughness:0.3 });
   part('ir','sensors', g, { name:'IR obstacle sensor', src:'mix',
     role:'Detects a car waiting at the East stop line, standing in for a second HC-SR04.',
     item:'IR obstacle avoidance module from the ESP32 kit', size:'≈3.2 × 1.4 cm', owner:OWN.sens,
-    pins:[['VCC','b24','3.3 V node (suggested, keeps OUT safe)'],['OUT','a35','GPIO 19 · LOW when a car is there'],['GND','T−26','']],
+    pins:[['VCC','b24','3.3 V node (suggested, keeps OUT safe)'],['OUT','a46','GPIO 19 · LOW when a car is there'],['GND','T−26','']],
     notes:['Turn its trimmer so it triggers at about one lane width (≈7 cm).','Strong sunlight can blind it; test under the presentation room lights.'] });
   tag('IR sensor', V3(11.5, Y0+3.8, -8.6), 'sensors', { pid:'ir' });
 }
@@ -470,7 +470,7 @@ const gold = M(0xD4AF37, { metalness:0.7, roughness:0.3 });
   part('water','sensors', g, { name:'Water level sensor', src:'mix',
     role:'Reads water in the flood well. Wet for 5 s puts the signal into Level 4 Flashing Amber.',
     item:'Water sensor board from the kit', size:'≈2 × 6 cm', owner:OWN.sens,
-    pins:[['+','c24','3.3 V node'],['S','j33','GPIO 34 (ADC1)'],['−','T−28','']],
+    pins:[['+','c24','3.3 V node'],['S','j31','GPIO 34 (ADC1)'],['−','T−28','']],
     notes:['GPIO 34 is on ADC1, so readings keep working while Wi-Fi is on.','Rinse and dry it after each flood test; the traces corrode.'] });
   tag('Flood well', V3(CUP.x, Y0+4.8, CUP.z), 'sensors', { pid:'water' });
 }
@@ -537,44 +537,66 @@ function breadboardTexture(){
   part('breadboard','controller', g, { name:'Breadboard', src:'spec', role:'Carries the ESP32, power module, diodes, resistors and every jumper.',
     item:'830-point breadboard from the kit', size:'16.5 × 5.5 cm · 63 columns, rows a–j, two rail pairs', owner:OWN.pwr,
     pinsHead:['Rail','Carries'], pins:[['T+ (top +)','MB102 5 V, raw (feeds D2 only)'],['T− / B−','GND'],['B+ (bottom +)','5 V bus after the diodes'],['Column 24, rows a–e','3.3 V node from the ESP32']],
-    notes:['If the red and blue rail lines have a gap in the middle, your rails are split. Bridge each rail across the gap with a short jumper, or VIN and the right half will get no power.','Each ESP32 pin has exactly one free hole (row a or row j), so every connection to a pin uses that hole.'] });
+    notes:['If the red and blue rail lines have a gap in the middle, your rails are split. Bridge each rail across the gap with a short jumper, or VIN and the right half will get no power.','The ESP32 south pins each have one free hole in row j. The north pins sit in row a with no free hole, so they reach the board through flat links under it (columns 25, 26, 46, 47, 48).'] });
 }
 
-/* ESP32 DevKit V1 (30-pin) — pins in rows b and i, columns 30–44, USB toward the east wall */
-const ESP_N = ['D23','D22','TX0','RX0','D21','D19','D18','D5','TX2','RX2','D4','D2','D15','GND','3V3'];
-const ESP_S = ['EN','VP','VN','D34','D35','D32','D33','D25','D26','D27','D14','D12','D13','GND','VIN'];
+/* ESP32 DevKitC-style 38-pin board, 1″ between pin rows — pins in rows a and i, columns 27–45, USB toward the east wall.
+   It is too wide for a free hole on both sides: row j stays free on the south side, while the north pins (row a)
+   reach the board through flat links laid in rows b–e under the PCB before it is seated. */
+const ESP_N = ['GND','23','22','TX','RX','21','GND','19','18','5','17','16','4','0','2','15','SD1','SD0','CLK'];
+const ESP_S = ['3V3','EN','SVP','SVN','34','35','32','33','25','26','27','14','12','GND','13','SD2','SD3','CMD','5V'];
+const ESP_C0 = 27, ESP_C1 = ESP_C0 + 18;
+const UNDER = [ // north-side GPIO → flat link under the board → landing column outside the footprint
+  { gpio:22, use:'SCL',  row:'e', to:26 },
+  { gpio:21, use:'SDA',  row:'d', to:25 },
+  { gpio:19, use:'IR',   row:'b', to:46 },
+  { gpio:18, use:'ECHO', row:'c', to:47 },
+  { gpio:5,  use:'TRIG', row:'d', to:48 }
+].map(u => Object.assign(u, { pin: ESP_C0 + ESP_N.indexOf(String(u.gpio)) }));
 {
   const g = new THREE.Group();
-  const pcbX0 = colX(30) - 1.25, pcbX1 = colX(44) + 0.4, pcbCx = (pcbX0 + pcbX1)/2, pcbLen = pcbX1 - pcbX0, pcbY = BBT + 0.33;
-  g.add(at(bx(pcbLen, 0.16, 2.5, M(0x15181B,{roughness:0.5})), pcbCx, pcbY, BBZ));
-  const hdr = M(0x0E0F11);
-  g.add(at(bx(14*PITCH + 0.25, 0.25, 0.25, hdr), colX(37), BBT + 0.125, RZ.b));
-  g.add(at(bx(14*PITCH + 0.25, 0.25, 0.25, hdr), colX(37), BBT + 0.125, RZ.i));
-  for (let k = 0; k < 15; k++) {
-    g.add(at(bx(0.07, 0.12, 0.07, gold), colX(30+k), pcbY + 0.12, RZ.b));
-    g.add(at(bx(0.07, 0.12, 0.07, gold), colX(30+k), pcbY + 0.12, RZ.i));
+  const linkMat = M(0x2BB24C, { roughness:0.5 });
+  UNDER.forEach(u => {
+    const a = H(u.pin, u.row), b = H(u.to, u.row);
+    g.add(tube([V3(a.x,BBT-0.02,a.z), V3(a.x,BBT+0.05,a.z), V3(b.x,BBT+0.05,b.z), V3(b.x,BBT-0.02,b.z)], linkMat, 0.03));
+    step('ESP32', 'Flat link under the ESP32 (lay it before seating): GPIO ' + u.gpio + ' ' + u.use + ' out to column ' + u.to,
+      hn(u.pin, u.row), hn(u.to, u.row), 'esp32', 'Pre-cut flat jumper, flush with the board');
+  });
+  const pz = (RZ.a + RZ.i)/2;
+  const pcbX0 = colX(ESP_C0) - 0.5, pcbX1 = colX(ESP_C1) + 0.4, pcbCx = (pcbX0 + pcbX1)/2, pcbLen = pcbX1 - pcbX0, pcbY = BBT + 0.33;
+  g.add(at(bx(pcbLen, 0.16, 2.8, M(0x15181B,{roughness:0.5})), pcbCx, pcbY, pz));
+  const hdr = M(0x0E0F11), hx = colX((ESP_C0 + ESP_C1)/2);
+  g.add(at(bx(18*PITCH + 0.25, 0.25, 0.25, hdr), hx, BBT + 0.125, RZ.a));
+  g.add(at(bx(18*PITCH + 0.25, 0.25, 0.25, hdr), hx, BBT + 0.125, RZ.i));
+  for (let k = 0; k < 19; k++) {
+    g.add(at(bx(0.07, 0.12, 0.07, gold), colX(ESP_C0+k), pcbY + 0.12, RZ.a));
+    g.add(at(bx(0.07, 0.12, 0.07, gold), colX(ESP_C0+k), pcbY + 0.12, RZ.i));
   }
-  g.add(at(bx(2.55, 0.32, 1.8, silver), pcbX0 + 1.4, pcbY + 0.24, BBZ));
-  g.add(at(bx(0.6, 0.02, 1.8, M(0x1E3D6E)), pcbX0 + 0.15, pcbY + 0.09, BBZ));
-  g.add(at(bx(0.55, 0.28, 0.75, silver), pcbX1 - 0.2, pcbY + 0.22, BBZ));
-  g.add(at(bx(0.35, 0.2, 0.35, M(0x2A2A2A)), pcbX1 - 0.95, pcbY + 0.18, BBZ - 0.75));
-  g.add(at(bx(0.35, 0.2, 0.35, M(0x2A2A2A)), pcbX1 - 0.95, pcbY + 0.18, BBZ + 0.75));
-  g.add(at(bx(0.5, 0.1, 0.5, M(0x111111)), pcbX1 - 1.7, pcbY + 0.13, BBZ));
-  part('esp32','controller', g, { name:'ESP32 DevKit V1 (30-pin)', src:'spec',
+  g.add(at(bx(2.55, 0.32, 1.8, silver), pcbX0 + 1.4, pcbY + 0.24, pz));
+  g.add(at(bx(0.6, 0.02, 1.8, M(0x1E3D6E)), pcbX0 + 0.15, pcbY + 0.09, pz));
+  g.add(at(bx(0.55, 0.28, 0.75, silver), pcbX1 - 0.2, pcbY + 0.22, pz));
+  g.add(at(bx(0.35, 0.2, 0.35, M(0x2A2A2A)), pcbX1 - 0.95, pcbY + 0.18, pz - 0.75));
+  g.add(at(bx(0.35, 0.2, 0.35, M(0x2A2A2A)), pcbX1 - 0.95, pcbY + 0.18, pz + 0.75));
+  g.add(at(bx(0.5, 0.1, 0.5, M(0x111111)), pcbX1 - 1.7, pcbY + 0.13, pz));
+  const sj = n => 'j' + (ESP_C0 + ESP_S.indexOf(n));
+  part('esp32','controller', g, { name:'ESP32 dev board (38-pin)', src:'spec',
     role:'Runs the signal controller: state machine, sensors, fail-safes and MQTT.',
-    item:'ESP32 dev board from the ESP32 kit', size:'≈5.2 × 2.5 cm · pins in rows b and i, columns 30–44', owner:OWN.lead,
-    pinsHead:['Pin','Free hole'],
-    pins:[['GPIO 25 / 26 / 27 · N–S G Y R','j37 / j38 / j39'],['GPIO 14 / 12 / 13 · E–W G Y R','j40 / j41 / j42','12 low at boot'],
-      ['GPIO 21 SDA / 22 SCL','a34 / a31'],['GPIO 5 TRIG / 18 ECHO','a37 / a36','ECHO via divider'],['GPIO 19 · IR OUT','a35'],
-      ['GPIO 34 · water','j33','ADC1'],['GPIO 35 · power sense','j34','10 kΩ / 10 kΩ on the bus'],['VIN','j44','from B+'],['3V3','a44','to column 24'],['GND','a43 / j43','to T− / B−']],
-    notes:['Seat it with the USB end at column 44 so the cable exits the east wall toward the laptop.','Its onboard USB diode is the USB leg of the Diode-OR. Check it before wiring: USB only → VIN ≈4.6–4.8 V; battery only → USB connector ≈0 V.','Non-blocking millis() loop, watchdog on, boot counter in NVS. The UNO R3 never joins this circuit.'] });
-  tag('ESP32', V3(colX(37), BBT + 1.6, BBZ), 'controller', { pid:'esp32' });
-  const nLab = { 1:'GPIO22 SCL', 4:'GPIO21 SDA', 5:'GPIO19 IR', 6:'GPIO18 ECHO', 7:'GPIO5 TRIG', 13:'GND', 14:'3V3' };
-  const sLab = { 3:'GPIO34 water', 4:'GPIO35 sense', 7:'GPIO25 NS-G', 8:'GPIO26 NS-Y', 9:'GPIO27 NS-R', 10:'GPIO14 EW-G', 11:'GPIO12 EW-Y', 12:'GPIO13 EW-R', 13:'GND', 14:'VIN' };
-  Object.entries(nLab).forEach(([k, t]) => tag(t, V3(colX(30 + +k), BBT + 0.9 + (k % 2)*0.55, RZ.a - 0.15), 'controller', { cls:'pin', kind:'pin' }));
-  Object.entries(sLab).forEach(([k, t]) => tag(t, V3(colX(30 + +k), BBT + 0.9 + (k % 2)*0.55, RZ.j + 0.15), 'controller', { cls:'pin', kind:'pin' }));
+    item:'ESP32 38-pin dev board from the ESP32 kit', size:'≈5.5 × 2.8 cm · pins in rows a and i, columns ' + ESP_C0 + '–' + ESP_C1, owner:OWN.lead,
+    pinsHead:['Pin','Hole'],
+    pins:[['GPIO 25 / 26 / 27 · N–S G Y R', sj('25') + ' / ' + sj('26') + ' / ' + sj('27')],['GPIO 14 / 12 / 13 · E–W G Y R', sj('14') + ' / ' + sj('12') + ' / ' + sj('13'),'12 low at boot'],
+      ['GPIO 21 SDA / 22 SCL','a25 / a26','via flat links under the board'],['GPIO 5 TRIG / 18 ECHO','a48 / a47','via flat links; ECHO via divider'],['GPIO 19 · IR OUT','a46','via flat link'],
+      ['GPIO 34 · water', sj('34'),'ADC1'],['GPIO 35 · power sense', sj('35'),'10 kΩ / 10 kΩ on the bus'],['5V', sj('5V'),'from B+'],['3V3', sj('3V3'),'to column 24'],['GND', sj('GND'),'to B− (the rails are bridged at column 49)']],
+    notes:['The board is 1″ wide, so only the south side keeps a free hole (row j). Lay the five flat links first, then seat it with the USB end at column ' + ESP_C1 + ' so the cable exits the east wall toward the laptop.',
+      'Check for an onboard USB diode before wiring: USB only → 5V pin ≈4.6–4.8 V; battery only → USB connector ≈0 V. If the USB connector shows the battery voltage, this board has no diode and you must add D1 (1N4007) on the USB leg.',
+      'Non-blocking millis() loop, watchdog on, boot counter in NVS. The UNO R3 never joins this circuit.'] });
+  tag('ESP32', V3(colX(36), BBT + 1.6, pz), 'controller', { pid:'esp32' });
+  const lab = (arr, names) => Object.fromEntries(Object.entries(names).map(([pin, t]) => [arr.indexOf(pin), t]));
+  const nLab = lab(ESP_N, { '22':'GPIO22 SCL', '21':'GPIO21 SDA', '19':'GPIO19 IR', '18':'GPIO18 ECHO', '5':'GPIO5 TRIG' });
+  const sLab = lab(ESP_S, { '3V3':'3V3', '34':'GPIO34 water', '35':'GPIO35 sense', '25':'GPIO25 NS-G', '26':'GPIO26 NS-Y', '27':'GPIO27 NS-R', '14':'GPIO14 EW-G', '12':'GPIO12 EW-Y', 'GND':'GND', '13':'GPIO13 EW-R', '5V':'5V' });
+  Object.entries(nLab).forEach(([k, t]) => tag(t, V3(colX(ESP_C0 + +k), BBT + 0.9 + (k % 2)*0.55, RZ.a - 0.15), 'controller', { cls:'pin', kind:'pin' }));
+  Object.entries(sLab).forEach(([k, t]) => tag(t, V3(colX(ESP_C0 + +k), BBT + 0.9 + (k % 2)*0.55, RZ.j + 0.15), 'controller', { cls:'pin', kind:'pin' }));
 }
-step('ESP32', 'Seat the ESP32: pins in rows b and i, USB end at column 44', 'b30–b44', 'i30–i44', 'esp32');
+step('ESP32', 'Seat the ESP32 over the flat links: pins in rows a and i, USB end at column ' + ESP_C1, 'a' + ESP_C0 + '–a' + ESP_C1, 'i' + ESP_C0 + '–i' + ESP_C1, 'esp32');
 
 /* MB102 power module on the west end */
 {
@@ -696,10 +718,10 @@ jumper([15,'e'], [15,'B+'], WC.red, 'Power', '5 V bus node onto the bottom + rai
 step('Power', 'C1 1000 µF (optional), stripe to B−', 'B+22', 'B−22', 'cap', 'Optional');
 
 /* ESP32 power and ground */
-jumper([44,'j'], [44,'B+'], WC.red, 'ESP32', 'ESP32 VIN from the 5 V bus', { src:'spec' });
-jumper([43,'j'], [43,'B-'], WC.blk, 'ESP32', 'ESP32 GND to bottom − rail', { src:'spec' });
-jumper([43,'a'], [43,'T-'], WC.blk, 'ESP32', 'ESP32 GND to top − rail', { src:'spec' });
-jumper([44,'a'], [24,'a'], WC.v33, 'ESP32', 'ESP32 3V3 to the 3.3 V node, column 24', { src:'spec', lift:0.5 });
+jumper([45,'j'], [45,'B+'], WC.red, 'ESP32', 'ESP32 5V pin from the 5 V bus', { src:'spec' });
+jumper([40,'j'], [40,'B-'], WC.blk, 'ESP32', 'ESP32 GND to bottom − rail', { src:'spec' });
+jumper([49,'T-'], [49,'B-'], WC.blk, 'ESP32', 'Bridge top − rail to bottom − rail (the north GND pins sit under the board)', { src:'spec' });
+jumper([27,'j'], [24,'a'], WC.v33, 'ESP32', 'ESP32 3V3 to the 3.3 V node, column 24', { src:'spec', lift:0.5 });
 
 /* USB sense and ECHO dividers */
 resistor('r-sense-hi', [15,'d'], [19,'d'], '10 kΩ', { name:'R · 10 kΩ power sense (top)', role:'Upper half of the power-source divider: halves the 5 V bus for GPIO 35.', fromNote:'5 V bus node', toNote:'sense node, column 19',
@@ -707,21 +729,21 @@ resistor('r-sense-hi', [15,'d'], [19,'d'], '10 kΩ', { name:'R · 10 kΩ power s
 step('Sense & echo', 'R 10 kΩ, power sense top', 'd15', 'd19', 'r-sense-hi');
 resistor('r-sense-lo', [19,'b'], [19,'T-'], '10 kΩ', { name:'R · 10 kΩ power sense (bottom)', role:'Lower half of the power-source divider.', fromNote:'sense node', toNote:'GND' });
 step('Sense & echo', 'R 10 kΩ, power sense bottom', 'b19', 'T−19', 'r-sense-lo');
-jumper([19,'e'], [34,'j'], WC.white, 'Sense & echo', 'Sense node to GPIO 35', { src:'spec', lift:0.7 });
+jumper([19,'e'], [32,'j'], WC.white, 'Sense & echo', 'Sense node to GPIO 35', { src:'spec', lift:0.7 });
 resistor('r-echo-1k', [16,'g'], [20,'g'], '1 kΩ', { name:'R · 1 kΩ ECHO divider (top)', role:'Upper half of the ECHO divider that turns the HC-SR04 5 V echo into ≈3.3 V.', fromNote:'ECHO wire, column 16', toNote:'divider node, column 20' });
 step('Sense & echo', 'R 1 kΩ, ECHO divider top', 'g16', 'g20', 'r-echo-1k');
 resistor('r-echo-2k', [20,'h'], [20,'B-'], '2 kΩ', { name:'R · 2 kΩ ECHO divider (bottom)', role:'Lower half of the ECHO divider.', fromNote:'divider node', toNote:'GND' });
 step('Sense & echo', 'R 2 kΩ, ECHO divider bottom', 'h20', 'B−20', 'r-echo-2k');
-jumper([20,'f'], [36,'a'], 0xB59CFF, 'Sense & echo', 'ECHO divider node to GPIO 18', { src:'spec', lift:0.9 });
+jumper([20,'f'], [47,'a'], 0xB59CFF, 'Sense & echo', 'ECHO divider node to GPIO 18', { src:'spec', lift:0.9 });
 
 /* lamp outputs: GPIO → node → link → two 220 Ω across the centre gap → harness holes in row a */
 const LAMPS = [
-  { gpio:25, pin:37, B:46, phase:'ns', col:'green',  h1:'NW', h2:'SE' },
-  { gpio:26, pin:38, B:49, phase:'ns', col:'yellow', h1:'NW', h2:'SE' },
-  { gpio:27, pin:39, B:52, phase:'ns', col:'red',    h1:'NW', h2:'SE' },
-  { gpio:14, pin:40, B:55, phase:'ew', col:'green',  h1:'NE', h2:'SW' },
-  { gpio:12, pin:41, B:58, phase:'ew', col:'yellow', h1:'NE', h2:'SW' },
-  { gpio:13, pin:42, B:61, phase:'ew', col:'red',    h1:'NE', h2:'SW' }
+  { gpio:25, pin:35, B:50, phase:'ns', col:'green',  h1:'NW', h2:'SE' },
+  { gpio:26, pin:36, B:52, phase:'ns', col:'yellow', h1:'NW', h2:'SE' },
+  { gpio:27, pin:37, B:54, phase:'ns', col:'red',    h1:'NW', h2:'SE' },
+  { gpio:14, pin:38, B:57, phase:'ew', col:'green',  h1:'NE', h2:'SW' },
+  { gpio:12, pin:39, B:59, phase:'ew', col:'yellow', h1:'NE', h2:'SW' },
+  { gpio:13, pin:41, B:61, phase:'ew', col:'red',    h1:'NE', h2:'SW' }
 ];
 LAMPS.forEach(L => {
   const ph = L.phase === 'ns' ? 'N–S' : 'E–W', c = L.phase === 'ns' ? WC.ns : WC.ew;
@@ -738,11 +760,11 @@ LAMPS.forEach(L => {
 });
 tag('5 V bus node', V3(colX(15), BBT + 1.1, RZ.c), 'controller', { cls:'pin', kind:'pin' });
 tag('Sense node', V3(colX(19), BBT + 1.6, RZ.c), 'controller', { cls:'pin', kind:'pin' });
-tag('3.3 V node', V3(colX(25), BBT + 1.6, RZ.d), 'controller', { cls:'pin', kind:'pin' });
+tag('3.3 V node', V3(colX(23), BBT + 1.6, RZ.d), 'controller', { cls:'pin', kind:'pin' });
 tag('ECHO divider', V3(colX(18), BBT + 1.0, RZ.h), 'controller', { cls:'pin', kind:'pin' });
 tag('T+ · MB102 5 V', V3(colX(20), BBT + 0.6, RZ['T+'] - 0.4), 'controller', { cls:'pin', kind:'pin' });
 tag('B+ · 5 V bus', V3(colX(27), BBT + 0.6, RZ['B+'] + 0.4), 'controller', { cls:'pin', kind:'pin' });
-tag('220 Ω × 12', V3(colX(54), BBT + 1.2, (RZ.e + RZ.f)/2), 'controller', { cls:'pin', kind:'pin' });
+tag('220 Ω × 12', V3(colX(56), BBT + 1.2, (RZ.e + RZ.f)/2), 'controller', { cls:'pin', kind:'pin' });
 
 /* OLED on the front wall */
 const oled = { canvas:document.createElement('canvas'), tex:null, last:'' };
@@ -754,35 +776,35 @@ oled.tex = new THREE.CanvasTexture(oled.canvas); oled.tex.magFilter = THREE.Near
   const scr = new THREE.Mesh(new THREE.PlaneGeometry(2.3,1.25), new THREE.MeshBasicMaterial({ map:oled.tex }));
   g.add(at(scr, 24, Y0+3.55, wz + 0.17));
   const back = V3(24, Y0+4.4, wz - 0.4);
-  [[[24,'d'],WC.v33],[[29,'T-'],WC.blk],[[34,'a'],WC.blue],[[31,'a'],WC.green]].forEach(([h, col], k) => {
+  [[[24,'d'],WC.v33],[[29,'T-'],WC.blk],[[25,'a'],WC.blue],[[26,'a'],WC.green]].forEach(([h, col], k) => {
     const p = H(...h); g.add(at(bx(0.21,0.5,0.21, housingMat), p.x, BBT + 0.25, p.z));
     g.add(arc(V3(p.x, BBT + 0.5, p.z), back.clone().add(V3(-0.4 + k*0.27, 0, 0)), 1.3, col, 0.05));
   });
   part('oled','controller', g, { name:'0.96″ OLED display', src:'spec',
     role:'Shows mode, phase and power state on the front of the box. In this model it mirrors the simulation.',
     item:'I²C OLED from the kit', size:'2.7 × 2.7 cm', owner:OWN.lead,
-    pinsHead:['Pin','Hole'], pins:[['VCC','d24','3.3 V node'],['GND','T−29',''],['SDA','a34','GPIO 21'],['SCL','a31','GPIO 22']] });
+    pinsHead:['Pin','Hole'], pins:[['VCC','d24','3.3 V node'],['GND','T−29',''],['SDA','a25','GPIO 21'],['SCL','a26','GPIO 22']] });
   tag('OLED', V3(24, Y0+5.6, wz), 'controller', { pid:'oled' });
 }
-step('Sensors & OLED', 'OLED: VCC, GND, SDA, SCL', 'OLED', 'd24 · T−29 · a34 · a31', 'oled');
+step('Sensors & OLED', 'OLED: VCC, GND, SDA, SCL', 'OLED', 'd24 · T−29 · a25 · a26', 'oled');
 
 /* ---------- harness: fan-in from holes, sleeved bundle under the board ---------- */
 const COND = { G:WC.green, Y:WC.yel, R:WC.red, K:WC.blk, V5:WC.red, V3:WC.v33, S1:WC.sens, S2:WC.white, S3:WC.blue };
 const HARNESS = [
   { id:'w-nw', to:'head NW', sleeve:WC.ns, rise:[-9.15,-9.15], tail:(r)=>[[r[0],10.2,r[1]]],
-    ends:[[46,'a','Green','G'],[49,'a','Yellow','Y'],[52,'a','Red','R'],[46,'T-','GND','K']] },
+    ends:[[50,'a','Green','G'],[52,'a','Yellow','Y'],[54,'a','Red','R'],[50,'T-','GND','K']] },
   { id:'w-se', to:'head SE', sleeve:WC.ns, rise:[9.15,9.15], tail:(r)=>[[r[0],10.2,r[1]]],
-    ends:[[47,'a','Green','G'],[50,'a','Yellow','Y'],[53,'a','Red','R'],[50,'T-','GND','K']] },
+    ends:[[51,'a','Green','G'],[53,'a','Yellow','Y'],[55,'a','Red','R'],[53,'T-','GND','K']] },
   { id:'w-ne', to:'head NE', sleeve:WC.ew, rise:[9.85,-9.15], tail:(r)=>[[r[0],10.2,r[1]]],
-    ends:[[55,'a','Green','G'],[58,'a','Yellow','Y'],[61,'a','Red','R'],[56,'T-','GND','K']] },
+    ends:[[57,'a','Green','G'],[59,'a','Yellow','Y'],[61,'a','Red','R'],[57,'T-','GND','K']] },
   { id:'w-sw', to:'head SW', sleeve:WC.ew, rise:[-9.85,9.15], tail:(r)=>[[r[0],10.2,r[1]]],
-    ends:[[56,'a','Green','G'],[59,'a','Yellow','Y'],[62,'a','Red','R'],[62,'T-','GND','K']] },
+    ends:[[58,'a','Green','G'],[60,'a','Yellow','Y'],[62,'a','Red','R'],[62,'T-','GND','K']] },
   { id:'w-hc', to:'HC-SR04', sleeve:WC.sens, rise:[-10.4,-11.5], tail:()=>[[-10.4,2.7,-11.5],[-8.75,2.7,-11.5]],
-    ends:[[26,'B+','VCC (5 V bus)','V5'],[37,'a','TRIG · GPIO 5','S2'],[16,'j','ECHO → divider','S1'],[27,'B-','GND','K']] },
+    ends:[[26,'B+','VCC (5 V bus)','V5'],[48,'a','TRIG · GPIO 5','S2'],[16,'j','ECHO → divider','S1'],[27,'B-','GND','K']] },
   { id:'w-ir', to:'IR sensor', sleeve:WC.sens, rise:[11.5,-10.0], tail:()=>[[11.5,1.7,-10.0],[11.5,1.35,-9.1]],
-    ends:[[24,'b','VCC (3.3 V)','V3'],[35,'a','OUT · GPIO 19','S1'],[26,'T-','GND','K']] },
+    ends:[[24,'b','VCC (3.3 V)','V3'],[46,'a','OUT · GPIO 19','S1'],[26,'T-','GND','K']] },
   { id:'w-water', to:'water sensor', sleeve:WC.sens, rise:[-21.5,11.5], tail:()=>[[-21.5,3.4,11.5],[-17.4,3.4,11.5]],
-    ends:[[24,'c','+ (3.3 V)','V3'],[33,'j','S · GPIO 34','S3'],[28,'T-','−','K']] }
+    ends:[[24,'c','+ (3.3 V)','V3'],[31,'j','S · GPIO 34','S3'],[28,'T-','−','K']] }
 ];
 const holeX = BOX.x + 7.1, holeZ = BOX.z - 3.4;
 HARNESS.forEach((h, i) => {
@@ -804,7 +826,7 @@ HARNESS.forEach((h, i) => {
 
 /* ---------- USB, camera rig, laptop ---------- */
 {
-  const ux = colX(44) + 0.75;
+  const ux = colX(ESP_C1) + 0.75;
   const m = wire([[ux,BBT+0.55,BBZ],[BOX.x+BOX.w/2-0.1,BBT+0.55,BBZ],[31.5,1.2,BBZ],[33,-8.75,BBZ],[33,-8.75,-12],[36.2,-8.3,-12]], WC.blk, 0.2);
   part('usb','wiring', m, { name:'USB cable (laptop → ESP32)', src:'spec',
     role:'Main 5 V supply plus the serial and flashing link from the edge laptop.', item:'Micro-USB data cable', owner:OWN.lead,
